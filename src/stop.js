@@ -5,6 +5,10 @@ function installStopHandler() {
   process.on('SIGUSR1', () => { paused = true; });
   process.on('SIGUSR2', () => { paused = false; });
   process.on('SIGTERM', () => { stopRequested = true; paused = false; });
+  process.on('message', message => {
+    if (message?.type === 'pause') paused = true;
+    if (message?.type === 'resume') paused = false;
+  });
 }
 
 function isStopRequested() {

@@ -16,7 +16,7 @@
     "puppeteer": "^24.20.0"
   },
   "devDependencies": {
-    "electron": "^37.2.6",
+    "electron": "^37.10.3",
     "electron-builder": "^24.13.3"
   },
   "build": {
@@ -42,5 +42,8 @@
     "win": {
       "target": "nsis"
     }
+  },
+  "allowScripts": {
+    "electron@37.10.3": true
   }
 }

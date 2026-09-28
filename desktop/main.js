@@ -208,7 +208,7 @@ async function startRunner() {
       INZ_DATA_ROOT: writableRoot,
       NODE_PATH: [modulePath, process.env.NODE_PATH].filter(Boolean).join(path.delimiter)
     },
-    stdio: ['ignore', 'pipe', 'pipe']
+    stdio: ['ignore', 'pipe', 'pipe', 'ipc']
   });
   send('runner-status', { running: true });
   const forward = type => chunk => send('runner-output', { type, text: chunk.toString() });
@@ -225,13 +225,15 @@ async function startRunner() {
 
 function pauseRunner() {
   if (!runnerProcess) return { ok: false, message: 'Runner chưa chạy.' };
-  runnerProcess.kill('SIGUSR1');
+  if (process.platform === 'win32') runnerProcess.send({ type: 'pause' });
+  else runnerProcess.kill('SIGUSR1');
   return { ok: true, message: 'Đã tạm dừng, Chrome giữ nguyên trang hiện tại.' };
 }
 
 function resumeRunner() {
   if (!runnerProcess) return { ok: false, message: 'Runner chưa chạy.' };
-  runnerProcess.kill('SIGUSR2');
+  if (process.platform === 'win32') runnerProcess.send({ type: 'resume' });
+  else runnerProcess.kill('SIGUSR2');
   return { ok: true, message: 'Đã tiếp tục runner.' };
 }
 
