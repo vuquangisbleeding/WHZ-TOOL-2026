@@ -2,6 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { normalizeProxy, maskApiKey } = require('../src/browser');
 const { detectPage } = require('../src/detect');
+const { maskUsername } = require('../src/privacy');
+const { applicantSummary } = require('../src/notifications');
 
 function fakePage({ url = 'https://example.test/', body = '', selectors = [] } = {}) {
   return {
@@ -55,6 +57,21 @@ test('maskApiKey never returns the full secret', () => {
   const masked = maskApiKey(key);
   assert.equal(masked, 'CAP-1234...ECRET');
   assert.ok(!masked.includes(key));
+});
+
+test('maskUsername exposes only the last three characters', () => {
+  assert.equal(maskUsername('username-123'), '*********123');
+  assert.equal(maskUsername('abc'), 'abc');
+});
+
+test('applicant summary omits email and passport', () => {
+  const summary = applicantSummary({
+    personal: { given_name_1: 'Test', family_name: 'Applicant' },
+    identification: { passport_number: 'P1234567' }
+  }, { username: 'username-123', email: 'private@example.test' });
+  assert.equal(summary, 'Tên: Test Applicant\nTài khoản: *********123');
+  assert.ok(!summary.includes('private@example.test'));
+  assert.ok(!summary.includes('P1234567'));
 });
 
 test('detectPage identifies login before generic form states', async () => {

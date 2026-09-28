@@ -15,9 +15,10 @@ const { fillHealth, fillCharacter } = require('./forms/health');
 const { fillWhs } = require('./forms/whs');
 const { fillText, dumpUnknown } = require('./dom');
 const { resetPageScroll } = require('./timing');
+const { maskUsername } = require('./privacy');
 
 async function runApplicant(browser, baseApplicant, account, index) {
-  const label = `account ${index + 1}: ${account.username}`;
+  const label = `account ${index + 1}: ${maskUsername(account.username)}`;
   await initializeAccountLogger(index, account.username);
   console.log(`[${label}] ACCOUNT_LOG_FILE ${accountLogFile(index)}`);
   let startedAt = null; const stats = { captchaMs: 0 };
@@ -27,7 +28,7 @@ async function runApplicant(browser, baseApplicant, account, index) {
   await authenticateProxy(page, account.proxy);
   const applicant = structuredClone(baseApplicant);
   applicant.contact = { ...(applicant.contact || {}), email: account.email };
-  result.applicantInfo = `Tên: ${[applicant.personal?.given_name_1, applicant.personal?.family_name].filter(Boolean).join(' ') || '(chưa có tên)'}\nEmail hồ sơ: ${account.email}`;
+  result.applicantInfo = `Tên: ${[applicant.personal?.given_name_1, applicant.personal?.family_name].filter(Boolean).join(' ') || '(chưa có tên)'}\nTài khoản: ${maskUsername(account.username)}`;
   page.on('framenavigated', frame => { if (frame === page.mainFrame()) console.log(`[${label}] NAVIGATE ${frame.url()}`); });
   page.on('requestfailed', request => { if (!request.url().startsWith('chrome-extension://') && !request.url().startsWith('chrome://')) console.log(`[${label}] REQUEST_FAILED ${request.url()} ${request.failure()?.errorText || ''}`); });
   await page.setViewport({ width: 1440, height: 900 });

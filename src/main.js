@@ -7,6 +7,7 @@ const { runApplicant } = require('./account');
 const { sendTelegramMessage, buildTelegramSummary, applicantSummary } = require('./notifications');
 const { formatDuration } = require('./timing');
 const { captchaStats } = require('./captcha');
+const { maskUsername } = require('./privacy');
 
 function validateAccounts(accounts) {
   if (!Array.isArray(accounts) || accounts.length === 0) throw new Error('emails.json phải chứa ít nhất một tài khoản');
@@ -22,7 +23,7 @@ function buildApiKeyAudit(apiKey, accounts) {
     `key_masked=${masked}`,
     `key_length=${apiKey.length}`,
     `key_sha256=${fingerprint}`,
-    ...accounts.map((account, index) => `profile=account-${index + 1} username=${account.username} key_masked=${masked} key_sha256=${fingerprint}`),
+    ...accounts.map((account, index) => `profile=account-${index + 1} username=${maskUsername(account.username)} key_masked=${masked} key_sha256=${fingerprint}`),
     ''
   ].join('\n');
 }
@@ -32,20 +33,20 @@ async function runAccount(baseApplicant, account, index, args) {
   let browser;
   try {
     await initializeAccountLogger(index, account.username);
-    console.log(`[account ${index + 1}: ${account.username}] BROWSER_LAUNCH_START`);
+    console.log(`[account ${index + 1}: ${maskUsername(account.username)}] BROWSER_LAUNCH_START`);
     browser = await launchBrowserWithTimeout(args, index, account.username, account.proxy);
-    console.log(`[account ${index + 1}: ${account.username}] BROWSER_LAUNCH_READY`);
+    console.log(`[account ${index + 1}: ${maskUsername(account.username)}] BROWSER_LAUNCH_READY`);
     await configureProxyAuthentication(browser, account.proxy);
     const result = await runApplicant(browser, baseApplicant, account, index);
     if (!result.runtimeMs) result.runtimeMs = Date.now() - accountStartedAt;
-    console.log(`[account ${index + 1}: ${account.username}] ACCOUNT_FINISHED status=${result.status} runtime_ms=${result.runtimeMs}`);
+    console.log(`[account ${index + 1}: ${maskUsername(account.username)}] ACCOUNT_FINISHED status=${result.status} runtime_ms=${result.runtimeMs}`);
     await sendTelegramMessage(buildTelegramSummary([result], result.runtimeMs)).catch(error => console.error(`[TELEGRAM] ${result.label} lỗi gửi: ${error.message}`));
     return result;
   } catch (error) {
     await browser?.close().catch(() => {}); await initializeAccountLogger(index, account.username);
-    console.error(`[account ${index + 1}: ${account.username}] ACCOUNT_ERROR ${error.stack || error.message}`);
+    console.error(`[account ${index + 1}: ${maskUsername(account.username)}] ACCOUNT_ERROR ${error.stack || error.message}`);
     const runtimeMs = Date.now() - accountStartedAt;
-    const result = { label: `account ${index + 1}: ${account.username}`, status: `ERROR: ${error.message}`, runtimeMs, captchaMs: 0, applicantInfo: applicantSummary(baseApplicant, account) };
+    const result = { label: `account ${index + 1}: ${maskUsername(account.username)}`, status: `ERROR: ${error.message}`, runtimeMs, captchaMs: 0, applicantInfo: applicantSummary(baseApplicant, account) };
     await sendTelegramMessage(buildTelegramSummary([result], runtimeMs)).catch(telegramError => console.error(`[TELEGRAM] ${result.label} lỗi gửi: ${telegramError.message}`));
     return result;
   } finally {
@@ -61,7 +62,7 @@ async function launchBrowserWithTimeout(args, index, username, proxy) {
   });
   return Promise.race([launch, new Promise((_, reject) => setTimeout(() => {
     timedOut = true;
-    reject(new Error(`Chrome launch timeout: ${username}`));
+    reject(new Error(`Chrome launch timeout: ${maskUsername(username)}`));
   }, 30000))]);
 }
 

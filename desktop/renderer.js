@@ -33,6 +33,17 @@ let runStartedAt = null;
 let logRemainder = '';
 let clockTimer = null;
 
+function maskUsername(username) {
+  const value = String(username || '');
+  return value.length <= 3 ? value : `${'*'.repeat(value.length - 3)}${value.slice(-3)}`;
+}
+
+function redactDisplayedText(text) {
+  return String(text || '')
+    .replace(/(\[account \d+: )([^\]]+)(\])/g, (_, prefix, username, suffix) => `${prefix}${maskUsername(username)}${suffix}`)
+    .replace(/(Email hồ sơ:|Hộ chiếu:)[^\n]*/gi, '$1 [ẩn]');
+}
+
 document.querySelector('#profiles').textContent = '-';
 
 function formatDuration(milliseconds) {
@@ -147,7 +158,7 @@ function renderArchivedLogs() {
     button.className = 'log-file';
     button.type = 'button';
     const title = document.createElement('strong');
-    title.textContent = file.name;
+    title.textContent = redactDisplayedText(file.name);
     const meta = document.createElement('span');
     meta.textContent = `${formatTimestamp(file.modifiedAt)} · ${formatFileSize(file.size)}`;
     button.append(title, meta);
@@ -167,9 +178,9 @@ async function loadArchivedLog(file, button) {
     const content = await window.runnerApi.readLog(file.name);
     document.querySelectorAll('.log-file.selected').forEach(item => item.classList.remove('selected'));
     button.classList.add('selected');
-    selectedLogName.textContent = file.name;
+    selectedLogName.textContent = redactDisplayedText(file.name);
     selectedLogSize.textContent = `${formatFileSize(file.size)} · ${formatTimestamp(file.modifiedAt)}`;
-    historicalLog.textContent = content;
+    historicalLog.textContent = redactDisplayedText(content);
     historicalLog.scrollTop = 0;
   } catch (error) {
     selectedLogName.textContent = 'Không thể đọc log';
@@ -194,7 +205,7 @@ async function loadHistoricalResults() {
     results.forEach(result => {
       const row = document.createElement('tr');
       const values = [
-        result.run, `account ${result.account}`, result.username,
+        result.run, `account ${result.account}`, maskUsername(result.username),
         formatTimestamp(result.startedAt), formatTimestamp(result.finishedAt),
         result.durationMs ? formatDuration(result.durationMs) : '-', result.status
       ];
@@ -227,11 +238,11 @@ function renderAccountRows(accounts = []) {
     row.id = `account-row-${index + 1}`;
     row.dataset.name = String(account.fullName || '').toLowerCase();
     [
-      `account ${index + 1}`, account.username, account.email, account.fullName,
-      account.passport, '-', '-', '-', 'Waiting', '-'
+      `account ${index + 1}`, maskUsername(account.username), account.fullName,
+      '-', '-', '-', 'Waiting', '-'
     ].forEach((value, cellIndex) => {
       const cell = document.createElement('td');
-      if (cellIndex === 8) cell.className = 'account-state';
+      if (cellIndex === 6) cell.className = 'account-state';
       cell.textContent = value || '-';
       row.appendChild(cell);
     });
@@ -245,19 +256,19 @@ function updateAccountRows() {
     const row = document.querySelector(`#account-row-${index}`);
     if (!row) continue;
     const cells = row.querySelectorAll('td');
-    cells[5].textContent = formatTimestamp(state.startedAt);
-    cells[6].textContent = formatTimestamp(state.finishedAt);
-    cells[7].textContent = state.startedAt && state.finishedAt ? formatDuration(state.finishedAt - state.startedAt) : '-';
+    cells[3].textContent = formatTimestamp(state.startedAt);
+    cells[4].textContent = formatTimestamp(state.finishedAt);
+    cells[5].textContent = state.startedAt && state.finishedAt ? formatDuration(state.finishedAt - state.startedAt) : '-';
     row.querySelector('.account-state').textContent = state.status || 'Waiting';
-    cells[9].replaceChildren();
+    cells[7].replaceChildren();
     if (state.paymentUrl) {
       const link = document.createElement('a');
       link.href = state.paymentUrl;
       link.target = '_blank';
       link.rel = 'noreferrer';
       link.textContent = 'Open payment';
-      cells[9].appendChild(link);
-    } else cells[9].textContent = '-';
+      cells[7].appendChild(link);
+    } else cells[7].textContent = '-';
   }
   const wanted = nameFilter.value.trim().toLowerCase();
   document.querySelectorAll('#accountRows tr').forEach(row => {
@@ -322,6 +333,7 @@ function processRunnerOutput(text) {
 }
 
 function append(text, type = 'stdout') {
+  text = redactDisplayedText(text);
   const line = document.createElement('span');
   line.className = type;
   line.textContent = text;

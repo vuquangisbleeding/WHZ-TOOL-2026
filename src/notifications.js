@@ -1,5 +1,6 @@
 const config = require('./config');
 const { formatDuration } = require('./timing');
+const { maskUsername } = require('./privacy');
 
 async function sendTelegramMessage(message) {
   if (!config.telegramBotToken || !config.telegramChatId) {
@@ -17,7 +18,7 @@ async function sendTelegramMessage(message) {
 
 function applicantSummary(applicant, account) {
   const name = [applicant.personal?.given_name_1, applicant.personal?.family_name].filter(Boolean).join(' ') || '(chưa có tên)';
-  return `Tên: ${name}\nEmail hồ sơ: ${account.email}\nTài khoản: ${account.username}\nHộ chiếu: ${applicant.identification?.passport_number || '(trống)'}`;
+  return `Tên: ${name}\nTài khoản: ${maskUsername(account.username)}`;
 }
 
 function buildTelegramSummary(results, totalRuntime) {
