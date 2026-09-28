@@ -13,6 +13,7 @@ async function fillPersonal1(page, applicant, label) {
     { type: 'select', selector: 'countryOfBirth', value: personal.country_of_birth },
     { selector: 'streetNumber', value: address.street_number }, { selector: 'streetName', value: address.street_name },
     { selector: 'suburb', value: address.suburb }, { selector: 'city', value: address.city },
+    { selector: 'province', value: address.province },
     { selector: 'postalCode', value: address.postal_code }, { type: 'select', selector: 'addressCountry', value: address.country },
     { selector: 'phoneDaytime', value: contact.phone_daytime }, { selector: 'phoneNight', value: contact.phone_night, clearEmpty: true },
     { selector: 'phoneMobile', value: contact.phone_mobile },

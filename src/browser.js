@@ -25,7 +25,7 @@ function maskApiKey(apiKey) {
 async function launchBrowser(args, index, proxy) {
   const profilePath = path.join(config.profileRoot, `account-${index + 1}`);
   await fs.mkdir(profilePath, { recursive: true });
-  if (config.capsolverExtensionPath) await clearCapSolverProfileStorage(profilePath, config.capsolverExtensionId);
+  if (config.capsolverExtensionPath) await clearCapSolverProfileStorage(profilePath);
   const normalizedProxy = normalizeProxy(proxy);
   const launchArgs = [...args];
   if (normalizedProxy) launchArgs.push(`--proxy-server=${normalizedProxy.server}`);
@@ -34,8 +34,8 @@ async function launchBrowser(args, index, proxy) {
   return puppeteer.launch({ headless: config.headless, executablePath: config.chromeExecutablePath, userDataDir: profilePath, args: launchArgs, defaultViewport: null });
 }
 
-async function clearCapSolverProfileStorage(profilePath, extensionId) {
-  const storagePath = path.join(profilePath, 'Default', 'Local Extension Settings', extensionId);
+async function clearCapSolverProfileStorage(profilePath) {
+  const storagePath = path.join(profilePath, 'Default', 'Local Extension Settings');
   await fs.rm(storagePath, { recursive: true, force: true });
   console.log(`[CapSolver] Đã xóa storage local của profile: ${storagePath}`);
 }
