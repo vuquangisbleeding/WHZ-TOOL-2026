@@ -8,6 +8,7 @@ const { sendTelegramMessage, buildTelegramSummary, applicantSummary } = require(
 const { formatDuration } = require('./timing');
 const { captchaStats } = require('./captcha');
 const { maskUsername } = require('./privacy');
+const { isStopRequested } = require('./stop');
 
 function validateAccounts(accounts) {
   if (!Array.isArray(accounts) || accounts.length === 0) throw new Error('emails.json phải chứa ít nhất một tài khoản');
@@ -50,7 +51,8 @@ async function runAccount(baseApplicant, account, index, args) {
     await sendTelegramMessage(buildTelegramSummary([result], runtimeMs)).catch(telegramError => console.error(`[TELEGRAM] ${result.label} lỗi gửi: ${telegramError.message}`));
     return result;
   } finally {
-    await browser?.close().catch(() => {});
+    if (isStopRequested()) browser?.disconnect();
+    else await browser?.close().catch(() => {});
   }
 }
 

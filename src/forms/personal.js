@@ -14,7 +14,8 @@ async function fillPersonal1(page, applicant, label) {
     { selector: 'streetNumber', value: address.street_number }, { selector: 'streetName', value: address.street_name },
     { selector: 'suburb', value: address.suburb }, { selector: 'city', value: address.city },
     { selector: 'postalCode', value: address.postal_code }, { type: 'select', selector: 'addressCountry', value: address.country },
-    { selector: 'phoneDaytime', value: contact.phone_daytime }, { selector: 'phoneMobile', value: contact.phone_mobile },
+    { selector: 'phoneDaytime', value: contact.phone_daytime }, { selector: 'phoneNight', value: contact.phone_night, clearEmpty: true },
+    { selector: 'phoneMobile', value: contact.phone_mobile },
     { selector: 'email', value: contact.email }, { type: 'select', selector: 'communicationMethod', value: contact.communication_method },
     { type: 'select', selector: 'hasCreditCard', value: contact.has_credit_card }
   ], label);

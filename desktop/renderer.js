@@ -1,6 +1,8 @@
 const log = document.querySelector('#log');
 const start = document.querySelector('#start');
 const stop = document.querySelector('#stop');
+const resume = document.querySelector('#resume');
+const cancel = document.querySelector('#cancel');
 const statusText = document.querySelector('#statusText');
 const lastEvent = document.querySelector('#lastEvent');
 const shell = document.querySelector('.shell');
@@ -355,6 +357,8 @@ function setTelegramStatus(text, type = '') {
 function setRunning(running) {
   start.disabled = running;
   stop.disabled = !running;
+  resume.disabled = true;
+  cancel.disabled = !running;
   statusText.textContent = running ? 'Running' : 'Ready';
   shell.classList.toggle('running', running);
   if (running && !runStartedAt) resetRunMonitor();
@@ -526,7 +530,26 @@ start.addEventListener('click', async () => {
   if (!result.ok) append(`[app] ${result.message}\n`, 'stderr');
   else append('[app] Runner started\n');
 });
-stop.addEventListener('click', async () => { await window.runnerApi.stop(); append('[app] Stop requested\n'); });
+stop.addEventListener('click', async () => {
+  const result = await window.runnerApi.pause();
+  if (result.ok) {
+    stop.disabled = true;
+    resume.disabled = false;
+  }
+  append(`[app] ${result.message || 'Stop requested'}\n`);
+});
+resume.addEventListener('click', async () => {
+  const result = await window.runnerApi.resume();
+  if (result.ok) {
+    stop.disabled = false;
+    resume.disabled = true;
+  }
+  append(`[app] ${result.message || 'Resume requested'}\n`);
+});
+cancel.addEventListener('click', async () => {
+  const result = await window.runnerApi.cancel();
+  append(`[app] ${result.message || 'Cancel requested'}\n`);
+});
 document.querySelector('#clear').addEventListener('click', () => { log.replaceChildren(); lastEvent.textContent = 'Waiting'; });
 document.querySelector('#refreshLogs').addEventListener('click', loadArchivedLogs);
 logFilter.addEventListener('input', renderArchivedLogs);

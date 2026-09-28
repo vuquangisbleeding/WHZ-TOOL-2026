@@ -16,6 +16,7 @@ const { fillWhs } = require('./forms/whs');
 const { fillText, dumpUnknown } = require('./dom');
 const { resetPageScroll } = require('./timing');
 const { maskUsername } = require('./privacy');
+const { isStopRequested, waitIfPaused } = require('./stop');
 
 async function runApplicant(browser, baseApplicant, account, index) {
   const label = `account ${index + 1}: ${maskUsername(account.username)}`;
@@ -27,7 +28,7 @@ async function runApplicant(browser, baseApplicant, account, index) {
   const page = await getSinglePage(browser);
   await authenticateProxy(page, account.proxy);
   const applicant = structuredClone(baseApplicant);
-  applicant.contact = { ...(applicant.contact || {}), email: account.email };
+  applicant.contact = { ...(applicant.contact || {}), email: applicant.contact?.email || account.email };
   result.applicantInfo = `Tên: ${[applicant.personal?.given_name_1, applicant.personal?.family_name].filter(Boolean).join(' ') || '(chưa có tên)'}\nTài khoản: ${maskUsername(account.username)}`;
   page.on('framenavigated', frame => { if (frame === page.mainFrame()) console.log(`[${label}] NAVIGATE ${frame.url()}`); });
   page.on('requestfailed', request => { if (!request.url().startsWith('chrome-extension://') && !request.url().startsWith('chrome://')) console.log(`[${label}] REQUEST_FAILED ${request.url()} ${request.failure()?.errorText || ''}`); });
@@ -57,6 +58,8 @@ async function runApplicant(browser, baseApplicant, account, index) {
 async function walkWizard(page, applicant, account, label, stats, result, finish) {
   // Mỗi vòng lặp xử lý đúng một trạng thái trang rồi mới chuyển bước.
   for (let pageNumber = 1; pageNumber <= config.maxWizardPages; pageNumber += 1) {
+    await waitIfPaused();
+    if (isStopRequested()) return finish('STOPPED_KEEP_BROWSER');
     await recoverHighLoad(page, label); await resetPageScroll(page);
     const currentPage = await detectPage(page); const pageLabel = `${label} PAGE ${pageNumber} ${currentPage}`;
     console.log(`[${pageLabel}] URL=${await page.url()}`);
@@ -90,6 +93,8 @@ async function walkWizard(page, applicant, account, label, stats, result, finish
     else if (currentPage === 'character') await fillCharacter(page, applicant, pageLabel);
     else if (currentPage === 'whs') await fillWhs(page, applicant, pageLabel);
     else if (currentPage === 'personal3') await dumpUnknown(page, pageLabel);
+    await waitIfPaused();
+    if (isStopRequested()) return finish('STOPPED_KEEP_BROWSER');
     const advanced = await advance(page, pageLabel, stats, actions);
     if (advanced === 'saved') {
       await waitForManualRecovery(page, pageLabel, new Error('Đã Save nhưng chưa thấy Next/Submit.'));

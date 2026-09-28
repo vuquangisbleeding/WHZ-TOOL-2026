@@ -32,6 +32,18 @@ async function fillText(page, selectors, value) {
   return true;
 }
 
+async function clearText(page, selectors) {
+  const selector = await firstExisting(page, selectors);
+  if (!selector) return false;
+  await page.$eval(selector, element => {
+    element.focus();
+    element.value = '';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  return true;
+}
+
 async function selectValue(page, selectors, value) {
   if (value === undefined || value === null || value === '') return false;
   const selector = await firstExisting(page, selectors);
@@ -52,6 +64,7 @@ async function fillJobs(page, jobs, label) {
   for (const job of jobs) {
     const selectors = job.type === 'select' ? selectSelectors[job.selector] : textSelectors[job.selector];
     if (job.value === undefined || job.value === null || job.value === '') {
+      if (job.clearEmpty && selectors) await clearText(page, selectors);
       console.log(`[${label}] FIELD_SKIP_EMPTY ${job.selector}`);
       continue;
     }
@@ -98,4 +111,4 @@ async function dumpUnknown(page, label) {
   console.log(`[${label}] UNKNOWN_FIELDS ${fields.join(', ')}`);
 }
 
-module.exports = { firstExisting, firstVisible, fillText, selectValue, fillJobs, fillByQuestion, dumpUnknown };
+module.exports = { firstExisting, firstVisible, fillText, clearText, selectValue, fillJobs, fillByQuestion, dumpUnknown };

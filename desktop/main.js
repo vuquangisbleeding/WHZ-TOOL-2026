@@ -223,16 +223,30 @@ async function startRunner() {
   return { ok: true };
 }
 
-function stopRunner() {
+function pauseRunner() {
   if (!runnerProcess) return { ok: false, message: 'Runner chưa chạy.' };
-  runnerProcess.kill();
-  return { ok: true };
+  runnerProcess.kill('SIGUSR1');
+  return { ok: true, message: 'Đã tạm dừng, Chrome giữ nguyên trang hiện tại.' };
+}
+
+function resumeRunner() {
+  if (!runnerProcess) return { ok: false, message: 'Runner chưa chạy.' };
+  runnerProcess.kill('SIGUSR2');
+  return { ok: true, message: 'Đã tiếp tục runner.' };
+}
+
+function cancelRunner() {
+  if (!runnerProcess) return { ok: false, message: 'Runner chưa chạy.' };
+  runnerProcess.kill('SIGTERM');
+  return { ok: true, message: 'Đã hủy runner, Chrome sẽ được giữ nguyên trang hiện tại.' };
 }
 
 app.whenReady().then(() => {
   createWindow();
   ipcMain.handle('runner-start', startRunner);
-  ipcMain.handle('runner-stop', stopRunner);
+  ipcMain.handle('runner-pause', pauseRunner);
+  ipcMain.handle('runner-resume', resumeRunner);
+  ipcMain.handle('runner-cancel', cancelRunner);
   ipcMain.handle('data-load', readDataFiles);
   ipcMain.handle('logs-list', listLogFiles);
   ipcMain.handle('logs-read', readLogFile);
@@ -248,4 +262,4 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
-app.on('before-quit', () => { if (runnerProcess) runnerProcess.kill(); });
+app.on('before-quit', () => { if (runnerProcess) runnerProcess.kill('SIGTERM'); });

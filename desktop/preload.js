@@ -2,7 +2,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('runnerApi', {
   start: () => ipcRenderer.invoke('runner-start'),
-  stop: () => ipcRenderer.invoke('runner-stop'),
+  pause: () => ipcRenderer.invoke('runner-pause'),
+  resume: () => ipcRenderer.invoke('runner-resume'),
+  cancel: () => ipcRenderer.invoke('runner-cancel'),
   loadData: () => ipcRenderer.invoke('data-load'),
   listLogs: () => ipcRenderer.invoke('logs-list'),
   readLog: name => ipcRenderer.invoke('logs-read', name),
