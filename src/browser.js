@@ -4,16 +4,59 @@ const { fs, path } = require('./io');
 
 function normalizeProxy(proxy) {
   if (!proxy) return null;
-  const input = typeof proxy === 'string' ? { server: proxy } : proxy;
-  if (!input.server || typeof input.server !== 'string') throw new Error('proxy phải là chuỗi hoặc object có server');
-  const parsed = new URL(input.server.includes('://') ? input.server : `http://${input.server}`);
-  const port = parsed.port || (parsed.protocol === 'https:' ? '443' : parsed.protocol === 'http:' ? '80' : '');
-  if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname || !port) throw new Error(`Proxy không hợp lệ: ${input.server}`);
-  return {
-    server: `${parsed.protocol}//${parsed.hostname}:${port}`,
-    username: input.username || (parsed.username ? decodeURIComponent(parsed.username) : ''),
-    password: input.password || (parsed.password ? decodeURIComponent(parsed.password) : '')
-  };
+
+  if (typeof proxy === 'string') {
+    const raw = proxy.trim();
+    const hasScheme = raw.includes('://');
+
+    if (hasScheme) {
+      const parsed = new URL(raw);
+      const port = parsed.port || (parsed.protocol === 'https:' ? '443' : parsed.protocol === 'http:' ? '80' : '');
+      if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname || !port) throw new Error(`Proxy không hợp lệ: ${raw}`);
+      return {
+        server: `${parsed.protocol}//${parsed.hostname}:${port}`,
+        username: parsed.username ? decodeURIComponent(parsed.username) : '',
+        password: parsed.password ? decodeURIComponent(parsed.password) : ''
+      };
+    }
+
+    const parts = raw.split(':');
+    if (parts.length >= 4) {
+      const [host, port, username, ...rest] = parts;
+      const passwordWithMeta = rest.join(':');
+      const password = passwordWithMeta.split('_')[0];
+      if (host && port && username && password) {
+        return {
+          server: `http://${host}:${port}`,
+          username: decodeURIComponent(username),
+          password: decodeURIComponent(password)
+        };
+      }
+    }
+
+    const parsed = new URL(`http://${raw}`);
+    const port = parsed.port || '80';
+    return {
+      server: `http://${parsed.hostname}:${port}`,
+      username: '',
+      password: ''
+    };
+  }
+
+  if (proxy && typeof proxy === 'object') {
+    const input = proxy;
+    if (!input.server || typeof input.server !== 'string') throw new Error('proxy phải là chuỗi hoặc object có server');
+    const parsed = new URL(input.server.includes('://') ? input.server : `http://${input.server}`);
+    const port = parsed.port || (parsed.protocol === 'https:' ? '443' : parsed.protocol === 'http:' ? '80' : '');
+    if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname || !port) throw new Error(`Proxy không hợp lệ: ${input.server}`);
+    return {
+      server: `${parsed.protocol}//${parsed.hostname}:${port}`,
+      username: input.username || (parsed.username ? decodeURIComponent(parsed.username) : ''),
+      password: input.password || (parsed.password ? decodeURIComponent(parsed.password) : '')
+    };
+  }
+
+  throw new Error('proxy không hợp lệ');
 }
 
 function maskApiKey(apiKey) {
