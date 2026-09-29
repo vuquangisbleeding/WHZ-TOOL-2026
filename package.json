@@ -30,6 +30,7 @@
       "src/**/*",
       "applicant.json",
       "emails.json",
+      "proxy-list.txt",
       ".env.example",
       "package.json"
     ],

@@ -125,6 +125,8 @@ function syncFormToJson() {
       if (input.dataset.accountField === 'proxy' && input.dataset.proxyCredentials) {
         const credentials = JSON.parse(input.dataset.proxyCredentials);
         account.proxy = { server: value, ...credentials };
+      } else if (input.dataset.accountField === 'proxy' && ['true', 'false'].includes(value.toLowerCase())) {
+        account.proxy = value.toLowerCase() === 'true';
       } else account[input.dataset.accountField] = value;
     });
     return account;

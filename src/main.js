@@ -1,6 +1,6 @@
 const crypto = require('node:crypto');
 const config = require('./config');
-const { fs, path, readJson, readCapSolverApiKey } = require('./io');
+const { fs, path, readJson, readProxyList, readCapSolverApiKey } = require('./io');
 const { initializeLogger, initializeAccountLogger, state } = require('./logger');
 const { launchBrowser, configureProxyAuthentication, maskApiKey } = require('./browser');
 const { runApplicant } = require('./account');
@@ -13,6 +13,20 @@ const { isStopRequested } = require('./stop');
 function validateAccounts(accounts) {
   if (!Array.isArray(accounts) || accounts.length === 0) throw new Error('emails.json phải chứa ít nhất một tài khoản');
   if (accounts.some(account => !account || typeof account !== 'object' || typeof account.username !== 'string' || !account.username.trim() || typeof account.email !== 'string' || !account.email.trim() || typeof account.password !== 'string' || !account.password)) throw new Error('Mỗi phần tử trong emails.json phải có username, password và email');
+  if (accounts.some(account => account.proxy !== undefined && typeof account.proxy !== 'boolean')) throw new Error('Trường proxy trong emails.json phải là true hoặc false');
+}
+
+function applyProxyList(accounts, proxies) {
+  let proxyIndex = 0;
+  for (const account of accounts) {
+    if (account.proxy !== true) {
+      account.proxy = null;
+      continue;
+    }
+    if (!proxies[proxyIndex]) throw new Error(`Thiếu proxy trong proxy-list.txt cho tài khoản ${account.username}`);
+    account.proxy = proxies[proxyIndex];
+    proxyIndex += 1;
+  }
 }
 
 function buildApiKeyAudit(apiKey, accounts) {
@@ -71,7 +85,7 @@ async function launchBrowserWithTimeout(args, index, username, proxy, apiKey) {
 async function main() {
   await initializeLogger();
   if (!config.loginUrl) throw new Error('Cần cấu hình LOGIN_URL trong file .env');
-  const [baseApplicant, accounts] = await Promise.all([readJson('applicant.json'), readJson('emails.json')]); validateAccounts(accounts);
+  const [baseApplicant, accounts, proxies] = await Promise.all([readJson('applicant.json'), readJson('emails.json'), readProxyList()]); validateAccounts(accounts); applyProxyList(accounts, proxies);
   const extensionPath = config.capsolverExtensionPath; const args = ['--start-maximized', '--lang=en-US'];
   let apiKey = '';
   if (extensionPath) {
