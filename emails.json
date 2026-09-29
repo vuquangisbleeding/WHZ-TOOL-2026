@@ -2,25 +2,28 @@
   {
     "username": "vuquang02122000",
     "password": "Vuquang02122000@",
-    "email": "quangnv.ftuforum@gmail.com",
-    "proxy": "http://nzproxy:NzProxy_2026_Test@172.196.51.201:8001"
+    "email": "quangnv.ftuforum@gmail.com"
   },
   {
     "username": "vuquang02122001",
     "password": "Vuquang02122000@",
-    "email": "quangnv.ftuforum@gmail.com",
-    "proxy": "http://nzproxy:NzProxy_2026_Test@172.196.37.80:8002"
+    "email": "quangnv.ftuforum@gmail.com"
   },
   {
     "username": "vuquang02122002",
     "password": "Vuquang02122000@",
-    "email": "quangnv.ftuforum@gmail.com",
-    "proxy": "http://nzproxy:NzProxy_2026_Test@172.196.37.87:8003"
+    "email": "quangnv.ftuforum@gmail.com"
   },
   {
     "username": "vuquang02122003",
     "password": "Vuquang02122000@",
     "email": "quangnv.ftuforum@gmail.com",
-    "proxy": "http://nzproxy:NzProxy_2026_Test@172.196.64.135:8004"
+    "proxy": true
+  },
+  {
+    "username": "vuquang02122004",
+    "password": "Vuquang02122000@",
+    "email": "quangnv.ftuforum@gmail.com",
+    "proxy": true
   }
 ]

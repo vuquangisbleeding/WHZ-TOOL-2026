@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { normalizeProxy, maskApiKey } = require('../src/browser');
+const { readProxyList } = require('../src/io');
 const { detectPage } = require('../src/detect');
 const { maskUsername } = require('../src/privacy');
 const { applicantSummary } = require('../src/notifications');
@@ -50,6 +51,16 @@ test('normalizeProxy rejects malformed proxy', () => {
   assert.throws(() => normalizeProxy('ftp://proxy.example:21'), /Proxy không hợp lệ/);
   assert.throws(() => normalizeProxy({}), /proxy phải là chuỗi/);
   assert.equal(normalizeProxy(null), null);
+});
+
+test('readProxyList converts host credentials to proxy URLs', async () => {
+  const proxies = await readProxyList('proxy-list.txt');
+  assert.equal(proxies.length, 6);
+  assert.equal(proxies[0], 'http://nzproxy:e6ac91ca3276cefe8ef45857@172.196.34.112:8001');
+});
+
+test('readProxyList allows the file to be absent when proxies are disabled', async () => {
+  assert.deepEqual(await readProxyList('proxy-list-does-not-exist.txt'), []);
 });
 
 test('maskApiKey never returns the full secret', () => {
