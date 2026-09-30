@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { normalizeProxy, maskApiKey } = require('../src/browser');
+const { parseProxyLine, readProxyList } = require('../src/io');
+const { applyProxyList, validateAccounts } = require('../src/main');
 const { detectPage } = require('../src/detect');
 const { maskUsername } = require('../src/privacy');
 const { applicantSummary } = require('../src/notifications');
@@ -50,6 +52,37 @@ test('normalizeProxy rejects malformed proxy', () => {
   assert.throws(() => normalizeProxy('ftp://proxy.example:21'), /Proxy không hợp lệ/);
   assert.throws(() => normalizeProxy({}), /proxy phải là chuỗi/);
   assert.equal(normalizeProxy(null), null);
+});
+
+test('parseProxyLine encodes credentials and keeps proxy server credential-free', () => {
+  const proxy = parseProxyLine('proxy.example:8080:proxy-user:p@ss');
+  assert.equal(proxy, 'http://proxy-user:p%40ss@proxy.example:8080');
+  const normalized = normalizeProxy(proxy);
+  assert.equal(normalized.server, 'http://proxy.example:8080');
+  assert.equal(normalized.username, 'proxy-user');
+  assert.equal(normalized.password, 'p@ss');
+});
+
+test('applyProxyList maps only proxy=true accounts in order', () => {
+  const accounts = [
+    { username: 'one', proxy: true },
+    { username: 'two', proxy: false },
+    { username: 'three' },
+    { username: 'four', proxy: true }
+  ];
+  applyProxyList(accounts, ['proxy-a', 'proxy-b']);
+  assert.deepEqual(accounts.map(account => account.proxy), ['proxy-a', null, null, 'proxy-b']);
+});
+
+test('applyProxyList rejects missing proxy and invalid proxy flag', () => {
+  assert.throws(() => applyProxyList([{ username: 'missing', proxy: true }], []), /missing/);
+  assert.throws(() => validateAccounts([{ username: 'bad', password: 'pass', email: 'bad@example.com', proxy: 'yes' }]), /proxy.*true hoặc false/);
+});
+
+test('readProxyList parses the workspace proxy file', async () => {
+  const proxies = await readProxyList();
+  assert.ok(Array.isArray(proxies));
+  assert.ok(proxies.every(proxy => /^http:\/\/[^:]+:[^@]+@[^:]+:\d+$/.test(proxy)));
 });
 
 test('maskApiKey never returns the full secret', () => {
