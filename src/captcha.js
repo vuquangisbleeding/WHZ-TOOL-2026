@@ -15,14 +15,17 @@ async function isDeclarationUi(page) {
   return Boolean(await firstVisible(page, selectors.submit) && await page.$('input[type="checkbox"], [role="checkbox"]'));
 }
 
-async function triggerCapSolver(page, label) {
-  const button = await page.$('#capsolver-solver-tip-button');
+async function triggerCaptchaSolver(page, label) {
+  const button = await page.$('.captcha-solver[data-state="ready"], .captcha-solver:not([data-state]), #capsolver-solver-tip-button');
   if (button) await page.evaluate(element => element.click(), button).catch(() => {});
   console.log(`[${label}] CAPTCHA_AUTO_MODE extension sẽ tự giải`);
 }
 
 async function isCaptchaSolved(page) {
   return page.evaluate(() => {
+    const solver = document.querySelector('.captcha-solver');
+    if (solver?.dataset.state === 'solved') return true;
+    if (solver?.dataset.state === 'error') return false;
     const response = [...document.querySelectorAll('textarea[name="g-recaptcha-response"], textarea#g-recaptcha-response')]
       .some(element => element.value.trim().length > 0);
     const checked = Boolean(document.querySelector('.recaptcha-checkbox-checked, [aria-checked="true"]'));
@@ -33,10 +36,10 @@ async function isCaptchaSolved(page) {
 
 async function pauseForCaptcha(page, label, stats = null) {
   if (!await hasCaptcha(page)) return;
-  await triggerCapSolver(page, label);
+  await triggerCaptchaSolver(page, label);
   const startedAt = Date.now();
   captchaStats.count += 1;
-  console.log(`[${label}] CAPTCHA detected, CapSolver đang tự xử lý`);
+  console.log(`[${label}] CAPTCHA detected, extension ${config.captchaProvider} đang tự xử lý`);
   const deadline = startedAt + config.captchaTimeoutMs;
   let nextHeartbeatAt = startedAt + 5000;
   while (Date.now() < deadline) {
@@ -65,7 +68,7 @@ async function pauseForCaptcha(page, label, stats = null) {
       return;
     }
     if (Date.now() >= nextHeartbeatAt) {
-      console.log(`[${label}] CAPTCHA vẫn đang chờ CapSolver elapsed=${formatDuration(Date.now() - startedAt)}`);
+      console.log(`[${label}] CAPTCHA vẫn đang chờ ${config.captchaProvider} elapsed=${formatDuration(Date.now() - startedAt)}`);
       nextHeartbeatAt += 5000;
     }
     await sleep(config.captchaPollMs);

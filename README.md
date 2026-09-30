@@ -140,6 +140,18 @@ CAPSOLVER_EXTENSION_ID=mbfeabdjfagoifkpcikdaneggoimeidb
 
 Runner sẽ ghi key vào `assets/config.js` trước khi nạp extension bằng Puppeteer, đúng theo hướng dẫn tích hợp chính thức của CapSolver. Không đưa API key vào `README.md`, `emails.json` hoặc git.
 
+## 2Captcha
+
+Có thể dùng extension 2Captcha đã được đặt trong thư mục `2captcha-solver`. Đăng ký API key trên 2Captcha, sau đó đặt trong `.env`:
+
+```dotenv
+CAPTCHA_PROVIDER=twocaptcha
+CAPTCHA_EXTENSION_PATH=./2captcha-solver
+TWOCAPTCHA_API_KEY=API_KEY_CUA_BAN
+```
+
+Runner sẽ inject key vào `chrome.storage.local`, bật tự động giải reCAPTCHA, hCaptcha và Turnstile, rồi chờ extension báo `data-state="solved"` trước khi submit. Để quay lại CapSolver, đặt `CAPTCHA_PROVIDER=capsolver` và dùng cấu hình CapSolver bên trên.
+
 ## Lưu ý
 
 - Không đưa `.env` vào git nếu sau này bạn bổ sung thông tin nhạy cảm.

@@ -1,6 +1,6 @@
 const crypto = require('node:crypto');
 const config = require('./config');
-const { fs, path, readJson, readProxyList, readCapSolverApiKey } = require('./io');
+const { fs, path, readJson, readProxyList, readCaptchaApiKey } = require('./io');
 const { initializeLogger, initializeAccountLogger, state } = require('./logger');
 const { launchBrowser, configureProxyAuthentication, maskApiKey } = require('./browser');
 const { runApplicant } = require('./account');
@@ -34,7 +34,7 @@ function buildApiKeyAudit(apiKey, accounts) {
   const masked = maskApiKey(apiKey);
   return [
     `created_at=${new Date().toISOString()}`,
-    'source=CapSolver.Browser.Extension-chrome-v1.7.1/assets/config.js',
+    `provider=${config.captchaProvider}`,
     `key_masked=${masked}`,
     `key_length=${apiKey.length}`,
     `key_sha256=${fingerprint}`,
@@ -49,7 +49,7 @@ async function runAccount(baseApplicant, account, index, args, apiKey) {
   try {
     await initializeAccountLogger(index, account.username);
     console.log(`[account ${index + 1}: ${maskUsername(account.username)}] BROWSER_LAUNCH_START`);
-    browser = await launchBrowserWithTimeout(args, index, account.username, account.proxy, apiKey);
+    browser = await launchBrowserWithTimeout(args, index, account.username, account.proxy, apiKey, config.captchaProvider);
     console.log(`[account ${index + 1}: ${maskUsername(account.username)}] BROWSER_LAUNCH_READY`);
     await configureProxyAuthentication(browser, account.proxy);
     const result = await runApplicant(browser, baseApplicant, account, index);
@@ -70,9 +70,9 @@ async function runAccount(baseApplicant, account, index, args, apiKey) {
   }
 }
 
-async function launchBrowserWithTimeout(args, index, username, proxy, apiKey) {
+async function launchBrowserWithTimeout(args, index, username, proxy, apiKey, provider) {
   let timedOut = false;
-  const launch = launchBrowser(args, index, proxy, apiKey).then(browser => {
+  const launch = launchBrowser(args, index, proxy, apiKey, provider).then(browser => {
     if (timedOut) browser.close().catch(() => {});
     return browser;
   });
@@ -86,18 +86,18 @@ async function main() {
   await initializeLogger();
   if (!config.loginUrl) throw new Error('Cần cấu hình LOGIN_URL trong file .env');
   const [baseApplicant, accounts, proxies] = await Promise.all([readJson('applicant.json'), readJson('emails.json'), readProxyList()]); validateAccounts(accounts); applyProxyList(accounts, proxies);
-  const extensionPath = config.capsolverExtensionPath; const args = ['--start-maximized', '--lang=en-US'];
+  const extensionPath = config.captchaExtensionPath; const args = ['--start-maximized', '--lang=en-US'];
   let apiKey = '';
   if (extensionPath) {
     const resolved = path.resolve(config.root, extensionPath);
-    apiKey = await readCapSolverApiKey(resolved);
-    console.log(`CapSolver config path=${path.join(resolved, 'assets', 'config.js')} key=${maskApiKey(apiKey)} length=${apiKey.length}`);
+    apiKey = await readCaptchaApiKey(resolved, config.captchaProvider);
+    console.log(`${config.captchaProvider} extension path=${resolved} key=${maskApiKey(apiKey)} length=${apiKey.length}`);
     args.push(`--disable-extensions-except=${resolved}`, `--load-extension=${resolved}`);
   }
   console.log(`Chuẩn bị chạy ${accounts.length} Chrome profile độc lập.`);
   const startedAt = Date.now(); await Promise.all(accounts.map((account, index) => runAccount(baseApplicant, account, index, args, apiKey)));
   if (apiKey) {
-    const auditFile = path.join(config.logRoot, `capsolver-keys-${new Date().toISOString().replace(/[:.]/g, '-')}.log`);
+    const auditFile = path.join(config.logRoot, `captcha-keys-${new Date().toISOString().replace(/[:.]/g, '-')}.log`);
     await fs.writeFile(auditFile, buildApiKeyAudit(apiKey, accounts), { mode: 0o600 });
     console.log(`CAPSOLVER_KEY_AUDIT ${auditFile}`);
   }

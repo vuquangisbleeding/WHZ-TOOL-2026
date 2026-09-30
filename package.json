@@ -28,6 +28,7 @@
     "files": [
       "desktop/**/*",
       "src/**/*",
+      "2captcha-solver/**/*",
       "applicant.json",
       "emails.json",
       "proxy-list.txt",
@@ -35,7 +36,8 @@
       "package.json"
     ],
     "extraResources": [
-      "CapSolver.Browser.Extension-chrome-v1.7.1/**/*"
+      "CapSolver.Browser.Extension-chrome-v1.7.1/**/*",
+      "2captcha-solver/**/*"
     ],
     "mac": {
       "target": "dmg"

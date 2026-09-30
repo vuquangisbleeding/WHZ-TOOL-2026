@@ -22,36 +22,39 @@ function maskApiKey(apiKey) {
   return `${value.slice(0, 8)}...${value.slice(-5)}`;
 }
 
-async function launchBrowser(args, index, proxy, apiKey = '') {
+async function launchBrowser(args, index, proxy, apiKey = '', provider = 'capsolver') {
   const profilePath = path.join(config.profileRoot, `account-${index + 1}`);
   await fs.mkdir(profilePath, { recursive: true });
-  if (config.capsolverExtensionPath) await clearCapSolverProfileStorage(profilePath);
+  if (config.captchaExtensionPath) await clearCapSolverProfileStorage(profilePath);
   const normalizedProxy = normalizeProxy(proxy);
   const launchArgs = [...args];
   if (normalizedProxy) launchArgs.push(`--proxy-server=${normalizedProxy.server}`);
   console.log(`[account ${index + 1}] Chrome profile: ${profilePath}`);
   if (normalizedProxy) console.log(`[account ${index + 1}] Proxy: ${normalizedProxy.server}`);
   const browser = await puppeteer.launch({ headless: config.headless, executablePath: config.chromeExecutablePath, userDataDir: profilePath, args: launchArgs, defaultViewport: null });
-  if (apiKey) await injectCapSolverApiKey(browser, apiKey);
+  if (apiKey) await injectCaptchaApiKey(browser, apiKey, provider);
   return browser;
 }
 
-async function injectCapSolverApiKey(browser, apiKey) {
+async function injectCaptchaApiKey(browser, apiKey, provider = 'capsolver') {
   const target = await browser.waitForTarget(item => item.type() === 'service_worker' && item.url().startsWith('chrome-extension://'), { timeout: 10000 }).catch(() => null);
-  if (!target) throw new Error('Không tìm thấy CapSolver service worker để inject API key');
+  if (!target) throw new Error(`Không tìm thấy ${provider} service worker để inject API key`);
   const session = await target.createCDPSession();
+  const settings = provider === 'twocaptcha'
+    ? { config: { apiKey, autoSolveRecaptchaV2: true, autoSolveInvisibleRecaptchaV2: true, autoSolveRecaptchaV3: true, autoSolveHCaptcha: true, autoSolveTurnstile: true } }
+    : { defaultConfig: { apiKey }, config: { apiKey } };
   await session.send('Runtime.evaluate', {
     expression: `(async () => {
       const stored = await chrome.storage.local.get(['defaultConfig', 'config']);
-      const value = ${JSON.stringify(apiKey)};
+      const settings = ${JSON.stringify(settings)};
       await chrome.storage.local.set({
-        defaultConfig: { ...(stored.defaultConfig || {}), apiKey: value },
-        config: { ...(stored.config || {}), apiKey: value }
+        ...(settings.defaultConfig ? { defaultConfig: { ...(stored.defaultConfig || {}), ...settings.defaultConfig } } : {}),
+        config: { ...(stored.config || {}), ...(settings.config || {}) }
       });
     })()`,
     awaitPromise: true
   });
-  console.log('[CapSolver] Đã inject API key vào Chrome profile');
+  console.log(`[${provider}] Đã inject API key vào Chrome profile`);
 }
 
 async function clearCapSolverProfileStorage(profilePath) {
@@ -85,4 +88,6 @@ async function getSinglePage(browser) {
   return page;
 }
 
-module.exports = { launchBrowser, authenticateProxy, configureProxyAuthentication, getSinglePage, normalizeProxy, maskApiKey, injectCapSolverApiKey };
+const injectCapSolverApiKey = (browser, apiKey) => injectCaptchaApiKey(browser, apiKey, 'capsolver');
+
+module.exports = { launchBrowser, authenticateProxy, configureProxyAuthentication, getSinglePage, normalizeProxy, maskApiKey, injectCaptchaApiKey, injectCapSolverApiKey };

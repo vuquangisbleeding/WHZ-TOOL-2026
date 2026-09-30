@@ -24,7 +24,11 @@ async function readProxyList(fileName = 'proxy-list.txt') {
   });
 }
 
-async function readCapSolverApiKey(extensionPath) {
+async function readCaptchaApiKey(extensionPath, provider) {
+  if (provider === 'twocaptcha') {
+    if (!config.twoCaptchaApiKey) throw new Error('TWOCAPTCHA_API_KEY chưa được cấu hình trong file .env');
+    return config.twoCaptchaApiKey;
+  }
   const file = path.join(extensionPath, 'assets', 'config.js');
   const source = await fs.readFile(file, 'utf8');
   const match = source.match(/apiKey\s*:\s*(['"])(.*?)\1/);
@@ -33,4 +37,6 @@ async function readCapSolverApiKey(extensionPath) {
   return apiKey;
 }
 
-module.exports = { fs, path, readJson, readProxyList, readCapSolverApiKey };
+const readCapSolverApiKey = extensionPath => readCaptchaApiKey(extensionPath, 'capsolver');
+
+module.exports = { fs, path, readJson, readProxyList, readCaptchaApiKey, readCapSolverApiKey };
