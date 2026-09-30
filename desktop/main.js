@@ -143,6 +143,9 @@ function validateData(applicantText, accountsText) {
     if (!account || typeof account !== 'object' || !account.username || !account.password || !account.email) {
       throw new Error(`Tài khoản ${index + 1} cần username, password và email.`);
     }
+    if (account.proxy !== undefined && typeof account.proxy !== 'boolean') {
+      throw new Error(`Tài khoản ${index + 1}: proxy phải là true hoặc false.`);
+    }
   }
   return { applicant, accounts };
 }

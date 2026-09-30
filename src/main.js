@@ -1,6 +1,6 @@
 const crypto = require('node:crypto');
 const config = require('./config');
-const { fs, path, readJson, readCapSolverApiKey } = require('./io');
+const { fs, path, readJson, readProxyList, readCapSolverApiKey } = require('./io');
 const { initializeLogger, initializeAccountLogger, state } = require('./logger');
 const { launchBrowser, configureProxyAuthentication, maskApiKey } = require('./browser');
 const { runApplicant } = require('./account');

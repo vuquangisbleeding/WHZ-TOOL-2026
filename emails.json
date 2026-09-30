@@ -2,11 +2,13 @@
   {
     "username": "vuquang02122000",
     "password": "Vuquang02122000@",
-    "email": "quangnv.ftuforum@gmail.com"
+    "email": "quangnv.ftuforum@gmail.com",
+    "proxy": true
   },
   {
     "username": "vuquang02122001",
     "password": "Vuquang02122000@",
-    "email": "quangnv.ftuforum@gmail.com"
+    "email": "quangnv.ftuforum@gmail.com",
+    "proxy": true
   }
 ]

@@ -64,6 +64,15 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function normalizeAccountProxyFlags(accounts) {
+  return accounts.map(account => {
+    if (!account || typeof account !== 'object' || typeof account.proxy !== 'string') return account;
+    const value = account.proxy.trim().toLowerCase();
+    if (value !== 'true' && value !== 'false') return account;
+    return { ...account, proxy: value === 'true' };
+  });
+}
+
 function readPath(object, path) {
   return path.split('.').reduce((value, key) => value?.[key], object) ?? '';
 }
@@ -125,6 +134,10 @@ function syncFormToJson() {
       if (input.dataset.accountField === 'proxy' && input.dataset.proxyCredentials) {
         const credentials = JSON.parse(input.dataset.proxyCredentials);
         account.proxy = { server: value, ...credentials };
+      } else if (input.dataset.accountField === 'proxy') {
+        if (value === '') return;
+        const normalized = value.toLowerCase();
+        account.proxy = normalized === 'true' ? true : normalized === 'false' ? false : value;
       } else account[input.dataset.accountField] = value;
     });
     return account;
@@ -404,13 +417,15 @@ async function testTelegram() {
 
 function parseData() {
   const applicant = JSON.parse(applicantInput.value);
-  const accounts = JSON.parse(accountsInput.value);
+  const accounts = normalizeAccountProxyFlags(JSON.parse(accountsInput.value));
   if (!applicant || typeof applicant !== 'object' || Array.isArray(applicant)) throw new Error('Applicant phải là object JSON.');
   if (!Array.isArray(accounts) || accounts.length === 0) throw new Error('Cần ít nhất một tài khoản.');
   for (const [index, account] of accounts.entries()) {
     if (!account?.username || !account?.password || !account?.email) throw new Error(`Tài khoản ${index + 1} thiếu username, password hoặc email.`);
+    if (account.proxy !== undefined && typeof account.proxy !== 'boolean') throw new Error(`Tài khoản ${index + 1}: proxy phải là true hoặc false.`);
   }
-  return { applicant: applicantInput.value, accounts: accountsInput.value, profiles: accounts.length };
+  accountsInput.value = JSON.stringify(accounts, null, 2);
+  return { applicant: applicantInput.value, accounts: JSON.stringify(accounts), profiles: accounts.length };
 }
 
 function checkData() {
