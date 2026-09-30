@@ -1,9 +1,34 @@
+const crypto = require('node:crypto');
 const config = require('./config');
 const { sleep, formatDuration } = require('./timing');
 const { firstExisting, firstVisible } = require('./dom');
 const selectors = require('./selectors/actions');
+const { isStopRequested } = require('./stop');
 
 const captchaStats = { count: 0, totalMs: 0 };
+
+async function readCaptchaInfo(page) {
+  return page.evaluate(() => {
+    const widget = document.querySelector('.g-recaptcha, [data-sitekey]');
+    const iframe = [...document.querySelectorAll('iframe[src*="captcha"], iframe[src*="recaptcha"]')].find(element => element.src);
+    return {
+      type: iframe?.src.includes('recaptcha') || widget?.classList.contains('g-recaptcha') ? 'recaptcha' : 'captcha',
+      sitekey: widget?.getAttribute('data-sitekey') || '',
+      widgetId: widget?.id || '',
+      iframeSrc: iframe?.src || '',
+      url: location.href
+    };
+  }).catch(() => ({ type: 'unknown', sitekey: '', widgetId: '', iframeSrc: '', url: '' }));
+}
+
+function getCaptchaId(info) {
+  return crypto.createHash('sha1').update(`${info.url}|${info.sitekey}|${info.widgetId}|${info.iframeSrc}`).digest('hex').slice(0, 12);
+}
+
+function logCaptcha(label, id, status, details = {}) {
+  const values = Object.entries(details).map(([key, value]) => `${key}=${JSON.stringify(String(value))}`).join(' ');
+  console.log(`[${label}] CAPTCHA id=${id} status=${status}${values ? ` ${values}` : ''}`);
+}
 
 async function hasCaptcha(page) {
   return page.evaluate(() => Boolean(/\/rs-captcha|\/captcha/i.test(location.href) ||
@@ -33,17 +58,21 @@ async function isCaptchaSolved(page) {
 
 async function pauseForCaptcha(page, label, stats = null) {
   if (!await hasCaptcha(page)) return;
-  await triggerCapSolver(page, label);
+  const info = await readCaptchaInfo(page);
+  const id = getCaptchaId(info);
   const startedAt = Date.now();
+  logCaptcha(label, id, 'DETECTED', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, url: info.url });
+  await triggerCapSolver(page, label);
   captchaStats.count += 1;
+  logCaptcha(label, id, 'SOLVING', { elapsed_ms: 0 });
   console.log(`[${label}] CAPTCHA detected, CapSolver đang tự xử lý`);
-  const deadline = startedAt + config.captchaTimeoutMs;
   let nextHeartbeatAt = startedAt + 5000;
-  while (Date.now() < deadline) {
+  while (!isStopRequested()) {
     if (await isCaptchaSolved(page)) {
       const duration = Date.now() - startedAt;
       captchaStats.totalMs += duration;
       if (stats) stats.captchaMs += duration;
+      logCaptcha(label, id, 'SOLVED', { elapsed_ms: duration, duration: formatDuration(duration) });
       console.log(`[${label}] CAPTCHA solved duration=${formatDuration(duration)}`);
       const submitSelector = await firstVisible(page, selectors.submit);
       if (!submitSelector) throw new Error('CAPTCHA đã giải nhưng không tìm thấy nút SUBMIT đang hiển thị');
@@ -65,15 +94,13 @@ async function pauseForCaptcha(page, label, stats = null) {
       return;
     }
     if (Date.now() >= nextHeartbeatAt) {
+      logCaptcha(label, id, 'PROCESSING', { elapsed_ms: Date.now() - startedAt });
       console.log(`[${label}] CAPTCHA vẫn đang chờ CapSolver elapsed=${formatDuration(Date.now() - startedAt)}`);
       nextHeartbeatAt += 5000;
     }
     await sleep(config.captchaPollMs);
   }
-  const duration = Date.now() - startedAt;
-  captchaStats.totalMs += duration;
-  if (stats) stats.captchaMs += duration;
-  throw new Error(`CAPTCHA chưa được giải sau ${config.captchaTimeoutMs}ms. Kiểm tra API key hoặc reload extension.`);
+  throw new Error('Đã yêu cầu dừng khi đang chờ CAPTCHA');
 }
 
 module.exports = { hasCaptcha, isDeclarationUi, pauseForCaptcha, captchaStats };

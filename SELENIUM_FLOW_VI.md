@@ -407,7 +407,7 @@ function detectPage(driver)
 
 File: `src/bot/wizard.ts`
 
-Bot giới hạn tối đa `MAX_WIZARD_PAGES` vòng để tránh chạy vô hạn.
+Bot không giới hạn số vòng wizard; nó tiếp tục cho đến khi hoàn tất hoặc người vận hành chủ động dừng.
 
 ### Pseudocode
 
@@ -415,7 +415,7 @@ Bot giới hạn tối đa `MAX_WIZARD_PAGES` vòng để tránh chạy vô hạ
 function walkWizard(driver)
     visits = map URL -> number of visits
 
-    repeat tối đa MAX_WIZARD_PAGES lần
+    repeat đến khi flow kết thúc hoặc người vận hành dừng
         recovered = recoverHighLoad(driver)
         page = detectPage(driver)
         url = current URL
@@ -896,7 +896,7 @@ function run()
         login()
         enter application()
 
-        for pageIndex from 1 to MAX_WIZARD_PAGES
+        while flow chưa kết thúc
             recover high-load if needed
             page = detect current page
 

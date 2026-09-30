@@ -57,7 +57,9 @@ async function runApplicant(browser, baseApplicant, account, index) {
 
 async function walkWizard(page, applicant, account, label, stats, result, finish) {
   // Mỗi vòng lặp xử lý đúng một trạng thái trang rồi mới chuyển bước.
-  for (let pageNumber = 1; pageNumber <= config.maxWizardPages; pageNumber += 1) {
+  let pageNumber = 0;
+  while (true) {
+    pageNumber += 1;
     await waitIfPaused();
     if (isStopRequested()) return finish('STOPPED_KEEP_BROWSER');
     await recoverHighLoad(page, label); await resetPageScroll(page);
@@ -105,7 +107,6 @@ async function walkWizard(page, applicant, account, label, stats, result, finish
       continue;
     }
   }
-  return finish('MAX_PAGES');
 }
 
 module.exports = { runApplicant };

@@ -109,7 +109,7 @@ Các Chrome profile được bắt đầu đồng thời. Profile được lưu 
 - tới declaration;
 - tới payment, không nhập thông tin thẻ;
 - không tìm thấy nút tiếp theo;
-- đạt `MAX_WIZARD_PAGES`.
+- chỉ dừng khi hoàn tất, đến payment hoặc người vận hành chủ động dừng.
 
 ## CapSolver
 
