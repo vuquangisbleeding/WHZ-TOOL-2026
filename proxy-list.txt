@@ -1,2 +1,2 @@
-172.196.34.176:8001:nzproxy:matkhaumoi
-172.204.24.100:8002:nzproxy:matkhaumoi
+172.204.16.16:8001:nzproxy:matkhaumoi
+172.196.35.202:8002:nzproxy:matkhaumoi
