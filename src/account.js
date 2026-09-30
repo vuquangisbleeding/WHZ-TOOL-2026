@@ -26,6 +26,7 @@ async function runApplicant(browser, baseApplicant, account, index) {
   const result = { label, status: 'ERROR', runtimeMs: 0, captchaMs: 0, applicantInfo: '' };
   const finish = status => Object.assign(result, { status, runtimeMs: startedAt ? Date.now() - startedAt : 0, captchaMs: stats.captchaMs });
   const page = await getSinglePage(browser);
+  page.captchaProxy = account.proxy;
   await authenticateProxy(page, account.proxy);
   const applicant = structuredClone(baseApplicant);
   applicant.contact = { ...(applicant.contact || {}), email: applicant.contact?.email || account.email };

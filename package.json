@@ -36,7 +36,6 @@
       "package.json"
     ],
     "extraResources": [
-      "CapSolver.Browser.Extension-chrome-v1.7.1/**/*",
       "2captcha-solver/**/*"
     ],
     "mac": {

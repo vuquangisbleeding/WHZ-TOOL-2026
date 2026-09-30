@@ -111,46 +111,15 @@ Các Chrome profile được bắt đầu đồng thời. Profile được lưu 
 - không tìm thấy nút tiếp theo;
 - đạt `MAX_WIZARD_PAGES`.
 
-## CapSolver
-
-API key không lấy từ `.env`, giao diện hoặc Chrome profile. Chỉ sửa key trong file:
-
-```text
-CapSolver.Browser.Extension-chrome-v1.7.1/assets/config.js
-```
-
-Mở file đó và thay:
-
-```js
-apiKey: '',
-```
-
-thành:
-
-```js
-apiKey: 'API_KEY_CUA_BAN',
-```
-
-Sau đó kiểm tra `.env` có đường dẫn:
-
-```dotenv
-CAPSOLVER_EXTENSION_PATH=./CapSolver.Browser.Extension-chrome-v1.7.1
-CAPSOLVER_EXTENSION_ID=mbfeabdjfagoifkpcikdaneggoimeidb
-```
-
-Runner sẽ ghi key vào `assets/config.js` trước khi nạp extension bằng Puppeteer, đúng theo hướng dẫn tích hợp chính thức của CapSolver. Không đưa API key vào `README.md`, `emails.json` hoặc git.
-
 ## 2Captcha
 
-Có thể dùng extension 2Captcha đã được đặt trong thư mục `2captcha-solver`. Đăng ký API key trên 2Captcha, sau đó đặt trong `.env`:
+Đăng ký API key trên 2Captcha, sau đó đặt trong `.env`:
 
 ```dotenv
-CAPTCHA_PROVIDER=twocaptcha
-CAPTCHA_EXTENSION_PATH=./2captcha-solver
 TWOCAPTCHA_API_KEY=API_KEY_CUA_BAN
 ```
 
-Runner sẽ inject key vào `chrome.storage.local`, bật tự động giải reCAPTCHA, hCaptcha và Turnstile, rồi chờ extension báo `data-state="solved"` trước khi submit. Để quay lại CapSolver, đặt `CAPTCHA_PROVIDER=capsolver` và dùng cấu hình CapSolver bên trên.
+Runner dùng API trực tiếp cho reCAPTCHA v2, lấy sitekey từ widget, gửi task kèm proxy account nếu có, inject token vào `g-recaptcha-response` rồi mới submit. Extension không được nạp mặc định nên không can thiệp vào widget reCAPTCHA của INZ.
 
 ## Lưu ý
 

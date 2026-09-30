@@ -19,7 +19,7 @@ npm start
 ```text
 runAccount()
   -> launchBrowser()
-  -> syncCapSolverApiKey()       nếu có CAPSOLVER_EXTENSION_PATH
+  -> syncTwoCaptchaApiKey()      nếu có CAPTCHA_EXTENSION_PATH
   -> runApplicant()
       -> login()
       -> continueToApplication()
@@ -55,7 +55,7 @@ Thứ tự này cần được giữ ổn định. Nếu website thay HTML, cậ
 |---|---|---|
 | Khởi động | `src/runner.js`, `src/main.js` | đọc input, chạy song song, tổng kết |
 | Cấu hình | `src/config.js` | biến môi trường và đường dẫn |
-| Browser | `src/browser.js` | Chrome profile và CapSolver extension |
+| Browser | `src/browser.js` | Chrome profile và 2Captcha extension |
 | Account | `src/account.js` | lifecycle và vòng lặp wizard |
 | Điều hướng | `src/auth.js`, `src/entry.js`, `src/detect.js` | login, mở hồ sơ, nhận diện trang |
 | Tương tác | `src/dom.js`, `src/actions.js` | tìm field, điền dữ liệu, click và Next |

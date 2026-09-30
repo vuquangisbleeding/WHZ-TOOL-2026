@@ -1,6 +1,6 @@
 const crypto = require('node:crypto');
 const config = require('./config');
-const { fs, path, readJson, readProxyList, readCaptchaApiKey } = require('./io');
+const { fs, path, readJson, readProxyList, readTwoCaptchaApiKey } = require('./io');
 const { initializeLogger, initializeAccountLogger, state } = require('./logger');
 const { launchBrowser, configureProxyAuthentication, maskApiKey } = require('./browser');
 const { runApplicant } = require('./account');
@@ -34,7 +34,7 @@ function buildApiKeyAudit(apiKey, accounts) {
   const masked = maskApiKey(apiKey);
   return [
     `created_at=${new Date().toISOString()}`,
-    `provider=${config.captchaProvider}`,
+    'provider=2captcha',
     `key_masked=${masked}`,
     `key_length=${apiKey.length}`,
     `key_sha256=${fingerprint}`,
@@ -49,7 +49,7 @@ async function runAccount(baseApplicant, account, index, args, apiKey) {
   try {
     await initializeAccountLogger(index, account.username);
     console.log(`[account ${index + 1}: ${maskUsername(account.username)}] BROWSER_LAUNCH_START`);
-    browser = await launchBrowserWithTimeout(args, index, account.username, account.proxy, apiKey, config.captchaProvider);
+    browser = await launchBrowserWithTimeout(args, index, account.username, account.proxy, apiKey);
     console.log(`[account ${index + 1}: ${maskUsername(account.username)}] BROWSER_LAUNCH_READY`);
     await configureProxyAuthentication(browser, account.proxy);
     const result = await runApplicant(browser, baseApplicant, account, index);
@@ -70,9 +70,9 @@ async function runAccount(baseApplicant, account, index, args, apiKey) {
   }
 }
 
-async function launchBrowserWithTimeout(args, index, username, proxy, apiKey, provider) {
+async function launchBrowserWithTimeout(args, index, username, proxy, apiKey) {
   let timedOut = false;
-  const launch = launchBrowser(args, index, proxy, apiKey, provider).then(browser => {
+  const launch = launchBrowser(args, index, proxy, apiKey).then(browser => {
     if (timedOut) browser.close().catch(() => {});
     return browser;
   });
@@ -90,8 +90,8 @@ async function main() {
   let apiKey = '';
   if (extensionPath) {
     const resolved = path.resolve(config.root, extensionPath);
-    apiKey = await readCaptchaApiKey(resolved, config.captchaProvider);
-    console.log(`${config.captchaProvider} extension path=${resolved} key=${maskApiKey(apiKey)} length=${apiKey.length}`);
+    apiKey = await readTwoCaptchaApiKey();
+    console.log(`2captcha extension path=${resolved} key=${maskApiKey(apiKey)} length=${apiKey.length}`);
     args.push(`--disable-extensions-except=${resolved}`, `--load-extension=${resolved}`);
   }
   console.log(`Chuẩn bị chạy ${accounts.length} Chrome profile độc lập.`);
@@ -99,7 +99,7 @@ async function main() {
   if (apiKey) {
     const auditFile = path.join(config.logRoot, `captcha-keys-${new Date().toISOString().replace(/[:.]/g, '-')}.log`);
     await fs.writeFile(auditFile, buildApiKeyAudit(apiKey, accounts), { mode: 0o600 });
-    console.log(`CAPSOLVER_KEY_AUDIT ${auditFile}`);
+    console.log(`TWOCAPTCHA_KEY_AUDIT ${auditFile}`);
   }
   const runtime = Date.now() - startedAt;
   console.log(`[SUMMARY] RUN_FINISHED total_runtime=${formatDuration(runtime)} total_runtime_ms=${runtime} captcha_count=${captchaStats.count} captcha_total=${formatDuration(captchaStats.totalMs)} captcha_total_ms=${captchaStats.totalMs}`);

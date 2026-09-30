@@ -57,7 +57,7 @@ Cơ chế này giúp tận dụng cơ hội hệ thống hoạt động trở l�
 
 INZ Runner có thể chờ CAPTCHA trong khoảng thời gian cấu hình và ghi nhận thời gian xử lý. Khi cần tương tác của người dùng, app dừng ở điểm phù hợp thay vì cố đoán hoặc bỏ qua trạng thái bảo vệ của website.
 
-Nếu được cấu hình, CapSolver extension có thể được nạp riêng vào từng Chrome profile. API key không nên đặt trong mã nguồn hoặc tài liệu công khai.
+Nếu được cấu hình, 2Captcha extension có thể được nạp riêng vào từng Chrome profile. API key không nên đặt trong mã nguồn hoặc tài liệu công khai.
 
 ### 7. Minh bạch từ log đến thông báo
 
@@ -89,7 +89,7 @@ Phù hợp khi muốn theo dõi trực quan. Giao diện desktop cung cấp các
 - Stop.
 - Xem log realtime.
 - Nhập và xuất `applicant.json`, `emails.json`.
-- Cập nhật country, Telegram và CapSolver API key trong Settings.
+- Cập nhật country, Telegram và 2Captcha API key trong Settings.
 
 App có thể được đóng gói cho macOS và Windows, giúp người dùng vận hành mà không cần thao tác trực tiếp với toàn bộ mã nguồn.
 
