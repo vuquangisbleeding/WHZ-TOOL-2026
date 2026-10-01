@@ -46,10 +46,28 @@ async function isDeclarationUi(page) {
   return Boolean(await firstVisible(page, selectors.submit) && await page.$('input[type="checkbox"], [role="checkbox"]'));
 }
 
-async function triggerCapSolver(page, label) {
-  const button = await page.$('#capsolver-solver-tip-button');
-  if (button) await page.evaluate(element => element.click(), button).catch(() => {});
-  console.log(`[${label}] CAPTCHA_AUTO_MODE extension sẽ tự giải`);
+function isRecaptchaAnchor(url) {
+  return /\/recaptcha\/(?:api2|enterprise)\/anchor/i.test(url || '');
+}
+
+function isRecaptchaChallenge(url) {
+  return /\/recaptcha\/(?:api2|enterprise)\/bframe/i.test(url || '');
+}
+
+async function clickRecaptchaCheckbox(page) {
+  if (page.frames().some(frame => isRecaptchaChallenge(frame.url()))) return 'challenge';
+  for (const frame of page.frames()) {
+    if (!isRecaptchaAnchor(frame.url())) continue;
+    const anchor = await frame.$('#recaptcha-anchor').catch(() => null);
+    if (!anchor) continue;
+    const checked = await frame.evaluate(element => element.getAttribute('aria-checked') === 'true', anchor).catch(() => false);
+    if (checked) return 'checked';
+    const box = await anchor.boundingBox().catch(() => null);
+    if (!box || box.width < 2 || box.height < 2) continue;
+    await anchor.click({ delay: 40 });
+    return 'clicked';
+  }
+  return 'not_found';
 }
 
 async function isCaptchaSolved(page) {
@@ -70,18 +88,14 @@ async function pauseForCaptcha(page, label, stats = null) {
   logCaptcha(label, id, 'FOUND', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, url: info.url });
   noteCaptcha(accountIndexFromLabel(label), id);
   try {
-    await triggerCapSolver(page, label);
     captchaStats.count += 1;
-    logCaptcha(label, id, 'SOLVING', { elapsed_ms: 0, result: 'pending' });
-    console.log(`[${label}] CAPTCHA detected, CapSolver đang tự xử lý`);
-    let nextHeartbeatAt = startedAt + 5000;
+    let nextClickAt = startedAt;
     while (!isStopRequested()) {
       if (await isCaptchaSolved(page)) {
         const duration = Date.now() - startedAt;
         captchaStats.totalMs += duration;
         if (stats) stats.captchaMs += duration;
-        logCaptcha(label, id, 'SOLVED', { elapsed_ms: duration, duration: formatDuration(duration), result: 'solved', message: 'captcha_response_detected' });
-        console.log(`[${label}] CAPTCHA solved duration=${formatDuration(duration)}`);
+        logCaptcha(label, id, 'SOLVED', { elapsed_ms: duration, duration: formatDuration(duration), result: 'solved' });
         const submitSelector = await firstVisible(page, selectors.submit);
         if (!submitSelector) throw new Error('CAPTCHA đã giải nhưng không tìm thấy nút SUBMIT đang hiển thị');
         const submitState = await page.$eval(submitSelector, element => ({
@@ -102,10 +116,10 @@ async function pauseForCaptcha(page, label, stats = null) {
         logCaptcha(label, id, 'SUBMIT_SENT', { elapsed_ms: Date.now() - startedAt, result: 'submit_clicked' });
         return;
       }
-      if (Date.now() >= nextHeartbeatAt) {
-        logCaptcha(label, id, 'PROCESSING', { elapsed_ms: Date.now() - startedAt, result: 'pending' });
-        console.log(`[${label}] CAPTCHA vẫn đang chờ CapSolver elapsed=${formatDuration(Date.now() - startedAt)}`);
-        nextHeartbeatAt += 5000;
+      if (Date.now() >= nextClickAt) {
+        const checkbox = await clickRecaptchaCheckbox(page);
+        if (checkbox === 'clicked') logCaptcha(label, id, 'CHECKBOX_CLICKED', { elapsed_ms: Date.now() - startedAt });
+        nextClickAt = Date.now() + 2000;
       }
       await sleep(config.captchaPollMs);
     }
@@ -118,4 +132,4 @@ async function pauseForCaptcha(page, label, stats = null) {
   }
 }
 
-module.exports = { hasCaptcha, isDeclarationUi, pauseForCaptcha, captchaStats };
+module.exports = { hasCaptcha, isDeclarationUi, isRecaptchaAnchor, pauseForCaptcha, captchaStats };

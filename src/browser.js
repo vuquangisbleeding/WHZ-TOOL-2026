@@ -116,7 +116,7 @@ async function injectCapSolverProxy(session, normalizedProxy, index) {
     port: parsed?.port ? Number(parsed.port) : '',
     proxyLogin: normalizedProxy?.username || '',
     proxyPassword: normalizedProxy?.password || '',
-    reCaptchaMode: 'token',
+    reCaptchaMode: 'click',
     manualSolving: false
   };
   await session.send('Runtime.evaluate', {

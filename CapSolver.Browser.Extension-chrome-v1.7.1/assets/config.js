@@ -40,7 +40,7 @@ export const defaultConfig = {
   enabledForCloudflare: true,
 
   // Task type: click or token
-  reCaptchaMode: 'token',
+  reCaptchaMode: 'click',
   hCaptchaMode: 'click',
 
   // Delay before solving captcha

@@ -1,2 +1,3 @@
-185.205.220.173:12323:14a746fffbb95:42e77ded0e
-185.205.220.173:12323:14a746fffbb95:42e77ded0e
+geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-KgUJF6ie_lifetime-30m
+geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-1u3ELTkn_lifetime-30m
+geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-LGxVQgRK_lifetime-30m

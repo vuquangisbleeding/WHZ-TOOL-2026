@@ -4,6 +4,7 @@ const { normalizeProxy, maskApiKey, summarizeCapSolverBody, capsolverEndpoint } 
 const { parseProxyLine, readProxyList } = require('../src/io');
 const { applyProxyList, validateAccounts } = require('../src/main');
 const { detectPage } = require('../src/detect');
+const { isRecaptchaAnchor } = require('../src/captcha');
 const { maskUsername } = require('../src/privacy');
 const { applicantSummary } = require('../src/notifications');
 
@@ -127,6 +128,12 @@ test('CapSolver summary keeps the error message and hides the solution token', (
 test('detectPage identifies login before generic form states', async () => {
   const page = fakePage({ selectors: ['input[name="username"]'] });
   assert.equal(await detectPage(page), 'login');
+});
+
+test('recaptcha anchor matcher ignores the image challenge frame', () => {
+  assert.equal(isRecaptchaAnchor('https://www.google.com/recaptcha/api2/anchor?k=site'), true);
+  assert.equal(isRecaptchaAnchor('https://www.google.com/recaptcha/enterprise/anchor?k=site'), true);
+  assert.equal(isRecaptchaAnchor('https://www.google.com/recaptcha/api2/bframe?k=site'), false);
 });
 
 test('detectPage identifies captcha by URL', async () => {
