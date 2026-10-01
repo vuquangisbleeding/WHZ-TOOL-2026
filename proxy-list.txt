@@ -1,7 +1,1 @@
-geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-5vVZwJFs_lifetime-30m
-geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-OKFoZqGG_lifetime-30m
-geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-JlcUiKZ9_lifetime-30m
-geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-WCt90CHU_lifetime-30m
-geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-Rzf4Zru2_lifetime-30m
-geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-gdOoD1Ef_lifetime-30m
-geo.iproyal.com:12321:aoX9C9aXphgDYvk0:yCmalQAEii7lGGcJ_country-nz_city-auckland_session-WQzQsFI2_lifetime-30m
+185.205.220.173:12323:14a746fffbb95:42e77ded0e
