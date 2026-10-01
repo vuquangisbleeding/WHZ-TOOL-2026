@@ -231,6 +231,11 @@ test('auth proxy adds upstream credentials on CONNECT', async () => {
   }
 });
 
+test('detectPage treats a submitted page without checkboxes as pending', async () => {
+  const page = fakePage({ url: 'https://example.test/WorkingHoliday/Application/Submit.aspx?ApplicationId=1' });
+  assert.equal(await detectPage(page), 'pending');
+});
+
 test('detectPage identifies personal2 by URL', async () => {
   const page = fakePage({ url: 'https://example.test/WorkingHoliday/Wizard/Personal2.aspx' });
   assert.equal(await detectPage(page), 'personal2');

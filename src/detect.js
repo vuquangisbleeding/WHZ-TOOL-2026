@@ -18,7 +18,8 @@ async function detectPage(page) {
   if (await firstExisting(page, textSelectors.payerName)) return 'payer';
   const submit = await firstVisible(page, actions.submit);
   if (submit && (/submit\.aspx/i.test(url) || await page.$('input[type="checkbox"], [role="checkbox"]'))) return 'submit';
-  if (/submit\.aspx/i.test(url) || await page.$('input[type="checkbox"]') && /declaration|submit/i.test(url + body)) return 'declaration';
+  if (await page.$('input[type="checkbox"]') && /declaration|submit/i.test(url + body)) return 'declaration';
+  if (/submit\.aspx/i.test(url)) return 'pending';
   if (await hasCaptcha(page)) return 'captcha';
   if (/personal1/i.test(url) || await firstExisting(page, textSelectors.familyName)) return 'personal1';
   if (/personal2/i.test(url) || await firstExisting(page, textSelectors.passportNumber)) return 'personal2';

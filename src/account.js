@@ -60,6 +60,7 @@ async function walkWizard(page, applicant, account, label, stats, result, finish
   let pageNumber = 0;
   while (true) {
     pageNumber += 1;
+    try {
     await waitIfPaused();
     if (isStopRequested()) return finish('STOPPED_KEEP_BROWSER');
     await recoverHighLoad(page, label); await resetPageScroll(page);
@@ -82,9 +83,18 @@ async function walkWizard(page, applicant, account, label, stats, result, finish
       await waitForManualRecovery(page, label, new Error('Không nhận diện được trang hiện tại.'));
       continue;
     }
+    if (currentPage === 'pending') {
+      console.log(`[${pageLabel}] PAGE_PENDING chờ trang sau khi nộp`);
+      await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: config.navigationWaitTimeoutMs }).catch(() => {});
+      continue;
+    }
     if (currentPage === 'declaration' || currentPage === 'submit') {
       const declaration = await fillDeclaration(page, applicant, pageLabel);
-      if (declaration.total === 0) { console.log(`[${pageLabel}] DECLARATION_ALREADY_SUBMITTED`); continue; }
+      if (declaration.total === 0) {
+        console.log(`[${pageLabel}] DECLARATION_WAITING_NEXT`);
+        await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: config.navigationWaitTimeoutMs }).catch(() => {});
+        continue;
+      }
       await pauseForCaptcha(page, pageLabel, stats);
       await clickFirstControl(page, actions.submit, pageLabel, stats) || await clickLabeled(page, ['SUBMIT'], ['CANCEL', 'PAY NOW', 'PAY LATER'], pageLabel, stats);
       continue;
@@ -105,6 +115,11 @@ async function walkWizard(page, applicant, account, label, stats, result, finish
     if (!advanced) {
       await waitForManualRecovery(page, pageLabel, new Error('Không tìm thấy Next/Save/Submit.'));
       continue;
+    }
+    } catch (error) {
+      if (!/Execution context was destroyed|Cannot find context with specified id|Session closed/i.test(error.message)) throw error;
+      console.log(`[${label}] NAVIGATION_INTERRUPTED ${error.message}`);
+      await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: config.navigationWaitTimeoutMs }).catch(() => {});
     }
   }
 }
