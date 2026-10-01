@@ -27,13 +27,4 @@ async function readProxyList(fileName = 'proxy-list.txt') {
     .map((line, index) => parseProxyLine(line, fileName, index + 1));
 }
 
-async function readCapSolverApiKey(extensionPath) {
-  const file = path.join(extensionPath, 'assets', 'config.js');
-  const source = await fs.readFile(file, 'utf8');
-  const match = source.match(/apiKey\s*:\s*(['"])(.*?)\1/);
-  const apiKey = match?.[2]?.trim() || '';
-  if (!apiKey) throw new Error(`CapSolver API key chưa được cấu hình trong ${file}`);
-  return apiKey;
-}
-
-module.exports = { fs, path, readJson, parseProxyLine, readProxyList, readCapSolverApiKey };
+module.exports = { fs, path, readJson, parseProxyLine, readProxyList };

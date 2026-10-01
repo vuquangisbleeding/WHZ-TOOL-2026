@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const net = require('node:net');
 const { startAuthProxy } = require('../src/proxy-forward');
-const { normalizeProxy, maskApiKey, summarizeCapSolverBody, capsolverEndpoint, noteCaptchaMode, captchaMode } = require('../src/browser');
+const { normalizeProxy } = require('../src/browser');
 const { parseProxyLine, readProxyList } = require('../src/io');
 const { applyProxyList, validateAccounts } = require('../src/main');
 const { detectPage } = require('../src/detect');
@@ -89,13 +89,6 @@ test('readProxyList parses the workspace proxy file', async () => {
   assert.ok(proxies.every(proxy => /^http:\/\/[^:]+:[^@]+@[^:]+:\d+$/.test(proxy)));
 });
 
-test('maskApiKey never returns the full secret', () => {
-  const key = 'CAP-1234567890-SECRET';
-  const masked = maskApiKey(key);
-  assert.equal(masked, 'CAP-1234...ECRET');
-  assert.ok(!masked.includes(key));
-});
-
 test('maskUsername exposes only the last three characters', () => {
   assert.equal(maskUsername('username-123'), '*********123');
   assert.equal(maskUsername('abc'), 'abc');
@@ -109,23 +102,6 @@ test('applicant summary omits email and passport', () => {
   assert.equal(summary, 'Tên: Test Applicant\nTài khoản: *********123');
   assert.ok(!summary.includes('private@example.test'));
   assert.ok(!summary.includes('P1234567'));
-});
-
-test('CapSolver summary keeps the error message and hides the solution token', () => {
-  assert.equal(capsolverEndpoint('https://api.capsolver.com/createTask'), 'createTask');
-  assert.equal(capsolverEndpoint('https://www.google.com/recaptcha/api2/anchor'), '');
-  const summary = summarizeCapSolverBody(JSON.stringify({
-    errorId: 1,
-    errorCode: 'ERROR_PROXY_CONNECT_REFUSED',
-    errorDescription: 'proxy connect failed',
-    status: 'failed',
-    taskId: 'task-1',
-    solution: { gRecaptchaResponse: 'secret-token-value' }
-  }));
-  assert.equal(summary.errorDescription, 'proxy connect failed');
-  assert.equal(summary.taskId, 'task-1');
-  assert.equal(summary.solution, 'gRecaptchaResponse:len18');
-  assert.equal(JSON.stringify(summary).includes('secret-token-value'), false);
 });
 
 test('detectPage identifies login before generic form states', async () => {
@@ -222,13 +198,6 @@ test('CapMonster response log keeps the message and hides the token', () => {
     errorDescription: 'clientKey is invalid'
   });
   assert.equal(failed.errorDescription, 'clientKey is invalid');
-});
-
-test('captcha mode defaults to click and stores token per account', () => {
-  assert.equal(captchaMode(7), 'click');
-  noteCaptchaMode(7, 'token');
-  assert.equal(captchaMode(7), 'token');
-  noteCaptchaMode(7, 'click');
 });
 
 test('auth proxy adds upstream credentials on CONNECT', async () => {

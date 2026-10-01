@@ -71,7 +71,7 @@ main()
 | `src/bot/fill.ts` | Ghi text/select vào DOM và chờ ASP.NET postback |
 | `src/bot/clicks.ts` | Bấm Next, Submit, Pay Now, OK, Payment Gateway |
 | `src/bot/elements.ts` | Tìm element, kiểm tra hiển thị/click được, dump field lạ |
-| `src/bot/captcha.ts` | Nhận diện captcha, tạo task CapSolver và chờ người dùng giải |
+| `src/bot/captcha.ts` | Nhận diện captcha, tạo task CapMonster Cloud và chờ token |
 | `src/bot/recover.ts` | Refresh khi INZ quá tải và login lại nếu session hết hạn |
 | `src/bot/declaration.ts` | Tick các checkbox declaration |
 | `src/bot/logger.ts` | Ghi log file, status và thống kê captcha |
@@ -696,7 +696,7 @@ function pauseForCaptcha(driver)
         return
 
     captchaInfo = đọc pageURL và sitekey bằng executeScript
-    tạo task CapSolver từ captchaInfo
+    tạo task CapMonster Cloud từ captchaInfo
     ghi log CAPTCHA_INFO
     ghi log PAUSE
 

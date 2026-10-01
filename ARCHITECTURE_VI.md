@@ -19,7 +19,6 @@ npm start
 ```text
 runAccount()
   -> launchBrowser()
-  -> syncCapSolverApiKey()       nếu có CAPSOLVER_EXTENSION_PATH
   -> runApplicant()
       -> login()
       -> continueToApplication()
@@ -55,7 +54,8 @@ Thứ tự này cần được giữ ổn định. Nếu website thay HTML, cậ
 |---|---|---|
 | Khởi động | `src/runner.js`, `src/main.js` | đọc input, chạy song song, tổng kết |
 | Cấu hình | `src/config.js` | biến môi trường và đường dẫn |
-| Browser | `src/browser.js` | Chrome profile và CapSolver extension |
+| Browser | `src/browser.js` | Chrome profile và proxy |
+| CAPTCHA | `src/captcha.js`, `src/capmonster.js` | chờ CAPTCHA và giải token bằng CapMonster Cloud |
 | Account | `src/account.js` | lifecycle và vòng lặp wizard |
 | Điều hướng | `src/auth.js`, `src/entry.js`, `src/detect.js` | login, mở hồ sơ, nhận diện trang |
 | Tương tác | `src/dom.js`, `src/actions.js` | tìm field, điền dữ liệu, click và Next |
@@ -96,7 +96,7 @@ node -e "require('./src/main'); console.log('main-load-ok')"
 npm start
 ```
 
-Hai lệnh đầu là kiểm tra tĩnh an toàn. `npm start` mở Chrome thật và nên chạy sau khi đã kiểm tra `.env`, `emails.json`, extension và Chrome profile.
+Hai lệnh đầu là kiểm tra tĩnh an toàn. `npm start` mở Chrome thật và nên chạy sau khi đã kiểm tra `.env`, `emails.json` và Chrome profile.
 
 ## 7. Quy tắc khi mở rộng
 

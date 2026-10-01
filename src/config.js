@@ -18,8 +18,6 @@ const config = {
   manualRecoveryPollMs: Number(process.env.MANUAL_RECOVERY_POLL_MS || 1000),
   clickWaitTimeoutMs: Number(process.env.CLICK_WAIT_TIMEOUT_MS || 1500),
   navigationWaitTimeoutMs: Number(process.env.NAVIGATION_WAIT_TIMEOUT_MS || 10000),
-  capsolverExtensionId: process.env.CAPSOLVER_EXTENSION_ID || 'mbfeabdjfagoifkpcikdaneggoimeidb',
-  capsolverExtensionPath: process.env.CAPSOLVER_EXTENSION_PATH || '',
   capmonsterApiKey: process.env.CAPMONSTER_API_KEY || '',
   chromeExecutablePath: process.env.CHROME_EXECUTABLE_PATH || undefined,
   headless: process.env.HEADLESS === 'true',

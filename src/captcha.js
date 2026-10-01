@@ -4,7 +4,7 @@ const { sleep, formatDuration } = require('./timing');
 const { firstExisting, firstVisible } = require('./dom');
 const selectors = require('./selectors/actions');
 const { isStopRequested } = require('./stop');
-const { noteCaptcha, captchaMode, accountProxy } = require('./browser');
+const { accountProxy } = require('./browser');
 const { solveRecaptchaV2 } = require('./capmonster');
 
 const captchaStats = { count: 0, totalMs: 0 };
@@ -95,10 +95,8 @@ async function pauseForCaptcha(page, label, stats = null) {
   const info = await readCaptchaInfo(page);
   const id = getCaptchaId(info);
   const startedAt = Date.now();
-  const mode = captchaMode(accountIndexFromLabel(label));
-  logCaptcha(label, id, 'FOUND', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, mode, url: info.url });
+  logCaptcha(label, id, 'FOUND', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, url: info.url });
   const accountIndex = accountIndexFromLabel(label);
-  noteCaptcha(accountIndex, id);
   const capmonsterJob = { cancelled: false };
   const capmonster = solveRecaptchaV2({
     page,
@@ -139,7 +137,7 @@ async function pauseForCaptcha(page, label, stats = null) {
         logCaptcha(label, id, 'SUBMIT_SENT', { elapsed_ms: Date.now() - startedAt, result: 'submit_clicked' });
         return;
       }
-      if (mode !== 'token' && !opened && Date.now() >= nextClickAt) {
+      if (!opened && Date.now() >= nextClickAt) {
         const checkbox = await clickRecaptchaCheckbox(page);
         if (checkbox === 'clicked' || checkbox === 'checked' || checkbox === 'challenge') opened = true;
         if (checkbox === 'clicked') logCaptcha(label, id, 'CHECKBOX_CLICKED', { elapsed_ms: Date.now() - startedAt });
@@ -153,7 +151,6 @@ async function pauseForCaptcha(page, label, stats = null) {
     throw error;
   } finally {
     capmonsterJob.cancelled = true;
-    noteCaptcha(accountIndex, '');
     capmonster.catch(() => {});
   }
 }

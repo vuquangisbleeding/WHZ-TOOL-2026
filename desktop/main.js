@@ -26,11 +26,6 @@ async function dataRoot() {
       await fs.copyFile(path.join(projectRoot(), source), target);
     }
   }
-  if (app.isPackaged) {
-    const extension = 'CapSolver.Browser.Extension-chrome-v1.7.1';
-    const target = path.join(root, extension);
-    try { await fs.access(target); } catch { await fs.cp(path.join(process.resourcesPath, extension), target, { recursive: true }); }
-  }
   return root;
 }
 
@@ -91,15 +86,10 @@ async function readTelegramSettings() {
   const envFile = path.join(root, '.env');
   const content = await fs.readFile(envFile, 'utf8');
   const readValue = key => content.match(new RegExp(`^${key}=(.*)$`, 'm'))?.[1] || '';
-  const extensionPath = readValue('CAPSOLVER_EXTENSION_PATH') || 'CapSolver.Browser.Extension-chrome-v1.7.1';
-  const extensionRoot = path.isAbsolute(extensionPath) ? extensionPath : path.join(root, extensionPath);
-  const capsolverConfig = await fs.readFile(path.join(extensionRoot, 'assets', 'config.js'), 'utf8');
-  const capsolverApiKey = capsolverConfig.match(/apiKey\s*:\s*(['"])(.*?)\1/)?.[2]?.trim() || '';
   return {
     botToken: readValue('TELEGRAM_BOT_TOKEN'),
     chatId: readValue('TELEGRAM_CHAT_ID'),
     schemeCountry: readValue('SCHEME_COUNTRY'),
-    capsolverApiKey,
     capmonsterApiKey: readValue('CAPMONSTER_API_KEY')
   };
 }

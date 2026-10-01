@@ -74,7 +74,7 @@ npm run desktop
 
 App có nút `Start runner`, `Stop` và cửa sổ log realtime. Runner vẫn chạy các profile song song như khi dùng `npm start`.
 
-Trong mục `Applicant data`, có thể nhập tay hoặc `Import`/`Export` hai file `applicant.json` và `emails.json`. Mục `Settings` cho phép sửa trực tiếp `SCHEME_COUNTRY`, `TELEGRAM_BOT_TOKEN` và `TELEGRAM_CHAT_ID`; CapSolver API key chỉ được đọc từ `assets/config.js`. Khi packaged, các giá trị được lưu trong thư mục dữ liệu riêng của app.
+Trong mục `Applicant data`, có thể nhập tay hoặc `Import`/`Export` hai file `applicant.json` và `emails.json`. Mục `Settings` cho phép sửa trực tiếp `SCHEME_COUNTRY`, `CAPMONSTER_API_KEY`, `TELEGRAM_BOT_TOKEN` và `TELEGRAM_CHAT_ID`. Khi packaged, các giá trị được lưu trong thư mục dữ liệu riêng của app.
 
 Đóng gói trên macOS:
 
@@ -88,7 +88,7 @@ npm run dist:mac
 npm run dist:win
 ```
 
-Lệnh build Windows cần chạy trên Windows; lệnh build macOS cần chạy trên macOS. Khi app packaged chạy lần đầu, các file `applicant.json`, `emails.json`, `.env` và extension được copy vào thư mục dữ liệu riêng của app để có quyền ghi log và Chrome profiles. Hãy sửa `.env` trong thư mục dữ liệu đó nếu cần đổi cấu hình.
+Lệnh build Windows cần chạy trên Windows; lệnh build macOS cần chạy trên macOS. Khi app packaged chạy lần đầu, các file `applicant.json`, `emails.json` và `.env` được copy vào thư mục dữ liệu riêng của app để có quyền ghi log và Chrome profiles. Hãy sửa `.env` trong thư mục dữ liệu đó nếu cần đổi cấu hình.
 
 Mỗi lần chạy tạo một file log tổng và một file riêng cho từng account trong thư mục `logs/`. Terminal sẽ in các dòng `LOG_FILE ...` và `ACCOUNT_LOG_FILE ...`; mở file account tương ứng để xem riêng từng bước, URL, request lỗi, CAPTCHA, high-load và vị trí runner dừng. CAPTCHA được chờ tự động trong tối đa `CAPTCHA_TIMEOUT_MS`, không cần nhấn Enter.
 
@@ -111,34 +111,15 @@ Các Chrome profile được bắt đầu đồng thời. Profile được lưu 
 - không tìm thấy nút tiếp theo;
 - chỉ dừng khi hoàn tất, đến payment hoặc người vận hành chủ động dừng.
 
-## CapSolver
+## CapMonster Cloud
 
-API key không lấy từ `.env`, giao diện hoặc Chrome profile. Chỉ sửa key trong file:
-
-```text
-CapSolver.Browser.Extension-chrome-v1.7.1/assets/config.js
-```
-
-Mở file đó và thay:
-
-```js
-apiKey: '',
-```
-
-thành:
-
-```js
-apiKey: 'API_KEY_CUA_BAN',
-```
-
-Sau đó kiểm tra `.env` có đường dẫn:
+CAPTCHA được giải bằng CapMonster Cloud. Điền API key vào `.env` hoặc mục Settings:
 
 ```dotenv
-CAPSOLVER_EXTENSION_PATH=./CapSolver.Browser.Extension-chrome-v1.7.1
-CAPSOLVER_EXTENSION_ID=mbfeabdjfagoifkpcikdaneggoimeidb
+CAPMONSTER_API_KEY=API_KEY_CUA_BAN
 ```
 
-Runner sẽ ghi key vào `assets/config.js` trước khi nạp extension bằng Puppeteer, đúng theo hướng dẫn tích hợp chính thức của CapSolver. Không đưa API key vào `README.md`, `emails.json` hoặc git.
+Runner gọi `api.capmonster.cloud`, nhận token reCAPTCHA rồi gắn vào trang. Không nạp extension trình duyệt. Không đưa API key vào `README.md`, `emails.json` hoặc git.
 
 ## Lưu ý
 
