@@ -4,6 +4,7 @@ const { sleep, formatDuration } = require('./timing');
 const { firstExisting, firstVisible } = require('./dom');
 const selectors = require('./selectors/actions');
 const { isStopRequested } = require('./stop');
+const { noteCaptcha } = require('./browser');
 
 const captchaStats = { count: 0, totalMs: 0 };
 
@@ -23,6 +24,11 @@ async function readCaptchaInfo(page) {
 
 function getCaptchaId(info) {
   return crypto.createHash('sha1').update(`${info.url}|${info.sitekey}|${info.widgetId}|${info.iframeSrc}`).digest('hex').slice(0, 12);
+}
+
+function accountIndexFromLabel(label) {
+  const match = String(label).match(/account (\d+)/);
+  return match ? Number(match[1]) - 1 : -1;
 }
 
 function logCaptcha(label, id, status, details = {}) {
@@ -61,46 +67,55 @@ async function pauseForCaptcha(page, label, stats = null) {
   const info = await readCaptchaInfo(page);
   const id = getCaptchaId(info);
   const startedAt = Date.now();
-  logCaptcha(label, id, 'DETECTED', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, url: info.url });
-  await triggerCapSolver(page, label);
-  captchaStats.count += 1;
-  logCaptcha(label, id, 'SOLVING', { elapsed_ms: 0 });
-  console.log(`[${label}] CAPTCHA detected, CapSolver đang tự xử lý`);
-  let nextHeartbeatAt = startedAt + 5000;
-  while (!isStopRequested()) {
-    if (await isCaptchaSolved(page)) {
-      const duration = Date.now() - startedAt;
-      captchaStats.totalMs += duration;
-      if (stats) stats.captchaMs += duration;
-      logCaptcha(label, id, 'SOLVED', { elapsed_ms: duration, duration: formatDuration(duration) });
-      console.log(`[${label}] CAPTCHA solved duration=${formatDuration(duration)}`);
-      const submitSelector = await firstVisible(page, selectors.submit);
-      if (!submitSelector) throw new Error('CAPTCHA đã giải nhưng không tìm thấy nút SUBMIT đang hiển thị');
-      const submitState = await page.$eval(submitSelector, element => ({
-        disabled: Boolean(element.disabled),
-        id: element.id || '',
-        value: element.value || element.textContent?.trim() || ''
-      }));
-      if (submitState.disabled) throw new Error(`Nút SUBMIT đang disabled: ${submitSelector}`);
-      console.log(`[${label}] CAPTCHA solved, click SUBMIT selector=${submitSelector} id=${submitState.id}`);
-      // Chờ navigation thật sự để vòng wizard không click lại trên context cũ.
-      await Promise.all([
-        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 5000 }).catch(() => {}),
-        page.$eval(submitSelector, element => {
-          element.focus();
-          element.click();
-        })
-      ]);
-      return;
+  logCaptcha(label, id, 'FOUND', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, url: info.url });
+  noteCaptcha(accountIndexFromLabel(label), id);
+  try {
+    await triggerCapSolver(page, label);
+    captchaStats.count += 1;
+    logCaptcha(label, id, 'SOLVING', { elapsed_ms: 0, result: 'pending' });
+    console.log(`[${label}] CAPTCHA detected, CapSolver đang tự xử lý`);
+    let nextHeartbeatAt = startedAt + 5000;
+    while (!isStopRequested()) {
+      if (await isCaptchaSolved(page)) {
+        const duration = Date.now() - startedAt;
+        captchaStats.totalMs += duration;
+        if (stats) stats.captchaMs += duration;
+        logCaptcha(label, id, 'SOLVED', { elapsed_ms: duration, duration: formatDuration(duration), result: 'solved', message: 'captcha_response_detected' });
+        console.log(`[${label}] CAPTCHA solved duration=${formatDuration(duration)}`);
+        const submitSelector = await firstVisible(page, selectors.submit);
+        if (!submitSelector) throw new Error('CAPTCHA đã giải nhưng không tìm thấy nút SUBMIT đang hiển thị');
+        const submitState = await page.$eval(submitSelector, element => ({
+          disabled: Boolean(element.disabled),
+          id: element.id || '',
+          value: element.value || element.textContent?.trim() || ''
+        }));
+        if (submitState.disabled) throw new Error(`Nút SUBMIT đang disabled: ${submitSelector}`);
+        console.log(`[${label}] CAPTCHA solved, click SUBMIT selector=${submitSelector} id=${submitState.id}`);
+        // Chờ navigation thật sự để vòng wizard không click lại trên context cũ.
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 5000 }).catch(() => {}),
+          page.$eval(submitSelector, element => {
+            element.focus();
+            element.click();
+          })
+        ]);
+        logCaptcha(label, id, 'SUBMIT_SENT', { elapsed_ms: Date.now() - startedAt, result: 'submit_clicked' });
+        return;
+      }
+      if (Date.now() >= nextHeartbeatAt) {
+        logCaptcha(label, id, 'PROCESSING', { elapsed_ms: Date.now() - startedAt, result: 'pending' });
+        console.log(`[${label}] CAPTCHA vẫn đang chờ CapSolver elapsed=${formatDuration(Date.now() - startedAt)}`);
+        nextHeartbeatAt += 5000;
+      }
+      await sleep(config.captchaPollMs);
     }
-    if (Date.now() >= nextHeartbeatAt) {
-      logCaptcha(label, id, 'PROCESSING', { elapsed_ms: Date.now() - startedAt });
-      console.log(`[${label}] CAPTCHA vẫn đang chờ CapSolver elapsed=${formatDuration(Date.now() - startedAt)}`);
-      nextHeartbeatAt += 5000;
-    }
-    await sleep(config.captchaPollMs);
+    throw new Error('Đã yêu cầu dừng khi đang chờ CAPTCHA');
+  } catch (error) {
+    logCaptcha(label, id, 'FAILED', { elapsed_ms: Date.now() - startedAt, result: 'failed', message: error.message });
+    throw error;
+  } finally {
+    noteCaptcha(accountIndexFromLabel(label), '');
   }
-  throw new Error('Đã yêu cầu dừng khi đang chờ CAPTCHA');
 }
 
 module.exports = { hasCaptcha, isDeclarationUi, pauseForCaptcha, captchaStats };

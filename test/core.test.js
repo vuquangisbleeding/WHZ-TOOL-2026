@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeProxy, maskApiKey } = require('../src/browser');
+const { normalizeProxy, maskApiKey, summarizeCapSolverBody, capsolverEndpoint } = require('../src/browser');
 const { parseProxyLine, readProxyList } = require('../src/io');
 const { applyProxyList, validateAccounts } = require('../src/main');
 const { detectPage } = require('../src/detect');
@@ -105,6 +105,23 @@ test('applicant summary omits email and passport', () => {
   assert.equal(summary, 'Tên: Test Applicant\nTài khoản: *********123');
   assert.ok(!summary.includes('private@example.test'));
   assert.ok(!summary.includes('P1234567'));
+});
+
+test('CapSolver summary keeps the error message and hides the solution token', () => {
+  assert.equal(capsolverEndpoint('https://api.capsolver.com/createTask'), 'createTask');
+  assert.equal(capsolverEndpoint('https://www.google.com/recaptcha/api2/anchor'), '');
+  const summary = summarizeCapSolverBody(JSON.stringify({
+    errorId: 1,
+    errorCode: 'ERROR_PROXY_CONNECT_REFUSED',
+    errorDescription: 'proxy connect failed',
+    status: 'failed',
+    taskId: 'task-1',
+    solution: { gRecaptchaResponse: 'secret-token-value' }
+  }));
+  assert.equal(summary.errorDescription, 'proxy connect failed');
+  assert.equal(summary.taskId, 'task-1');
+  assert.equal(summary.solution, 'gRecaptchaResponse:len18');
+  assert.equal(JSON.stringify(summary).includes('secret-token-value'), false);
 });
 
 test('detectPage identifies login before generic form states', async () => {
