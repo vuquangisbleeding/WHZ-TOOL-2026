@@ -54,21 +54,17 @@ function isRecaptchaChallenge(url) {
   return /\/recaptcha\/(?:api2|enterprise)\/bframe/i.test(url || '');
 }
 
-async function recaptchaChallengeState(page) {
-  const frame = page.frames().find(item => isRecaptchaChallenge(item.url()));
-  if (!frame) return 'absent';
-  const image = await frame.$('.rc-imageselect-tile img').catch(() => null);
-  return image ? 'ready' : 'loading';
-}
-
-async function reloadRecaptchaChallenge(page) {
-  await page.evaluate(() => {
-    for (const iframe of document.querySelectorAll('iframe[src*="bframe"]')) iframe.src = iframe.src;
-  }).catch(() => {});
+async function challengeImagesVisible(page) {
+  for (const frame of page.frames()) {
+    if (!isRecaptchaChallenge(frame.url())) continue;
+    const image = await frame.$('.rc-imageselect-tile img').catch(() => null);
+    if (image) return true;
+  }
+  return false;
 }
 
 async function clickRecaptchaCheckbox(page) {
-  if (await recaptchaChallengeState(page) !== 'absent') return 'challenge';
+  if (await challengeImagesVisible(page)) return 'challenge';
   for (const frame of page.frames()) {
     if (!isRecaptchaAnchor(frame.url())) continue;
     const anchor = await frame.$('#recaptcha-anchor').catch(() => null);
@@ -104,8 +100,7 @@ async function pauseForCaptcha(page, label, stats = null) {
   try {
     captchaStats.count += 1;
     let nextClickAt = startedAt;
-    let challengeSeenAt = 0;
-    let reloadedAt = 0;
+    let opened = false;
     while (!isStopRequested()) {
       if (await isCaptchaSolved(page)) {
         const duration = Date.now() - startedAt;
@@ -132,22 +127,11 @@ async function pauseForCaptcha(page, label, stats = null) {
         logCaptcha(label, id, 'SUBMIT_SENT', { elapsed_ms: Date.now() - startedAt, result: 'submit_clicked' });
         return;
       }
-      if (mode !== 'token') {
-        const challenge = await recaptchaChallengeState(page);
-        if (challenge === 'ready') challengeSeenAt = 0;
-        else if (challenge === 'loading') {
-          if (!challengeSeenAt) challengeSeenAt = Date.now();
-          if (Date.now() - challengeSeenAt > 4000 && Date.now() - reloadedAt > 4000) {
-            await reloadRecaptchaChallenge(page);
-            reloadedAt = Date.now();
-            logCaptcha(label, id, 'CHALLENGE_RELOAD', { elapsed_ms: Date.now() - startedAt });
-          }
-        } else if (Date.now() >= nextClickAt) {
-          challengeSeenAt = 0;
-          const checkbox = await clickRecaptchaCheckbox(page);
-          if (checkbox === 'clicked') logCaptcha(label, id, 'CHECKBOX_CLICKED', { elapsed_ms: Date.now() - startedAt });
-          nextClickAt = Date.now() + 2000;
-        }
+      if (mode !== 'token' && !opened && Date.now() >= nextClickAt) {
+        const checkbox = await clickRecaptchaCheckbox(page);
+        if (checkbox === 'clicked' || checkbox === 'checked' || checkbox === 'challenge') opened = true;
+        if (checkbox === 'clicked') logCaptcha(label, id, 'CHECKBOX_CLICKED', { elapsed_ms: Date.now() - startedAt });
+        nextClickAt = Date.now() + 2000;
       }
       await sleep(config.captchaPollMs);
     }
