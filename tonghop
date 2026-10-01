@@ -1,5 +1,5 @@
-Tạm thời dừng ở đây
-Capsolver vẫn chạy, nhưng chạy rất chậm qua dataipcenter. Nó ko tự tick khi mode click. mode khác thì vẫn chạy nhưng 30s
-Test trên máy thật mode clcik thì chạy, nhưng nhiều hình vãi
+trong app pupeteer
+Capsolver vẫn chạy, nhưng chạy rất chậm qua resident trên iproyal. Nó ko tự tick khi mode click. mode còn lại thì vẫn chạy nhưng 30s
+Test trên máy thật ko proxy, ko pupeteer mode clcik thì chạy, nhưng nhiều hình vãi khiến giải lâu
 Đéo biết do capsovler hay gì
 Cân nhắc đổi qua cái khác

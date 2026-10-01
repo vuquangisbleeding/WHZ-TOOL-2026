@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeProxy, maskApiKey, summarizeCapSolverBody, capsolverEndpoint } = require('../src/browser');
+const net = require('node:net');
+const { startAuthProxy } = require('../src/proxy-forward');
+const { normalizeProxy, maskApiKey, summarizeCapSolverBody, capsolverEndpoint, noteCaptchaMode, captchaMode } = require('../src/browser');
 const { parseProxyLine, readProxyList } = require('../src/io');
 const { applyProxyList, validateAccounts } = require('../src/main');
 const { detectPage } = require('../src/detect');
@@ -152,6 +154,56 @@ test('detectPage identifies payment before wizard pages', async () => {
 test('detectPage identifies health page by selector', async () => {
   const page = fakePage({ selectors: ['renalDialysisDropDownList'] });
   assert.equal(await detectPage(page), 'health');
+});
+
+test('captcha mode defaults to click and stores token per account', () => {
+  assert.equal(captchaMode(7), 'click');
+  noteCaptchaMode(7, 'token');
+  assert.equal(captchaMode(7), 'token');
+  noteCaptchaMode(7, 'click');
+});
+
+test('auth proxy adds upstream credentials on CONNECT', async () => {
+  const upstream = net.createServer(socket => {
+    let pending = Buffer.alloc(0);
+    socket.on('data', chunk => {
+      pending = Buffer.concat([pending, chunk]);
+      const headerEnd = pending.indexOf('\r\n\r\n');
+      if (headerEnd === -1) return;
+      const header = pending.subarray(0, headerEnd).toString('latin1');
+      assert.match(header, /^CONNECT example.test:443 /);
+      assert.match(header, /Proxy-Authorization: Basic /);
+      const encoded = header.match(/Proxy-Authorization: Basic (\S+)/)[1];
+      assert.equal(Buffer.from(encoded, 'base64').toString(), 'proxy-user:p@ss');
+      socket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+      socket.write('ready');
+    });
+  });
+  await new Promise(resolve => upstream.listen(0, '127.0.0.1', resolve));
+  const forwarder = await startAuthProxy({
+    host: '127.0.0.1',
+    port: upstream.address().port,
+    username: 'proxy-user',
+    password: 'p@ss'
+  });
+  try {
+    const reply = await new Promise((resolve, reject) => {
+      const socket = net.connect(forwarder.port, '127.0.0.1', () => {
+        socket.write('CONNECT example.test:443 HTTP/1.1\r\nHost: example.test:443\r\n\r\n');
+      });
+      let pending = Buffer.alloc(0);
+      socket.on('data', chunk => {
+        pending = Buffer.concat([pending, chunk]);
+        if (pending.includes('ready')) resolve(pending.toString('latin1'));
+      });
+      socket.on('error', reject);
+    });
+    assert.match(reply, /^HTTP\/1\.1 200 Connection Established/);
+    assert.match(reply, /ready$/);
+  } finally {
+    forwarder.close();
+    upstream.close();
+  }
 });
 
 test('detectPage identifies personal2 by URL', async () => {

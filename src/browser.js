@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const config = require('./config');
 const { fs, path } = require('./io');
+const { startAuthProxy } = require('./proxy-forward');
 
 function normalizeProxy(proxy) {
   if (!proxy) return null;
@@ -66,11 +67,21 @@ function maskApiKey(apiKey) {
 }
 
 const activeCaptchaIds = new Map();
+const captchaModes = new Map();
 
 function noteCaptcha(accountIndex, id) {
   if (!Number.isInteger(accountIndex) || accountIndex < 0) return;
   if (id) activeCaptchaIds.set(accountIndex, id);
   else activeCaptchaIds.delete(accountIndex);
+}
+
+function noteCaptchaMode(accountIndex, mode) {
+  if (!Number.isInteger(accountIndex) || accountIndex < 0) return;
+  captchaModes.set(accountIndex, mode === 'token' ? 'token' : 'click');
+}
+
+function captchaMode(accountIndex) {
+  return captchaModes.get(accountIndex) || 'click';
 }
 
 function capsolverEndpoint(url) {
@@ -119,6 +130,7 @@ async function injectCapSolverProxy(session, normalizedProxy, index) {
     reCaptchaMode: 'click',
     manualSolving: false
   };
+  noteCaptchaMode(index, settings.reCaptchaMode);
   await session.send('Runtime.evaluate', {
     expression: `(async () => {
       const stored = await chrome.storage.local.get(['defaultConfig', 'config']);
@@ -141,18 +153,6 @@ async function watchCapSolver(browser, index, normalizedProxy) {
   }
   const session = await target.createCDPSession();
   await injectCapSolverProxy(session, normalizedProxy, index);
-  if (normalizedProxy?.username || normalizedProxy?.password) {
-    await session.send('Fetch.enable', { handleAuthRequests: true }).catch(() => {});
-    session.on('Fetch.authRequired', event => {
-      session.send('Fetch.continueWithAuth', {
-        requestId: event.requestId,
-        authChallengeResponse: { response: 'ProvideCredentials', username: normalizedProxy.username, password: normalizedProxy.password }
-      }).catch(() => {});
-    });
-    session.on('Fetch.requestPaused', event => {
-      session.send('Fetch.continueRequest', { requestId: event.requestId }).catch(() => {});
-    });
-  }
   await session.send('Network.enable').catch(() => {});
   const responses = new Map();
   session.on('Network.requestWillBeSent', event => {
@@ -194,12 +194,30 @@ async function launchBrowser(args, index, proxy) {
   if (config.capsolverExtensionPath) await clearCapSolverProfileStorage(profilePath);
   const normalizedProxy = normalizeProxy(proxy);
   const launchArgs = [...args];
-  if (normalizedProxy) {
-    launchArgs.push(`--proxy-server=${normalizedProxy.server}`, '--proxy-bypass-list=api.capsolver.com');
+  const proxyEndpoint = normalizedProxy ? new URL(normalizedProxy.server) : null;
+  const forwarder = normalizedProxy?.username
+    ? await startAuthProxy({
+      host: proxyEndpoint.hostname,
+      port: Number(proxyEndpoint.port),
+      username: normalizedProxy.username,
+      password: normalizedProxy.password
+    })
+    : null;
+  if (forwarder) {
+    launchArgs.push(`--proxy-server=http://127.0.0.1:${forwarder.port}`, '--proxy-bypass-list=<-loopback>;api.capsolver.com');
+  } else if (normalizedProxy) {
+    launchArgs.push(`--proxy-server=${normalizedProxy.server}`, '--proxy-bypass-list=<-loopback>;api.capsolver.com');
   }
   console.log(`[account ${index + 1}] Chrome profile: ${profilePath}`);
-  if (normalizedProxy) console.log(`[account ${index + 1}] Proxy: ${normalizedProxy.server}`);
-  const browser = await puppeteer.launch({ headless: config.headless, executablePath: config.chromeExecutablePath, userDataDir: profilePath, args: launchArgs, defaultViewport: null });
+  if (normalizedProxy) console.log(`[account ${index + 1}] Proxy: ${normalizedProxy.server}${forwarder ? ` qua cổng nội bộ ${forwarder.port}` : ''}`);
+  let browser;
+  try {
+    browser = await puppeteer.launch({ headless: config.headless, executablePath: config.chromeExecutablePath, userDataDir: profilePath, args: launchArgs, defaultViewport: null });
+  } catch (error) {
+    forwarder?.close();
+    throw error;
+  }
+  if (forwarder) browser.on('disconnected', () => forwarder.close());
   if (config.capsolverExtensionPath) await watchCapSolver(browser, index, normalizedProxy);
   return browser;
 }
@@ -235,4 +253,4 @@ async function getSinglePage(browser) {
   return page;
 }
 
-module.exports = { launchBrowser, authenticateProxy, configureProxyAuthentication, getSinglePage, normalizeProxy, maskApiKey, noteCaptcha, capsolverEndpoint, summarizeCapSolverBody };
+module.exports = { launchBrowser, authenticateProxy, configureProxyAuthentication, getSinglePage, normalizeProxy, maskApiKey, noteCaptcha, noteCaptchaMode, captchaMode, capsolverEndpoint, summarizeCapSolverBody };

@@ -4,7 +4,7 @@ const { sleep, formatDuration } = require('./timing');
 const { firstExisting, firstVisible } = require('./dom');
 const selectors = require('./selectors/actions');
 const { isStopRequested } = require('./stop');
-const { noteCaptcha } = require('./browser');
+const { noteCaptcha, captchaMode } = require('./browser');
 
 const captchaStats = { count: 0, totalMs: 0 };
 
@@ -54,8 +54,21 @@ function isRecaptchaChallenge(url) {
   return /\/recaptcha\/(?:api2|enterprise)\/bframe/i.test(url || '');
 }
 
+async function recaptchaChallengeState(page) {
+  const frame = page.frames().find(item => isRecaptchaChallenge(item.url()));
+  if (!frame) return 'absent';
+  const image = await frame.$('.rc-imageselect-tile img').catch(() => null);
+  return image ? 'ready' : 'loading';
+}
+
+async function reloadRecaptchaChallenge(page) {
+  await page.evaluate(() => {
+    for (const iframe of document.querySelectorAll('iframe[src*="bframe"]')) iframe.src = iframe.src;
+  }).catch(() => {});
+}
+
 async function clickRecaptchaCheckbox(page) {
-  if (page.frames().some(frame => isRecaptchaChallenge(frame.url()))) return 'challenge';
+  if (await recaptchaChallengeState(page) !== 'absent') return 'challenge';
   for (const frame of page.frames()) {
     if (!isRecaptchaAnchor(frame.url())) continue;
     const anchor = await frame.$('#recaptcha-anchor').catch(() => null);
@@ -85,11 +98,14 @@ async function pauseForCaptcha(page, label, stats = null) {
   const info = await readCaptchaInfo(page);
   const id = getCaptchaId(info);
   const startedAt = Date.now();
-  logCaptcha(label, id, 'FOUND', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, url: info.url });
+  const mode = captchaMode(accountIndexFromLabel(label));
+  logCaptcha(label, id, 'FOUND', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, mode, url: info.url });
   noteCaptcha(accountIndexFromLabel(label), id);
   try {
     captchaStats.count += 1;
     let nextClickAt = startedAt;
+    let challengeSeenAt = 0;
+    let reloadedAt = 0;
     while (!isStopRequested()) {
       if (await isCaptchaSolved(page)) {
         const duration = Date.now() - startedAt;
@@ -116,10 +132,22 @@ async function pauseForCaptcha(page, label, stats = null) {
         logCaptcha(label, id, 'SUBMIT_SENT', { elapsed_ms: Date.now() - startedAt, result: 'submit_clicked' });
         return;
       }
-      if (Date.now() >= nextClickAt) {
-        const checkbox = await clickRecaptchaCheckbox(page);
-        if (checkbox === 'clicked') logCaptcha(label, id, 'CHECKBOX_CLICKED', { elapsed_ms: Date.now() - startedAt });
-        nextClickAt = Date.now() + 2000;
+      if (mode !== 'token') {
+        const challenge = await recaptchaChallengeState(page);
+        if (challenge === 'ready') challengeSeenAt = 0;
+        else if (challenge === 'loading') {
+          if (!challengeSeenAt) challengeSeenAt = Date.now();
+          if (Date.now() - challengeSeenAt > 4000 && Date.now() - reloadedAt > 4000) {
+            await reloadRecaptchaChallenge(page);
+            reloadedAt = Date.now();
+            logCaptcha(label, id, 'CHALLENGE_RELOAD', { elapsed_ms: Date.now() - startedAt });
+          }
+        } else if (Date.now() >= nextClickAt) {
+          challengeSeenAt = 0;
+          const checkbox = await clickRecaptchaCheckbox(page);
+          if (checkbox === 'clicked') logCaptcha(label, id, 'CHECKBOX_CLICKED', { elapsed_ms: Date.now() - startedAt });
+          nextClickAt = Date.now() + 2000;
+        }
       }
       await sleep(config.captchaPollMs);
     }
