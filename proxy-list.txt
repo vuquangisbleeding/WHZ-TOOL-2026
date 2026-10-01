@@ -1,1 +1,7 @@
-185.205.220.173:12323:14a746fffbb95:42e77ded0e
+172.204.24.157:8001:nzproxy:matkhaumoi
+172.204.25.36:8002:nzproxy:matkhaumoi
+172.196.49.154:8003:nzproxy:matkhaumoi
+172.204.26.107:8004:nzproxy:matkhaumoi
+172.204.27.128:8005:nzproxy:matkhaumoi
+172.196.49.208:8006:nzproxy:matkhaumoi
+172.196.45.54:8007:nzproxy:matkhaumoi

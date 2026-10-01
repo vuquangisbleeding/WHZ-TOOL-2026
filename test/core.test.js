@@ -7,7 +7,7 @@ const { parseProxyLine, readProxyList } = require('../src/io');
 const { applyProxyList, validateAccounts } = require('../src/main');
 const { detectPage } = require('../src/detect');
 const { isRecaptchaAnchor } = require('../src/captcha');
-const { buildRecaptchaTask } = require('../src/capmonster');
+const { buildRecaptchaTask, injectRecaptchaToken, summarizeCapMonsterResponse } = require('../src/capmonster');
 const { maskUsername } = require('../src/privacy');
 const { applicantSummary } = require('../src/notifications');
 
@@ -179,6 +179,49 @@ test('CapMonster task uses the account proxy and hides nothing but the request f
   assert.equal(proxied.proxyLogin, 'user');
   assert.equal(proxied.proxyPassword, 'secret-pass');
   assert.equal(proxied.userAgent, 'TestAgent');
+});
+
+test('recaptcha token inject skips a cross-origin frame and still calls same-origin callbacks', () => {
+  const calls = [];
+  const field = { value: '' };
+  const crossOrigin = {};
+  Object.defineProperty(crossOrigin, 'callback', {
+    get() { throw new Error("SecurityError: Failed to read a named property 'callback' from 'Window'"); }
+  });
+  const root = {
+    document: { querySelectorAll: () => [field] },
+    ___grecaptcha_cfg: {
+      clients: {
+        0: {
+          callback(value) { calls.push(value); },
+          frame: crossOrigin,
+          nested: { callback(value) { calls.push(`nested:${value}`); } }
+        }
+      }
+    }
+  };
+  injectRecaptchaToken('token-value', root);
+  assert.equal(field.value, 'token-value');
+  assert.deepEqual(calls, ['token-value', 'nested:token-value']);
+});
+
+test('CapMonster response log keeps the message and hides the token', () => {
+  const summary = summarizeCapMonsterResponse({
+    errorId: 0,
+    status: 'ready',
+    taskId: 42,
+    solution: { gRecaptchaResponse: 'secret-token-value' }
+  });
+  assert.equal(summary.errorDescription, '');
+  assert.equal(summary.status, 'ready');
+  assert.equal(summary.tokenLength, 18);
+  assert.equal(JSON.stringify(summary).includes('secret-token-value'), false);
+  const failed = summarizeCapMonsterResponse({
+    errorId: 1,
+    errorCode: 'ERROR_KEY_DOES_NOT_EXIST',
+    errorDescription: 'clientKey is invalid'
+  });
+  assert.equal(failed.errorDescription, 'clientKey is invalid');
 });
 
 test('captcha mode defaults to click and stores token per account', () => {

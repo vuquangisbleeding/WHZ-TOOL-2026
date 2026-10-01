@@ -22,6 +22,22 @@ function buildRecaptchaTask({ websiteURL, websiteKey, iframeSrc = '', userAgent 
   return task;
 }
 
+function summarizeCapMonsterResponse(data = {}) {
+  const token = data.solution?.gRecaptchaResponse;
+  return {
+    errorId: data.errorId ?? '',
+    errorCode: data.errorCode || '',
+    errorDescription: data.errorDescription || '',
+    status: data.status || '',
+    taskId: data.taskId || '',
+    tokenLength: typeof token === 'string' ? token.length : 0
+  };
+}
+
+function capMonsterError(data) {
+  return data.errorDescription || data.errorCode || 'CapMonster từ chối task';
+}
+
 async function capmonsterPost(method, body) {
   const response = await fetch(`https://api.capmonster.cloud/${method}`, {
     method: 'POST',
@@ -33,25 +49,40 @@ async function capmonsterPost(method, body) {
   try { data = JSON.parse(text); } catch {
     throw new Error(`CapMonster HTTP ${response.status}`);
   }
-  if (data.errorId) throw new Error(data.errorDescription || data.errorCode || 'CapMonster từ chối task');
   return data;
 }
 
-async function applyRecaptchaToken(page, token) {
-  await page.evaluate(value => {
-    for (const element of document.querySelectorAll('textarea[name="g-recaptcha-response"], textarea#g-recaptcha-response')) {
-      element.value = value;
+function injectRecaptchaToken(token, root = globalThis) {
+  for (const element of root.document.querySelectorAll('textarea[name="g-recaptcha-response"], textarea#g-recaptcha-response')) {
+    element.value = token;
+  }
+  const clients = root.___grecaptcha_cfg?.clients;
+  const seen = new Set();
+  const visit = (node, depth) => {
+    if (!node || typeof node !== 'object' || seen.has(node) || depth > 6) return;
+    seen.add(node);
+    let callback;
+    try {
+      callback = node.callback;
+    } catch {
+      return;
     }
-    const clients = window.___grecaptcha_cfg?.clients;
-    const seen = new Set();
-    const visit = (node, depth) => {
-      if (!node || typeof node !== 'object' || seen.has(node) || depth > 6) return;
-      seen.add(node);
-      if (typeof node.callback === 'function') node.callback(value);
-      for (const child of Object.values(node)) visit(child, depth + 1);
-    };
-    visit(clients, 0);
-  }, token);
+    if (typeof callback === 'function') {
+      try { callback(token); } catch { /* callback của widget có thể chạm frame khác origin */ }
+    }
+    let children;
+    try {
+      children = Object.values(node);
+    } catch {
+      return;
+    }
+    for (const child of children) visit(child, depth + 1);
+  };
+  visit(clients, 0);
+}
+
+async function applyRecaptchaToken(page, token) {
+  await page.evaluate(injectRecaptchaToken, token);
 }
 
 async function solveRecaptchaV2({ page, info, proxy = null, isCancelled = () => false, onUpdate = () => {} }) {
@@ -69,16 +100,28 @@ async function solveRecaptchaV2({ page, info, proxy = null, isCancelled = () => 
     proxy
   });
   const created = await capmonsterPost('createTask', { task });
-  onUpdate('task', { taskId: created.taskId, type: task.type });
+  onUpdate('response', { method: 'createTask', type: task.type, ...summarizeCapMonsterResponse(created) });
+  if (created.errorId) throw new Error(capMonsterError(created));
   const startedAt = Date.now();
+  let lastStatus = '';
   while (!isCancelled() && Date.now() - startedAt < 120000) {
     await sleep(1000);
-    if (isCancelled()) return;
+    if (isCancelled()) {
+      onUpdate('cancelled', { taskId: created.taskId, status: lastStatus });
+      return;
+    }
     const result = await capmonsterPost('getTaskResult', { taskId: created.taskId });
+    const summary = summarizeCapMonsterResponse(result);
+    lastStatus = summary.status;
+    onUpdate('response', { method: 'getTaskResult', ...summary });
+    if (result.errorId) throw new Error(capMonsterError(result));
     if (result.status !== 'ready') continue;
     const token = result.solution?.gRecaptchaResponse || '';
     if (!token) throw new Error('CapMonster không trả token');
-    if (isCancelled()) return;
+    if (isCancelled()) {
+      onUpdate('cancelled', { taskId: created.taskId, status: 'ready' });
+      return;
+    }
     await applyRecaptchaToken(page, token);
     onUpdate('ready', { taskId: created.taskId, tokenLength: token.length, elapsedMs: Date.now() - startedAt });
     return;
@@ -86,4 +129,4 @@ async function solveRecaptchaV2({ page, info, proxy = null, isCancelled = () => 
   if (!isCancelled()) throw new Error('CapMonster hết 120 giây');
 }
 
-module.exports = { buildRecaptchaTask, solveRecaptchaV2 };
+module.exports = { buildRecaptchaTask, injectRecaptchaToken, summarizeCapMonsterResponse, solveRecaptchaV2 };
