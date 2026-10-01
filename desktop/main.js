@@ -99,18 +99,20 @@ async function readTelegramSettings() {
     botToken: readValue('TELEGRAM_BOT_TOKEN'),
     chatId: readValue('TELEGRAM_CHAT_ID'),
     schemeCountry: readValue('SCHEME_COUNTRY'),
-    capsolverApiKey
+    capsolverApiKey,
+    capmonsterApiKey: readValue('CAPMONSTER_API_KEY')
   };
 }
 
-async function saveTelegramSettings(_event, { botToken, chatId, schemeCountry }) {
+async function saveTelegramSettings(_event, { botToken, chatId, schemeCountry, capmonsterApiKey }) {
   const root = await dataRoot();
   const file = path.join(root, '.env');
   let content = await fs.readFile(file, 'utf8');
   const values = {
     TELEGRAM_BOT_TOKEN: botToken || '',
     TELEGRAM_CHAT_ID: chatId || '',
-    SCHEME_COUNTRY: (schemeCountry || '').trim().toUpperCase()
+    SCHEME_COUNTRY: (schemeCountry || '').trim().toUpperCase(),
+    CAPMONSTER_API_KEY: String(capmonsterApiKey || '').trim().replace(/[\r\n]/g, '')
   };
   for (const [key, value] of Object.entries(values)) {
     const line = `${key}=${value}`;

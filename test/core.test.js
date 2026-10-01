@@ -7,6 +7,7 @@ const { parseProxyLine, readProxyList } = require('../src/io');
 const { applyProxyList, validateAccounts } = require('../src/main');
 const { detectPage } = require('../src/detect');
 const { isRecaptchaAnchor } = require('../src/captcha');
+const { buildRecaptchaTask } = require('../src/capmonster');
 const { maskUsername } = require('../src/privacy');
 const { applicantSummary } = require('../src/notifications');
 
@@ -154,6 +155,30 @@ test('detectPage identifies payment before wizard pages', async () => {
 test('detectPage identifies health page by selector', async () => {
   const page = fakePage({ selectors: ['renalDialysisDropDownList'] });
   assert.equal(await detectPage(page), 'health');
+});
+
+test('CapMonster task uses the account proxy and hides nothing but the request fields', () => {
+  const proxyless = buildRecaptchaTask({
+    websiteURL: 'https://example.test/rs-captcha',
+    websiteKey: 'site-key',
+    iframeSrc: 'https://www.google.com/recaptcha/api2/anchor'
+  });
+  assert.equal(proxyless.type, 'RecaptchaV2TaskProxyless');
+  assert.equal(proxyless.proxyPassword, undefined);
+
+  const proxied = buildRecaptchaTask({
+    websiteURL: 'https://example.test/rs-captcha',
+    websiteKey: 'site-key',
+    iframeSrc: 'https://www.google.com/recaptcha/enterprise/anchor',
+    userAgent: 'TestAgent',
+    proxy: { server: 'http://geo.example:12321', username: 'user', password: 'secret-pass' }
+  });
+  assert.equal(proxied.type, 'RecaptchaV2EnterpriseTask');
+  assert.equal(proxied.proxyAddress, 'geo.example');
+  assert.equal(proxied.proxyPort, 12321);
+  assert.equal(proxied.proxyLogin, 'user');
+  assert.equal(proxied.proxyPassword, 'secret-pass');
+  assert.equal(proxied.userAgent, 'TestAgent');
 });
 
 test('captcha mode defaults to click and stores token per account', () => {

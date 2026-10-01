@@ -13,6 +13,7 @@ const telegramToken = document.querySelector('#telegramToken');
 const telegramChatId = document.querySelector('#telegramChatId');
 const schemeCountry = document.querySelector('#schemeCountry');
 const capsolverApiKey = document.querySelector('#capsolverApiKey');
+const capmonsterApiKey = document.querySelector('#capmonsterApiKey');
 const telegramStatus = document.querySelector('#telegramStatus');
 const runTime = document.querySelector('#runTime');
 const accountRows = document.querySelector('#accountRows');
@@ -385,6 +386,7 @@ async function loadTelegram() {
     telegramChatId.value = settings.chatId;
     schemeCountry.value = settings.schemeCountry;
     capsolverApiKey.value = settings.capsolverApiKey;
+    capmonsterApiKey.value = settings.capmonsterApiKey;
   } catch (error) {
     setTelegramStatus(error.message, 'invalid');
   }
@@ -395,7 +397,8 @@ async function saveTelegram() {
     await window.runnerApi.saveTelegram({
       botToken: telegramToken.value.trim(),
       chatId: telegramChatId.value.trim(),
-      schemeCountry: schemeCountry.value
+      schemeCountry: schemeCountry.value,
+      capmonsterApiKey: capmonsterApiKey.value.trim()
     });
     setTelegramStatus('Saved', 'valid');
     return true;

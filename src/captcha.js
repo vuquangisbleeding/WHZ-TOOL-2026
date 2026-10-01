@@ -4,7 +4,8 @@ const { sleep, formatDuration } = require('./timing');
 const { firstExisting, firstVisible } = require('./dom');
 const selectors = require('./selectors/actions');
 const { isStopRequested } = require('./stop');
-const { noteCaptcha, captchaMode } = require('./browser');
+const { noteCaptcha, captchaMode, accountProxy } = require('./browser');
+const { solveRecaptchaV2 } = require('./capmonster');
 
 const captchaStats = { count: 0, totalMs: 0 };
 
@@ -96,7 +97,18 @@ async function pauseForCaptcha(page, label, stats = null) {
   const startedAt = Date.now();
   const mode = captchaMode(accountIndexFromLabel(label));
   logCaptcha(label, id, 'FOUND', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, mode, url: info.url });
-  noteCaptcha(accountIndexFromLabel(label), id);
+  const accountIndex = accountIndexFromLabel(label);
+  noteCaptcha(accountIndex, id);
+  const capmonsterJob = { cancelled: false };
+  const capmonster = solveRecaptchaV2({
+    page,
+    info,
+    proxy: accountProxy(accountIndex),
+    isCancelled: () => capmonsterJob.cancelled,
+    onUpdate: (status, details) => logCaptcha(label, id, `CAPMONSTER_${status.toUpperCase()}`, details)
+  }).catch(error => {
+    if (!capmonsterJob.cancelled) logCaptcha(label, id, 'CAPMONSTER_FAILED', { message: error.message });
+  });
   try {
     captchaStats.count += 1;
     let nextClickAt = startedAt;
@@ -140,7 +152,9 @@ async function pauseForCaptcha(page, label, stats = null) {
     logCaptcha(label, id, 'FAILED', { elapsed_ms: Date.now() - startedAt, result: 'failed', message: error.message });
     throw error;
   } finally {
-    noteCaptcha(accountIndexFromLabel(label), '');
+    capmonsterJob.cancelled = true;
+    noteCaptcha(accountIndex, '');
+    capmonster.catch(() => {});
   }
 }
 

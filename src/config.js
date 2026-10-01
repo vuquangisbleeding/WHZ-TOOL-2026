@@ -20,6 +20,7 @@ const config = {
   navigationWaitTimeoutMs: Number(process.env.NAVIGATION_WAIT_TIMEOUT_MS || 10000),
   capsolverExtensionId: process.env.CAPSOLVER_EXTENSION_ID || 'mbfeabdjfagoifkpcikdaneggoimeidb',
   capsolverExtensionPath: process.env.CAPSOLVER_EXTENSION_PATH || '',
+  capmonsterApiKey: process.env.CAPMONSTER_API_KEY || '',
   chromeExecutablePath: process.env.CHROME_EXECUTABLE_PATH || undefined,
   headless: process.env.HEADLESS === 'true',
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_KEY || '',

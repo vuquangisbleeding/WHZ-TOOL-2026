@@ -68,6 +68,7 @@ function maskApiKey(apiKey) {
 
 const activeCaptchaIds = new Map();
 const captchaModes = new Map();
+const accountProxies = new Map();
 
 function noteCaptcha(accountIndex, id) {
   if (!Number.isInteger(accountIndex) || accountIndex < 0) return;
@@ -82,6 +83,17 @@ function noteCaptchaMode(accountIndex, mode) {
 
 function captchaMode(accountIndex) {
   return captchaModes.get(accountIndex) || 'click';
+}
+
+function noteAccountProxy(accountIndex, proxy) {
+  if (!Number.isInteger(accountIndex) || accountIndex < 0) return;
+  const normalized = normalizeProxy(proxy);
+  if (normalized) accountProxies.set(accountIndex, normalized);
+  else accountProxies.delete(accountIndex);
+}
+
+function accountProxy(accountIndex) {
+  return accountProxies.get(accountIndex) || null;
 }
 
 function capsolverEndpoint(url) {
@@ -189,6 +201,7 @@ async function watchCapSolver(browser, index, normalizedProxy) {
 }
 
 async function launchBrowser(args, index, proxy) {
+  noteAccountProxy(index, proxy);
   const profilePath = path.join(config.profileRoot, `account-${index + 1}`);
   await fs.mkdir(profilePath, { recursive: true });
   if (config.capsolverExtensionPath) await clearCapSolverProfileStorage(profilePath);
@@ -253,4 +266,4 @@ async function getSinglePage(browser) {
   return page;
 }
 
-module.exports = { launchBrowser, authenticateProxy, configureProxyAuthentication, getSinglePage, normalizeProxy, maskApiKey, noteCaptcha, noteCaptchaMode, captchaMode, capsolverEndpoint, summarizeCapSolverBody };
+module.exports = { launchBrowser, authenticateProxy, configureProxyAuthentication, getSinglePage, normalizeProxy, maskApiKey, noteCaptcha, noteCaptchaMode, captchaMode, noteAccountProxy, accountProxy, capsolverEndpoint, summarizeCapSolverBody };
