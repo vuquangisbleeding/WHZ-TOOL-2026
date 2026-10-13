@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Hướng dẫn sử dụng INZ Runner</title>
+  <style>
+    @page { size: A4; margin: 16mm 15mm 18mm; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: #1c1c1c;
+      font-family: Arial, "Helvetica Neue", sans-serif;
+      font-size: 11.2pt;
+      line-height: 1.5;
+    }
+    h1, h2, h3 { line-height: 1.25; page-break-after: avoid; }
+    h1 { font-size: 26pt; margin: 0 0 8px; }
+    h2 { font-size: 16.5pt; margin: 28px 0 8px; border-bottom: 2px solid #0b3a66; padding-bottom: 4px; page-break-before: always; }
+    h2.first { page-break-before: auto; }
+    h3 { font-size: 13pt; margin: 18px 0 6px; color: #0b3a66; }
+    p { margin: 0 0 8px; }
+    ol, ul { margin: 6px 0 10px; padding-left: 22px; }
+    li { margin: 0 0 4px; }
+    a { color: #0b57d0; text-decoration: none; }
+    code, .mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; page-break-inside: avoid; }
+    th, td { border: 1px solid #cfcfcf; padding: 5px 8px; vertical-align: top; text-align: left; }
+    th { background: #eef3f8; }
+    img { width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; }
+    figure { margin: 10px 0 14px; page-break-inside: avoid; }
+    figcaption { font-size: 9.5pt; color: #444; margin-top: 4px; }
+    .cover { page-break-after: always; min-height: 250mm; }
+    .kicker { letter-spacing: 0.12em; font-size: 10pt; color: #0b3a66; font-weight: 700; margin: 0 0 10px; }
+    .lead { font-size: 13pt; color: #333; }
+    .meta { margin-top: 28px; color: #444; }
+    .box { border-radius: 6px; padding: 10px 12px; margin: 10px 0 12px; page-break-inside: avoid; }
+    .note { background: #f3f7fb; border-left: 4px solid #0b3a66; }
+    .warn { background: #fff6e8; border-left: 4px solid #b86e00; }
+    .ok { background: #f1f8f2; border-left: 4px solid #1b7a32; }
+    .example { background: #f7f7f7; border-left: 4px solid #666; }
+    .box strong.label { display: block; margin-bottom: 4px; }
+    .toc a { color: inherit; }
+    .toc ol { line-height: 1.7; }
+    .small { font-size: 10pt; color: #444; }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <p class="kicker">INZ RUNNER · PHIÊN BẢN 1.0.0</p>
+    <h1>Hướng dẫn sử dụng</h1>
+    <p class="lead">Cài app trên Windows, điền đơn Working Holiday một lần, rồi bấm chạy khi quốc gia trên trang Immigration New Zealand đang mở.</p>
+    <div class="box note">
+      <strong class="label">Bạn sẽ làm được gì sau khi đọc xong</strong>
+      Cài file <span class="mono">INZ-Runner-Setup.exe</span>, điền hồ sơ đúng chữ mà website nhận, thêm tài khoản đăng nhập, bấm <strong>Bắt đầu</strong>, và tự trả phí khi app dừng ở trang thanh toán.
+    </div>
+    <p class="meta">Dành cho Windows 10 và Windows 11, bản 64-bit.<br>Máy Windows dùng chip ARM vẫn mở được file cài này.</p>
+  </section>
+
+  <h2 class="first">Mục lục</h2>
+  <nav class="toc">
+    <ol>
+      <li>App làm những việc gì</li>
+      <li>Chuẩn bị trước khi cài</li>
+      <li>Cài trên Windows</li>
+      <li>Bốn tab trong app</li>
+      <li>Điền hồ sơ, kèm một ví dụ</li>
+      <li>Thêm tài khoản đăng nhập</li>
+      <li>Cài đặt quốc gia, proxy và whitelist</li>
+      <li>Bấm chạy và đọc màn hình</li>
+      <li>Tới trang thanh toán</li>
+      <li>Việc hay gặp</li>
+      <li>Việc cần kiểm lại trước giờ mở đơn</li>
+    </ol>
+  </nav>
+
+  <h2>1. App làm những việc gì</h2>
+  <p>INZ Runner mở Google Chrome, đăng nhập tài khoản Immigration New Zealand, điền đơn Working Holiday theo hồ sơ bạn đã lưu, rồi bấm tiếp cho đến trang thanh toán.</p>
+  <p>Mỗi tài khoản là một cửa sổ Chrome riêng. Hai tài khoản không dùng chung phiên đăng nhập.</p>
+  <ul>
+    <li>App tự bấm ô “không phải người máy”, gửi ảnh captcha đi giải, rồi bấm Submit.</li>
+    <li>Nếu thẻ quốc gia đang đóng, app tải lại trang và chờ đến khi thẻ đó hiện <strong>OPEN</strong>.</li>
+    <li>Nếu trang báo quá tải, app chờ rồi thử lại.</li>
+    <li>Khi tới trang nhập thẻ, app ghi lại link thanh toán rồi đóng Chrome. Bạn tự trả phí.</li>
+  </ul>
+  <div class="box warn">
+    <strong class="label">App không làm các việc này</strong>
+    App không lưu số thẻ, ngày hết hạn thẻ hay mã bảo mật. App không bấm Edit, Submit hay Delete trên danh sách hồ sơ cũ. App không nộp giấy tờ sau này, không đặt lịch khám sức khỏe và không lấy dấu vân tay.
+  </div>
+
+  <h2>2. Chuẩn bị trước khi cài</h2>
+  <table>
+    <thead><tr><th>Thứ cần có</th><th>Ghi chú</th></tr></thead>
+    <tbody>
+      <tr><td>Máy Windows 10 hoặc 11, 64-bit</td><td>Windows 32-bit không dùng được. Máy chip ARM vẫn cài file này.</td></tr>
+      <tr><td>File <span class="mono">INZ-Runner-Setup.exe</span></td><td>Bấm đúp file này để cài. Không cần giải nén.</td></tr>
+      <tr><td>Google Chrome</td><td>Cài bản mặc định từ trang Google. App mở đúng Chrome trên máy.</td></tr>
+      <tr><td>Tài khoản Immigration</td><td>Đã tạo xong và đã xác nhận email. Cần tên đăng nhập, mật khẩu và email nhận tin visa.</td></tr>
+      <tr><td>Hộ chiếu</td><td>Còn hạn trên 6 tháng tính từ ngày nộp. Số hộ chiếu gõ đúng từng ký tự.</td></tr>
+      <tr><td>Giấy tờ thứ hai</td><td>Thường là căn cước. Cần ngày cấp và ngày hết hạn.</td></tr>
+      <tr><td>Thẻ Visa hoặc Mastercard</td><td>Bạn tự nhập trên trang thanh toán. App dừng trước bước đó.</td></tr>
+      <tr><td>Username được phép chạy</td><td>Nếu người phát app bật whitelist, username phải có trong danh sách của họ. Thiếu thì Chrome không mở.</td></tr>
+    </tbody>
+  </table>
+  <div class="box note">
+    <strong class="label">Cách viết ngày</strong>
+    Mọi ngày trong app viết theo dạng <span class="mono">24 May, 1996</span>. Có dấu phẩy sau tên tháng. Tháng viết bằng tiếng Anh: January, February, March, April, May, June, July, August, September, October, November, December.
+  </div>
+  <div class="box note">
+    <strong class="label">Chữ lưu vào đơn</strong>
+    Câu hỏi hiện tiếng Việt. Giá trị lưu vẫn là chữ của website, ví dụ <span class="mono">Yes</span>, <span class="mono">No</span>, <span class="mono">Miss</span>, <span class="mono">Female</span>, <span class="mono">National ID</span>. Trên màn hình bạn sẽ thấy dạng <span class="mono">Yes (Có)</span>.
+  </div>
+
+  <h2>3. Cài trên Windows</h2>
+  <h3>3.1. Cài Google Chrome</h3>
+  <ol>
+    <li>Mở trình duyệt hiện có, vào <span class="mono">https://www.google.com/chrome/</span>.</li>
+    <li>Tải bản Chrome cho Windows và cài vào thư mục mặc định.</li>
+    <li>Mở Chrome một lần để chắc là cài xong, rồi đóng Chrome.</li>
+  </ol>
+  <p>App tìm Chrome ở các chỗ sau:</p>
+  <ul>
+    <li><span class="mono">C:\Users\&lt;tên bạn&gt;\AppData\Local\Google\Chrome\Application\chrome.exe</span></li>
+    <li><span class="mono">C:\Program Files\Google\Chrome\Application\chrome.exe</span></li>
+    <li><span class="mono">C:\Program Files (x86)\Google\Chrome\Application\chrome.exe</span></li>
+  </ul>
+  <p>Nếu app báo <strong>Không thấy Google Chrome</strong>, cài lại Chrome vào một trong ba chỗ trên rồi mở app lại.</p>
+
+  <h3>3.2. Cài INZ Runner</h3>
+  <ol>
+    <li>Copy file <span class="mono">INZ-Runner-Setup.exe</span> sang máy Windows. Có thể để trên Desktop hoặc trong thư mục Tải xuống.</li>
+    <li>Bấm đúp file đó.</li>
+    <li>Nếu Windows hiện cửa sổ xanh SmartScreen, bấm <strong>More info</strong>, rồi bấm <strong>Run anyway</strong>. Cửa sổ này hiện vì app chưa được Microsoft ký số.</li>
+    <li>Trong trình cài, chọn thư mục nếu bạn muốn đổi chỗ cài. Quyền quản trị cả máy là không cần.</li>
+    <li>Cài xong, mở <strong>INZ Runner</strong> từ shortcut trên Desktop hoặc từ menu Start.</li>
+  </ol>
+  <div class="box ok">
+    <strong class="label">File hướng dẫn nằm cạnh app</strong>
+    Sau khi cài, file <span class="mono">HUONG_DAN_SU_DUNG.pdf</span> nằm cùng thư mục với <span class="mono">INZ Runner.exe</span>. Bạn có thể mở lại bất cứ lúc nào.
+  </div>
+
+  <h3>3.3. Lần đầu mở</h3>
+  <p>Hồ sơ và danh sách tài khoản đang trống. App không kèm đơn hay mật khẩu của người khác. Bạn tự điền, bấm lưu, rồi mới bấm chạy.</p>
+  <p>Dữ liệu bạn nhập được giữ trên máy này, trong thư mục:</p>
+  <p class="mono">C:\Users\&lt;tên bạn&gt;\AppData\Roaming\inz-puppeteer-multi-tab</p>
+  <p>Trong đó có đơn, tài khoản, file cài đặt, danh sách proxy, file kết quả và thư mục nhật ký. Xóa thư mục này là xóa dữ liệu đã nhập trên máy đó. Gỡ app không tự xóa thư mục này.</p>
+
+  <h2>4. Bốn tab trong app</h2>
+  <p>Thanh trên cùng có bốn tab. Làm theo thứ tự: <strong>Hồ sơ</strong>, rồi <strong>Cài đặt</strong>, rồi <strong>Chạy</strong>. Tab <strong>Nhật ký</strong> dùng khi cần xem app đã làm gì.</p>
+  <table>
+    <thead><tr><th>Tab</th><th>Dùng để</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Chạy</strong></td><td>Bấm Bắt đầu, Tạm dừng, Tiếp tục, Huỷ. Xem tài khoản nào đang ở đâu và mở link thanh toán.</td></tr>
+      <tr><td><strong>Nhật ký</strong></td><td>Đọc log của lần đang chạy và các lần trước. Nút Xóa màn hình chỉ xóa chữ trên màn hình, không xóa file log.</td></tr>
+      <tr><td><strong>Hồ sơ</strong></td><td>Điền đơn. Giữ chế độ <strong>Form</strong>. Bấm <strong>Lưu hồ sơ</strong> sau khi điền.</td></tr>
+      <tr><td><strong>Cài đặt</strong></td><td>Điền quốc gia chương trình, danh sách proxy và tài khoản đăng nhập. Bấm <strong>Lưu cài đặt</strong>.</td></tr>
+    </tbody>
+  </table>
+  <figure>
+    <img src="../docs/images/huong-dan/01-run.png" alt="Tab Chạy khi chưa bấm Bắt đầu">
+    <figcaption>Tab Chạy lúc chưa chạy. Nút Bắt đầu ở góc trên. Bảng phía dưới hiện tài khoản sau khi bạn đã lưu.</figcaption>
+  </figure>
+  <div class="box note">
+    <strong class="label">Dấu trên form</strong>
+    Dấu <strong>!</strong> là ô website bắt buộc. Dòng xanh <strong>Có thể để trống</strong> thì được bỏ trống. Nút <strong>Trước</strong> và <strong>Tiếp</strong> chuyển trang trong đơn. Góc form có nút <strong>Tiếng Việt</strong> và <strong>English</strong>. Lần đầu app dùng tiếng Việt.
+  </div>
+
+  <h2>5. Điền hồ sơ, kèm một ví dụ</h2>
+  <p>Vào tab <strong>Hồ sơ</strong>. Giữ nút <strong>Form</strong> đang sáng. Điền xong cả đơn rồi bấm <strong>Lưu hồ sơ</strong>. Dòng trạng thái phải báo đã lưu. Nếu chữ đỏ, đọc đúng câu đó và sửa ô nó chỉ.</p>
+  <div class="box example">
+    <strong class="label">Ví dụ trong hướng dẫn này là hồ sơ giả</strong>
+    Tên Nguyễn Thị Lan, số hộ chiếu và số điện thoại dưới đây chỉ để bạn thấy cách điền. Hãy thay bằng thông tin in trên hộ chiếu và giấy tờ của bạn. Tên trên đơn phải trùng hộ chiếu, thường viết hoa và không dấu.
+  </div>
+  <table>
+    <thead><tr><th>Ô</th><th>Ví dụ</th></tr></thead>
+    <tbody>
+      <tr><td>Họ</td><td>NGUYEN</td></tr>
+      <tr><td>Tên 1</td><td>THI LAN</td></tr>
+      <tr><td>Danh xưng</td><td>Miss (Cô)</td></tr>
+      <tr><td>Giới tính</td><td>Female (Nữ)</td></tr>
+      <tr><td>Ngày sinh</td><td>24 May, 1996</td></tr>
+      <tr><td>Nước sinh</td><td>Vietnam</td></tr>
+      <tr><td>Số nhà / Tên đường</td><td>15 / Le Loi</td></tr>
+      <tr><td>Phường / khu vực</td><td>Ben Nghe</td></tr>
+      <tr><td>Thành phố / Tỉnh</td><td>Ho Chi Minh City / Ho Chi Minh</td></tr>
+      <tr><td>Mã bưu chính / Quốc gia</td><td>700000 / Vietnam</td></tr>
+      <tr><td>Số di động / Email</td><td>0901234567 / lan.example@gmail.com</td></tr>
+      <tr><td>Số hộ chiếu</td><td>C12345678, gõ lại y hệt ở ô xác nhận</td></tr>
+      <tr><td>Hết hạn hộ chiếu</td><td>20 Mar, 2032</td></tr>
+      <tr><td>Quốc tịch</td><td>Vietnam</td></tr>
+      <tr><td>Giấy tờ thứ hai</td><td>National ID (Căn cước công dân), cấp 01 Jun, 2021, hết hạn 01 Jun, 2036</td></tr>
+      <tr><td>Quốc gia chương trình</td><td>VIETNAM</td></tr>
+      <tr><td>Ngày dự định đến</td><td>15 Jan, 2027</td></tr>
+      <tr><td>Tên chủ thẻ</td><td>NGUYEN THI LAN</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.1. Cá nhân</h3>
+  <figure>
+    <img src="../docs/images/huong-dan/form-personal.png" alt="Trang thông tin cá nhân">
+    <figcaption>Trang Cá nhân. Điền tên đúng thứ tự trên hộ chiếu.</figcaption>
+  </figure>
+  <table>
+    <thead><tr><th>Ô trong app</th><th>Điền thế nào</th></tr></thead>
+    <tbody>
+      <tr><td>Bạn có người đại diện là cố vấn di trú không?</td><td>Tự nộp thì chọn <span class="mono">No (Không)</span>.</td></tr>
+      <tr><td>Họ</td><td>Họ trên hộ chiếu. Ví dụ <span class="mono">NGUYEN</span>.</td></tr>
+      <tr><td>Tên 1</td><td>Chữ lót và tên viết chung một ô. Ví dụ <span class="mono">THI LAN</span>. Để trống Tên 2 và Tên 3.</td></tr>
+      <tr><td>Tên khác</td><td>Chỉ điền nếu bạn đã dùng tên khác. Không có thì để trống.</td></tr>
+      <tr><td>Danh xưng</td><td>Ông, bà hoặc cô. Ví dụ <span class="mono">Miss (Cô)</span>. Chọn Khác thì hiện thêm ô ghi rõ danh xưng.</td></tr>
+      <tr><td>Giới tính</td><td><span class="mono">Female (Nữ)</span> hoặc <span class="mono">Male (Nam)</span>.</td></tr>
+      <tr><td>Ngày sinh</td><td><span class="mono">24 May, 1996</span></td></tr>
+      <tr><td>Nước sinh</td><td>Đúng chữ trong danh sách website. Hồ sơ Việt Nam ghi <span class="mono">Vietnam</span>, không ghi “Việt Nam”.</td></tr>
+      <tr><td>Số nhà, Tên đường</td><td>Tách số nhà và tên đường. Ví dụ số nhà <span class="mono">15</span>, tên đường <span class="mono">Le Loi</span>.</td></tr>
+      <tr><td>Phường / khu vực</td><td>Ô này bắt buộc, kể cả khi bạn ở thành phố. Điền tên phường, quận hoặc khu vực. Ví dụ <span class="mono">Ben Nghe</span>.</td></tr>
+      <tr><td>Thành phố, Tỉnh / bang, Mã bưu chính, Quốc gia</td><td>Điền đúng địa chỉ của bạn. Quốc gia ghi <span class="mono">Vietnam</span> nếu bạn ở Việt Nam.</td></tr>
+      <tr><td>Điện thoại ban ngày, ban đêm, fax</td><td>Được để trống. Muốn nhanh thì copy số di động vào ô ban ngày.</td></tr>
+      <tr><td>Số di động</td><td>Bắt buộc. Ví dụ <span class="mono">0901234567</span>.</td></tr>
+      <tr><td>Email</td><td>Email nhận tin visa. Phải điền đúng, ví dụ <span class="mono">lan.example@gmail.com</span>.</td></tr>
+      <tr><td>Cách liên hệ mong muốn</td><td>Chọn <span class="mono">Email</span> nếu bạn muốn được liên hệ bằng email.</td></tr>
+      <tr><td>Bạn có thẻ tín dụng để nộp phí trực tuyến không?</td><td>Có thẻ Visa hoặc Mastercard thì chọn <span class="mono">Yes (Có)</span>.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.2. Giấy tờ</h3>
+  <figure>
+    <img src="../docs/images/huong-dan/form-identification.png" alt="Trang giấy tờ">
+    <figcaption>Hai ô số hộ chiếu phải giống nhau thì hồ sơ mới lưu được.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Số hộ chiếu</strong> gõ đúng như trên hộ chiếu, rồi gõ lại ở <strong>Nhập lại số hộ chiếu</strong>. Khác một ký tự là app báo lỗi và không lưu.</li>
+    <li><strong>Ngày hết hạn hộ chiếu</strong> phải còn hơn 6 tháng. Ví dụ <span class="mono">20 Mar, 2032</span>.</li>
+    <li><strong>Quốc tịch trên hộ chiếu</strong> là nước in trên hộ chiếu. Hồ sơ Việt Nam ghi <span class="mono">Vietnam</span>.</li>
+    <li><strong>Loại giấy tờ</strong>: dùng căn cước thì chọn <span class="mono">National ID (Căn cước công dân)</span>. Có thể chọn giấy khai sinh hoặc bằng lái nếu đó mới là giấy bạn dùng.</li>
+    <li>Điền <strong>Ngày cấp</strong> và <strong>Ngày hết hạn</strong> của giấy đó. Ví dụ cấp <span class="mono">01 Jun, 2021</span>, hết hạn <span class="mono">01 Jun, 2036</span>.</li>
+  </ul>
+
+  <h3>5.3. Nghề nghiệp</h3>
+  <figure>
+    <img src="../docs/images/huong-dan/form-occupation.png" alt="Trang nghề nghiệp">
+    <figcaption>Hai ô ngành và nghề được để trống. App bấm Next và đi tiếp.</figcaption>
+  </figure>
+  <p>Trang này trên website không bắt buộc. Trong app, để trống <strong>Ngành nghề</strong> và <strong>Nghề nghiệp</strong>. Runner không gõ hai ô tìm kiếm này.</p>
+
+  <h3>5.4. Sức khỏe</h3>
+  <figure>
+    <img src="../docs/images/huong-dan/form-health.png" alt="Trang sức khỏe">
+    <figcaption>Mỗi câu chọn Có hoặc Không. Chỉ ghi khung chi tiết khi website yêu cầu giải thích.</figcaption>
+  </figure>
+  <p>Với người không có bệnh nêu trong đơn, chọn <span class="mono">No (Không)</span> cho các câu:</p>
+  <ul>
+    <li>Cần lọc máu trong thời gian ở New Zealand.</li>
+    <li>Đang có bệnh lao.</li>
+    <li>Đang có ung thư.</li>
+    <li>Đang có bệnh tim.</li>
+    <li>Có khuyết tật thể chất, tâm thần hoặc trí tuệ.</li>
+    <li>Cần nằm viện trong thời gian ở New Zealand.</li>
+    <li>Cần chăm sóc tại cơ sở lưu trú.</li>
+    <li>Đang mang thai.</li>
+  </ul>
+  <div class="box warn">
+    <strong class="label">Câu nguy cơ lao</strong>
+    Câu “ở từ 3 tháng trở lên trong 5 năm tại nước không thuộc nhóm ít nguy cơ lao”: Việt Nam thuộc nhóm nguy cơ lao cao. Nếu bạn sống ở Việt Nam, chọn <span class="mono">Yes (Có)</span>. Câu này không cần ghi thêm vào khung chi tiết.
+  </div>
+  <p>Ô <strong>Nếu có câu trả lời Có, hãy ghi chi tiết</strong> chỉ dùng khi có câu Yes mà website yêu cầu giải thích. Có bệnh thật thì phải ghi. Khai Không trong khi có bệnh là khai sai.</p>
+
+  <h3>5.5. Lý lịch</h3>
+  <figure>
+    <img src="../docs/images/huong-dan/form-character.png" alt="Trang lý lịch">
+    <figcaption>Trang lý lịch. Chưa từng phạm tội, ngồi tù hoặc bị trục xuất thì chọn Không hết.</figcaption>
+  </figure>
+  <p>Các câu hỏi về án tù từ 5 năm, án tù từ 12 tháng trong 10 năm, trục xuất, lệnh đưa ra khỏi nước, bị buộc tội, bị kết án, đang bị điều tra, bị từ chối nhập cảnh và bị đưa ra khỏi nước.</p>
+  <p>Chưa từng thì chọn <span class="mono">No (Không)</span> hết và để trống ô chi tiết. Từng có thì chọn <span class="mono">Yes (Có)</span> đúng câu đó, rồi ghi ngày và quốc gia vào ô chi tiết. Để Yes mà bỏ trống phần giải thích thì đơn không đúng.</p>
+
+  <h3>5.6. Riêng Working Holiday</h3>
+  <figure>
+    <img src="../docs/images/huong-dan/form-whs.png" alt="Trang Working Holiday">
+    <figcaption>Ô quốc gia ở đây phải giống ô Quốc gia chương trình trong tab Cài đặt.</figcaption>
+  </figure>
+  <p><strong>Quốc gia chương trình Working Holiday</strong> là chữ trên thẻ quốc gia bạn sẽ bấm Apply now. Gõ đúng chữ đó, ví dụ <span class="mono">VIETNAM</span> hoặc <span class="mono">JAPAN</span>. Ô này và ô <strong>Quốc gia chương trình</strong> trong tab Cài đặt phải giống nhau. Khác nhau thì app không chạy.</p>
+  <table>
+    <thead><tr><th>Câu</th><th>Cách chọn</th></tr></thead>
+    <tbody>
+      <tr><td>Đã từng được cấp visa Working Holiday New Zealand chưa</td><td><span class="mono">No (Không)</span> nếu chưa từng.</td></tr>
+      <tr><td>Có đủ tiền cho chuyến không</td><td><span class="mono">Yes (Có)</span> chỉ khi bạn đủ mức của đúng chương trình đang nộp. Mỗi nước một mức. Đọc điều kiện trên trang Immigration trước khi chọn Có.</td></tr>
+      <tr><td>Bạn dự định đến New Zealand ngày nào?</td><td>Ví dụ <span class="mono">15 Jan, 2027</span>.</td></tr>
+      <tr><td>Đã từng đến New Zealand chưa</td><td><span class="mono">No (Không)</span> nếu chưa. Chọn Yes thì điền thêm ngày vào ô hiện ra.</td></tr>
+      <tr><td>Đủ tiền mua vé rời New Zealand khi visa hết hạn</td><td><span class="mono">Yes (Có)</span> khi bạn có khoản đó.</td></tr>
+      <tr><td>Đủ điều kiện riêng của chương trình nước mình</td><td><span class="mono">Yes (Có)</span> khi bạn đã đọc và đủ điều kiện của nước đã chọn, gồm tuổi, hộ chiếu và các yêu cầu riêng.</td></tr>
+      <tr><td>Thời gian dự định ở lại</td><td>Để trống nếu trang không hỏi. Có hỏi thì chọn <span class="mono">6 months</span> hoặc <span class="mono">12 months</span>.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.7. Cam kết</h3>
+  <figure>
+    <img src="../docs/images/huong-dan/form-declaration.png" alt="Trang cam kết">
+    <figcaption>Tick đủ 11 ô. Chữ Yes cạnh mỗi câu là giá trị sẽ lưu.</figcaption>
+  </figure>
+  <p>Mỗi câu là một ô Yes: bạn đã đọc quy định, thông tin khai là đúng, sẽ báo nếu hoàn cảnh đổi, cho phép dùng thông tin, hiểu visa cho phép làm gì, sẽ rời New Zealand trước khi visa hết hạn, và sẽ có bảo hiểm y tế hoặc tự trả chi phí khám nếu không được miễn phí.</p>
+  <p>Tick hết 11 ô. Runner chỉ tick các ô trên website khi tất cả đều được chọn. Thiếu một ô thì hồ sơ không lưu được vì các ô này là bắt buộc.</p>
+
+  <h3>5.8. Người trả tiền</h3>
+  <figure>
+    <img src="../docs/images/huong-dan/form-payer.png" alt="Tên người trả tiền">
+    <figcaption>Chỉ lưu tên chủ thẻ. Số thẻ không có ô nào trong app.</figcaption>
+  </figure>
+  <p><strong>Tên chủ thẻ</strong> là tên người trả phí, viết như trên thẻ. Ví dụ <span class="mono">NGUYEN THI LAN</span>. Phí đúng là số hiện trên trang thanh toán lúc bạn nộp. Số đó có thể đổi theo năm.</p>
+  <p>Bấm <strong>Lưu hồ sơ</strong>. Dòng trạng thái ở Hồ sơ cần hiện số tài khoản sẵn sàng thì mới chạy được. Lúc này nếu chưa thêm tài khoản, app sẽ báo cần ít nhất một tài khoản. Sang tab Cài đặt để thêm.</p>
+
+  <h2>6. Thêm tài khoản đăng nhập</h2>
+  <p>Tài khoản nằm ở tab <strong>Cài đặt</strong>, phía dưới danh sách proxy. Mỗi dòng là một Chrome riêng.</p>
+  <figure>
+    <img src="../docs/images/huong-dan/form-accounts.png" alt="Danh sách tài khoản">
+    <figcaption>Mỗi dòng cần tên đăng nhập, mật khẩu và email. Tick Dùng proxy nếu dòng đó phải đi qua proxy.</figcaption>
+  </figure>
+  <ol>
+    <li>Bấm <strong>Thêm tài khoản</strong>.</li>
+    <li><strong>Tên đăng nhập</strong> và <strong>Mật khẩu</strong> là tài khoản Immigration vừa tạo.</li>
+    <li><strong>Email</strong> là email nhận tin visa. Nên trùng email trong đơn.</li>
+    <li>Tick <strong>Dùng proxy</strong> nếu tài khoản này phải lấy một dòng trong danh sách proxy phía trên. Không tick thì Chrome đi mạng trực tiếp của máy.</li>
+    <li>Bấm <strong>Lưu tài khoản</strong> hoặc <strong>Lưu cài đặt</strong>. Cả hai nút đều ghi quốc gia, proxy và tài khoản.</li>
+  </ol>
+  <p>Nhiều tài khoản thì thêm nhiều dòng. Các dòng tick Dùng proxy lấy proxy lần lượt từ trên xuống: dòng tick đầu lấy proxy dòng 1, dòng tick kế lấy proxy dòng 2. Số dòng tick nhiều hơn số proxy thì app báo thiếu proxy và không chạy.</p>
+  <p>Muốn sửa file thô thì bấm <strong>JSON</strong> cạnh tài khoản. Có nút Nhập và Xuất. Xong thì quay lại Form và bấm lưu.</p>
+
+  <h2>7. Cài đặt quốc gia, proxy và whitelist</h2>
+  <figure>
+    <img src="../docs/images/huong-dan/settings.png" alt="Tab Cài đặt">
+    <figcaption>Tab Cài đặt. Ô whitelist chỉ để xem, không sửa trong app.</figcaption>
+  </figure>
+  <h3>7.1. Quốc gia chương trình</h3>
+  <p>Gõ cùng chữ với ô quốc gia trong đơn, ví dụ <span class="mono">VIETNAM</span>. App so sánh không phân biệt hoa thường. Runner chỉ bấm Apply now khi thẻ đó hiện <strong>OPEN</strong>. Thẻ đang đóng thì app tải lại trang và chờ. <strong>Tạm dừng</strong> hoặc <strong>Huỷ</strong> thì ngừng chờ.</p>
+
+  <h3>7.2. Danh sách proxy</h3>
+  <p>Mỗi dòng một proxy, đúng dạng:</p>
+  <p class="mono">host:port:username:password</p>
+  <p>Ví dụ: <span class="mono">123.45.67.89:8080:user1:pass1</span>. Đủ bốn phần, cách nhau bằng dấu hai chấm. Port là số từ 1 đến 65535. Dòng sai thì bấm lưu sẽ báo đúng số dòng bị lỗi.</p>
+  <p>Không dùng proxy thì để trống ô này và bỏ tick Dùng proxy ở mọi tài khoản.</p>
+
+  <h3>7.3. Whitelist, captcha và Telegram</h3>
+  <p>Ô <strong>Whitelist Google Sheet</strong> hiện link đã che. Bạn không sửa link, API key, bot token hay chat ID trong app. Người phát app giữ các giá trị đó trên Google Sheet.</p>
+  <ul>
+    <li>Cột <span class="mono">whitelist</span> là <span class="mono">yes</span>: chỉ username có trong sheet mới chạy. Username khác thì app dừng, báo <strong>Không có trong whitelist</strong>, Chrome không mở. Nhờ người phát app thêm đúng username.</li>
+    <li>Cột <span class="mono">whitelist</span> là <span class="mono">no</span>: username nào cũng chạy.</li>
+    <li>Cùng sheet phải có API key giải captcha, bot token và chat ID. Thiếu một giá trị thì lần chạy dừng. Nhật ký ghi là không có giá trị.</li>
+  </ul>
+  <p>Nút <strong>Gửi thử Telegram</strong> gửi một tin “kết nối thành công” vào nhóm đã cấu hình. Dùng nút này trước giờ mở đơn để biết tin nhắn sẽ tới.</p>
+  <p>Khi một tài khoản chạy xong hoặc lỗi, app gửi một tin Telegram riêng cho tài khoản đó. Tin gồm trạng thái, link thanh toán nếu đã có, và thông tin cơ bản của hồ sơ.</p>
+
+  <h3>7.4. File kết quả</h3>
+  <p>Ô <strong>File kết quả</strong> hiện đường dẫn file CSV. App thêm một dòng khi tài khoản thành công hoặc thất bại. Cột gồm username, họ tên, email, trạng thái, link thanh toán và ghi chú. Bấm <strong>Mở file kết quả</strong> để xem, sửa hoặc xóa dòng, giống cách sửa một file Excel đã lưu dạng CSV.</p>
+
+  <h2>8. Bấm chạy và đọc màn hình</h2>
+  <p>Quay lại tab <strong>Chạy</strong>. Dòng trạng thái ở Hồ sơ cần hiện số tài khoản sẵn sàng, và hai ô quốc gia phải giống nhau. Bấm <strong>Bắt đầu</strong>.</p>
+  <p>Bấm Bắt đầu thì app lưu hồ sơ và cài đặt thêm một lần. Nếu còn ô sai, nút chạy dừng và dòng “Việc vừa xảy ra” hiện đúng lỗi.</p>
+  <figure>
+    <img src="../docs/images/huong-dan/02-run-live.png" alt="Tiến độ khi đang chạy">
+    <figcaption>Lúc đang chạy: trạng thái từng tài khoản, captcha và số ô đã điền.</figcaption>
+  </figure>
+  <table>
+    <thead><tr><th>Nút</th><th>Việc nút làm</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Bắt đầu</strong></td><td>Mở Chrome và chạy các tài khoản cùng lúc.</td></tr>
+      <tr><td><strong>Tạm dừng</strong></td><td>Dừng account đang chạy, kể cả lúc đang tải lại quốc gia, lúc web quá tải và lúc đang giải captcha. Đồng hồ đứng. Chrome giữ nguyên trang.</td></tr>
+      <tr><td><strong>Tiếp tục</strong></td><td>Chạy tiếp từ chỗ đã dừng.</td></tr>
+      <tr><td><strong>Huỷ</strong></td><td>Đóng hết Chrome của lần chạy và xóa tiến độ, log, đồng hồ trên màn Chạy. Đơn đã lưu vẫn còn. Bấm Bắt đầu khi muốn chạy lại.</td></tr>
+    </tbody>
+  </table>
+  <div class="box warn">
+    <strong class="label">Đóng cửa sổ app</strong>
+    Đóng cửa sổ INZ Runner trong lúc đang chạy cũng đóng Chrome. Muốn giữ trang thì dùng Tạm dừng, đừng tắt app.
+  </div>
+  <h3>Chữ trên màn Chạy</h3>
+  <ul>
+    <li><strong>Số tài khoản</strong> là số dòng tài khoản đã lưu.</li>
+    <li><strong>Việc vừa xảy ra</strong> là bước mới nhất.</li>
+    <li><strong>Tiến độ trực tiếp</strong> đọc log app đã in. Nó cho biết trang đang đứng và ô đã điền.</li>
+    <li>Captcha có ba trạng thái: <strong>Đang giải captcha</strong>, <strong>Đã giải captcha</strong>, <strong>Giải captcha không xong</strong>.</li>
+    <li><strong>Đã điền</strong> là số ô app đã ghi trên trang hiện tại.</li>
+    <li>Ô lọc phía trên bảng dùng để tìm theo tên hoặc username khi chạy nhiều tài khoản.</li>
+  </ul>
+  <p>Sang tab Hồ sơ trong lúc chạy: trang đang mở có chấm vàng, trang đã qua có chấm xanh. Ô đã điền nền xanh và chữ <strong>Đã điền</strong>. Ô không thấy trên trang nền đỏ và chữ <strong>Không thấy trên trang</strong>.</p>
+  <figure>
+    <img src="../docs/images/huong-dan/form-health-live.png" alt="Ô sức khỏe đã điền và captcha đã giải">
+    <figcaption>Vừa chạy vừa mở Hồ sơ để xem trang nào đã qua và captcha đã giải chưa.</figcaption>
+  </figure>
+  <h3>Một số tình huống lúc chạy</h3>
+  <ul>
+    <li><strong>Thẻ quốc gia đang đóng.</strong> App tải lại và chờ OPEN. Bạn có thể Tạm dừng hoặc Huỷ.</li>
+    <li><strong>Trang quá tải.</strong> App chờ rồi thử lại. Cứ để nó chạy, trừ khi bạn muốn dừng.</li>
+    <li><strong>Sau đăng nhập thấy danh sách hồ sơ cũ</strong>, có nút Edit, Submit và Delete. App dừng ngay, không bấm các nút đó, và giữ Chrome để bạn tự xem.</li>
+    <li><strong>App không nhận ra trang.</strong> Chrome được giữ lại. Bạn xử lý trang đó, app chờ rồi đi tiếp khi trang trở lại dạng nó biết.</li>
+    <li><strong>Giải captcha không xong.</strong> Xem tab Nhật ký. Kiểm tra API key trên whitelist với người phát app, rồi chạy lại.</li>
+  </ul>
+  <p>Tab <strong>Nhật ký</strong> có log lần này ở phía trên. Phía dưới là các file log đã lưu. Bấm một file bên trái để đọc. Ô lọc giúp tìm theo tài khoản, ngày hoặc trạng thái.</p>
+
+  <h2>9. Tới trang thanh toán</h2>
+  <p>Khi điền xong, app bấm Pay now, ghi tên chủ thẻ, mở trang thanh toán, lưu link, rồi đóng Chrome. App không nhập số thẻ.</p>
+  <p>Trên tab Chạy, bảng kết quả có nút <strong>Mở trang thanh toán</strong>. Bấm nút đó, trình duyệt mở link đã lưu, bạn tự điền số thẻ, ngày hết hạn và mã bảo mật trên trang Paystation.</p>
+  <p>Một dòng thành công trong file kết quả có trạng thái dừng ở thanh toán và có link. Tin Telegram của tài khoản đó cũng có link này.</p>
+  <div class="box note">
+    <strong class="label">Sau khi trả tiền</strong>
+    Email xác nhận sẽ yêu cầu giấy tờ kèm, ví dụ bằng cấp hoặc chứng chỉ tiếng Anh. Khám sức khỏe và lấy dấu vân tay là bước sau, làm trên trang Immigration, ngoài app này.
+  </div>
+
+  <h2>10. Việc hay gặp</h2>
+  <table>
+    <thead><tr><th>Bạn thấy</th><th>Làm gì</th></tr></thead>
+    <tbody>
+      <tr><td>SmartScreen màu xanh lúc mở file cài</td><td>Bấm More info, rồi Run anyway.</td></tr>
+      <tr><td>Không thấy Google Chrome</td><td>Cài Chrome vào thư mục mặc định, mở Chrome một lần, mở lại app.</td></tr>
+      <tr><td>Không có trong whitelist</td><td>Username chưa được phép. Nhờ người phát app thêm đúng tên đăng nhập. Chrome sẽ không mở.</td></tr>
+      <tr><td>Không có giá trị API key, bot token hoặc chat ID</td><td>Sheet whitelist thiếu ô. Nhờ người phát app điền. App không có chỗ để bạn tự gõ ba giá trị này.</td></tr>
+      <tr><td>Quốc gia chương trình không khớp</td><td>Sửa ô trong Hồ sơ và ô trong Cài đặt cho cùng một chữ, ví dụ cùng <span class="mono">VIETNAM</span>, rồi lưu lại.</td></tr>
+      <tr><td>Nhập lại số hộ chiếu chưa khớp</td><td>Gõ lại hai ô cho giống nhau, kể cả chữ hoa và chữ thường.</td></tr>
+      <tr><td>Ngày phải theo dạng 24 May, 1996</td><td>Viết ngày, tên tháng tiếng Anh, dấu phẩy, năm. Ví dụ <span class="mono">01 Jun, 2021</span>.</td></tr>
+      <tr><td>Thiếu thông tin bắt buộc</td><td>App liệt kê tên ô. Dấu ! là ô còn thiếu. Điền rồi bấm Lưu hồ sơ.</td></tr>
+      <tr><td>Thiếu proxy cho một tài khoản</td><td>Thêm đủ dòng proxy, hoặc bỏ tick Dùng proxy ở tài khoản không cần proxy.</td></tr>
+      <tr><td>Proxy không hợp lệ</td><td>Sửa dòng cho đúng <span class="mono">host:port:username:password</span>.</td></tr>
+      <tr><td>Chrome báo profile đang được dùng</td><td>Đóng hết cửa sổ Chrome do app mở, rồi bấm Bắt đầu lại.</td></tr>
+      <tr><td>Thẻ quốc gia mãi không OPEN</td><td>App vẫn đang chờ. Tạm dừng nếu bạn chưa muốn chờ. Chỉ chạy khi bạn sẵn sàng để máy bật đến lúc thẻ mở.</td></tr>
+      <tr><td>Đứng ở danh sách hồ sơ cũ</td><td>App cố ý không bấm Edit, Submit, Delete. Tự xử lý trên Chrome đang mở.</td></tr>
+      <tr><td>Gửi thử Telegram lỗi</td><td>Bot token hoặc chat ID trên sheet sai, hoặc máy không ra được mạng. Nhờ người phát app kiểm sheet.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Gỡ app</h3>
+  <p>Vào <strong>Settings</strong> của Windows, mục <strong>Apps</strong>, chọn <strong>INZ Runner</strong>, bấm <strong>Uninstall</strong>. Thư mục dữ liệu trong <span class="mono">AppData\Roaming\inz-puppeteer-multi-tab</span> vẫn còn cho đến khi bạn tự xóa.</p>
+
+  <h2>11. Việc cần kiểm lại trước giờ mở đơn</h2>
+  <ol>
+    <li>Chrome đã cài và mở được.</li>
+    <li>Tài khoản Immigration đã xác nhận email. Tên đăng nhập và mật khẩu đã nằm trong tab Cài đặt và đã bấm lưu.</li>
+    <li>Dòng trạng thái báo số tài khoản sẵn sàng, chữ không đỏ.</li>
+    <li>Tên 1 gồm chữ lót và tên. Họ nằm ở ô Họ. Tên trùng hộ chiếu.</li>
+    <li>Phường / khu vực đã có chữ.</li>
+    <li>Hộ chiếu còn hạn trên 6 tháng. Hai ô số hộ chiếu giống nhau. Quốc tịch đúng nước trên hộ chiếu.</li>
+    <li>Sống ở Việt Nam thì câu nguy cơ lao là Có.</li>
+    <li>Câu đủ tiền chỉ là Có khi bạn đủ mức của đúng scheme đang nộp.</li>
+    <li>Đủ 11 ô cam kết đã tick.</li>
+    <li>Quốc gia trong đơn và quốc gia trong Cài đặt là cùng một chữ.</li>
+    <li>Username được phép chạy. Đã bấm Gửi thử Telegram và thấy tin nhắn.</li>
+    <li>Máy cắm điện, mạng ổn, Chrome khác đã đóng. Bạn ở cạnh máy để bấm Mở trang thanh toán khi app chạy xong.</li>
+  </ol>
+  <div class="box ok">
+    <strong class="label">Thứ tự một lần dùng</strong>
+    Cài Chrome. Cài INZ Runner. Điền Hồ sơ và bấm Lưu hồ sơ. Điền quốc gia, proxy nếu cần, tài khoản, rồi bấm Lưu cài đặt. Gửi thử Telegram. Sang tab Chạy, bấm Bắt đầu. Khi có nút Mở trang thanh toán, bấm nút đó và tự trả.
+  </div>
+</body>
+</html>

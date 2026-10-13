@@ -7,8 +7,9 @@ const { parseProxyLine, readProxyList } = require('../src/io');
 const { applyProxyList, validateAccounts } = require('../src/main');
 const { detectPage } = require('../src/detect');
 const { isRecaptchaAnchor } = require('../src/captcha');
-const { buildRecaptchaTask, injectRecaptchaToken, summarizeCapMonsterResponse } = require('../src/capmonster');
+const { buildRecaptchaTask, injectRecaptchaToken, summarizeCapMonsterResponse, capmonsterKeyPlan, capmonsterKeyLabel, showCapmonsterKey, shouldTryNextCapmonsterKey } = require('../src/capmonster');
 const { maskUsername } = require('../src/privacy');
+const { chromeCandidates, findChrome } = require('../src/chrome-path');
 const { applicantSummary } = require('../src/notifications');
 
 function fakePage({ url = 'https://example.test/', body = '', selectors = [] } = {}) {
@@ -128,6 +129,15 @@ test('detectPage identifies payment before wizard pages', async () => {
   assert.equal(await detectPage(page), 'payment');
 });
 
+test('detectPage stops on the existing applications list', async () => {
+  const page = fakePage({
+    url: 'https://onlineservices.immigration.govt.nz/WorkingHoliday/',
+    body: 'Existing Applications\nEdit | Submit Delete',
+    selectors: ['editHyperLink_']
+  });
+  assert.equal(await detectPage(page), 'existing');
+});
+
 test('detectPage identifies health page by selector', async () => {
   const page = fakePage({ selectors: ['renalDialysisDropDownList'] });
   assert.equal(await detectPage(page), 'health');
@@ -200,6 +210,31 @@ test('CapMonster response log keeps the message and hides the token', () => {
   assert.equal(failed.errorDescription, 'clientKey is invalid');
 });
 
+test('captcha page shows the whitelist CapMonster key', () => {
+  const key = 'a'.repeat(32);
+  assert.equal(capmonsterKeyLabel(key, 'whitelist'), `CapMonster API key (whitelist): ${key}`);
+  const elements = new Map();
+  const root = {
+    document: {
+      body: { appendChild(node) { elements.set(node.id, node); } },
+      getElementById(id) { return elements.get(id) || null; },
+      createElement() { return { id: '', style: '', textContent: '', setAttribute() {} }; }
+    }
+  };
+  showCapmonsterKey(key, 'whitelist', root);
+  assert.equal(elements.get('inz-capmonster-key').textContent, `CapMonster API key (whitelist): ${key}`);
+});
+
+test('CapMonster falls back to the local key when the sheet key is rejected', () => {
+  const local = 'b'.repeat(32);
+  const sheet = 'a'.repeat(32);
+  assert.deepEqual(capmonsterKeyPlan(sheet, local), [sheet, local]);
+  assert.deepEqual(capmonsterKeyPlan(local, local), [local]);
+  assert.equal(shouldTryNextCapmonsterKey('ERROR_KEY_DOES_NOT_EXIST', 0, 2), true);
+  assert.equal(shouldTryNextCapmonsterKey('ERROR_KEY_DOES_NOT_EXIST', 1, 2), false);
+  assert.equal(shouldTryNextCapmonsterKey('ERROR_ZERO_BALANCE', 0, 2), false);
+});
+
 test('auth proxy adds upstream credentials on CONNECT', async () => {
   const upstream = net.createServer(socket => {
     let pending = Buffer.alloc(0);
@@ -246,6 +281,13 @@ test('auth proxy adds upstream credentials on CONNECT', async () => {
 test('detectPage treats a submitted page without checkboxes as pending', async () => {
   const page = fakePage({ url: 'https://example.test/WorkingHoliday/Application/Submit.aspx?ApplicationId=1' });
   assert.equal(await detectPage(page), 'pending');
+});
+
+test('Chrome lookup prefers an explicit path, then the installed browser for that system', () => {
+  assert.equal(findChrome('C:\\Chrome\\chrome.exe', { exists: () => false }), 'C:\\Chrome\\chrome.exe');
+  assert.ok(chromeCandidates('darwin').some(candidate => candidate.endsWith('/Google Chrome')));
+  assert.ok(chromeCandidates('win32', { LOCALAPPDATA: 'C:\\Users\\me\\AppData\\Local' }).some(candidate => candidate.endsWith('chrome.exe')));
+  assert.equal(findChrome('', { platform: 'darwin', env: {}, exists: () => false }), '');
 });
 
 test('detectPage identifies personal2 by URL', async () => {

@@ -74,7 +74,7 @@ npm run desktop
 
 App có nút `Start runner`, `Stop` và cửa sổ log realtime. Runner vẫn chạy các profile song song như khi dùng `npm start`.
 
-Trong mục `Applicant data`, có thể nhập tay hoặc `Import`/`Export` hai file `applicant.json` và `emails.json`. Mục `Settings` cho phép sửa trực tiếp `SCHEME_COUNTRY`, `CAPMONSTER_API_KEY`, `TELEGRAM_BOT_TOKEN` và `TELEGRAM_CHAT_ID`. Khi packaged, các giá trị được lưu trong thư mục dữ liệu riêng của app.
+Trong mục Hồ sơ có thể nhập tay hoặc `Import`/`Export` `applicant.json`. Tài khoản (`emails.json`) và danh sách proxy nằm ở mục Cài đặt. Link whitelist hiện dạng đã che và không sửa được trong app. Autocaptcha API key, bot token và chat ID chỉ lấy từ whitelist. Khi packaged, các giá trị được lưu trong thư mục dữ liệu riêng của app.
 
 Đóng gói trên macOS:
 
@@ -92,14 +92,7 @@ Lệnh build Windows cần chạy trên Windows; lệnh build macOS cần chạy
 
 Mỗi lần chạy tạo một file log tổng và một file riêng cho từng account trong thư mục `logs/`. Terminal sẽ in các dòng `LOG_FILE ...` và `ACCOUNT_LOG_FILE ...`; mở file account tương ứng để xem riêng từng bước, URL, request lỗi, CAPTCHA, high-load và vị trí runner dừng. CAPTCHA được chờ tự động trong tối đa `CAPTCHA_TIMEOUT_MS`, không cần nhấn Enter.
 
-Ngay khi từng account kết thúc hoặc gặp lỗi, runner gửi một tin nhắn Telegram riêng, không chờ account khác. Tin nhắn gồm thời gian chạy, thời gian giải CAPTCHA và thông tin cơ bản của applicant. Điền bot token (key) và chat ID vào `.env`:
-
-```dotenv
-TELEGRAM_BOT_TOKEN=KEY_CUA_BOT
-TELEGRAM_CHAT_ID=CHAT_ID_CUA_BAN
-```
-
-Telegram là tùy chọn; nếu để trống, runner vẫn chạy và ghi rõ lý do bỏ qua trong log.
+Ngay khi từng account kết thúc hoặc gặp lỗi, runner gửi một tin nhắn Telegram riêng, không chờ account khác. Tin nhắn gồm thời gian chạy, thời gian giải CAPTCHA và thông tin cơ bản của applicant. Bot token và chat ID lấy từ whitelist. Thiếu một trong hai thì lần chạy không bắt đầu.
 
 Các Chrome profile được bắt đầu đồng thời. Profile được lưu trong thư mục `chrome-profiles/account-1`, `account-2`, ... để cookie/session của từng account được tách riêng và giữ lại cho lần chạy sau. Bot tự điền các field đã có selector theo pseudocode Selenium, nhấn `Next`, và dừng khi:
 
@@ -111,15 +104,11 @@ Các Chrome profile được bắt đầu đồng thời. Profile được lưu 
 - không tìm thấy nút tiếp theo;
 - chỉ dừng khi hoàn tất, đến payment hoặc người vận hành chủ động dừng.
 
-## CapMonster Cloud
+## Autocaptcha
 
-CAPTCHA được giải bằng CapMonster Cloud. Điền API key vào `.env` hoặc mục Settings:
+Ảnh reCAPTCHA v2 được giải bằng [autocaptcha.pro](https://documenter.getpostman.com/view/18090353/2s9YC8vAoo#136736b1-73d9-4a7c-be1c-512b40608291). API key lấy từ whitelist. Thiếu key thì lần chạy không bắt đầu.
 
-```dotenv
-CAPMONSTER_API_KEY=API_KEY_CUA_BAN
-```
-
-Runner gọi `api.capmonster.cloud`, nhận token reCAPTCHA rồi gắn vào trang. Không nạp extension trình duyệt. Không đưa API key vào `README.md`, `emails.json` hoặc git.
+Khi lưới ảnh hiện, runner chụp ảnh và gửi `type: compleximagetask`, `class: recaptcha`, rồi bấm các ô được trả về. Request `type: recaptchav2` chạy song song và chỉ gắn token nếu ảnh chưa giải xong. Không nạp extension trình duyệt. Không đưa API key vào `README.md`, `emails.json` hoặc git.
 
 ## Lưu ý
 

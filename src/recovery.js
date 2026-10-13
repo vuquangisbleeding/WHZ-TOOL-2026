@@ -1,12 +1,23 @@
 const config = require('./config');
-const { sleep } = require('./timing');
+const { sleep, loadDocument, documentLoadOptions, isContextGone } = require('./timing');
+const { isStopRequested, waitIfPaused, sleepUnlessStopped } = require('./stop');
 const refreshLocks = new WeakMap();
 
 async function isHighLoadPage(page) {
-  const probe = page.evaluate(() => `${location.href} ${document.body?.innerText || ''}`)
-    .then(content => /site is under high load|currently experiencing high demand|system is busy|please try again later|try again later/i.test(content))
-    .catch(error => { console.log(`[HIGH_LOAD_PROBE_ERROR] không đọc được trang: ${error.message}`); return false; });
-  return Promise.race([probe, sleep(config.highLoadProbeTimeoutMs).then(() => false)]);
+  while (!isStopRequested()) {
+    await waitIfPaused();
+    try {
+      const content = await page.evaluate(() => `${location.href} ${document.body?.innerText || ''}`);
+      return /site is under high load|currently experiencing high demand|system is busy|please try again later|try again later/i.test(content);
+    } catch (error) {
+      if (!isContextGone(error)) {
+        console.log(`[HIGH_LOAD_PROBE_ERROR] không đọc được trang: ${error.message}`);
+        return false;
+      }
+      await sleep(50);
+    }
+  }
+  return false;
 }
 
 async function recoverHighLoad(page, label) {
@@ -25,22 +36,31 @@ async function recoverHighLoadLocked(page, label) {
   let attempt = 0;
   const batchSize = Math.max(1, config.maxHighLoadRetries);
   while (true) {
+    await waitIfPaused();
+    if (isStopRequested()) return false;
     attempt += 1;
     if (!await isHighLoadPage(page)) return false;
     const batchAttempt = ((attempt - 1) % batchSize) + 1;
-    const delay = config.highLoadBackoffMs;
-    console.log(`[${label}] INZ quá tải (${batchAttempt}/${batchSize}), chuẩn bị refresh sau ${delay}ms; không dừng`);
-    await sleep(delay);
-    const startedAt = Date.now();
+    const delay = attempt === 1 ? 0 : config.highLoadBackoffMs;
+    console.log(`[${label}] INZ quá tải (${batchAttempt}/${batchSize}), tải lại trang, không dừng`);
+    if (delay && !await sleepUnlessStopped(delay)) return false;
     console.log(`[${label}] HIGH_LOAD_REFRESH_START`);
-    await page.reload({ waitUntil: 'domcontentloaded', timeout: config.highLoadReloadTimeoutMs })
-      .catch(error => console.log(`[${label}] HIGH_LOAD_REFRESH_TIMEOUT ${error.message}`));
-    console.log(`[${label}] HIGH_LOAD_REFRESH_DONE duration=${Date.now() - startedAt}ms`);
-    const stillHighLoad = await isHighLoadPage(page);
-    if (!stillHighLoad) return false;
+    try {
+      await loadDocument(page, () => page.reload(documentLoadOptions));
+    } catch (error) {
+      console.log(`[${label}] HIGH_LOAD_REFRESH_FAILED ${error.message}`);
+    }
+    console.log(`[${label}] HIGH_LOAD_REFRESH_DONE`);
+    if (!await isHighLoadPage(page)) return false;
     if (batchAttempt === batchSize) {
-      console.log(`[${label}] HIGH_LOAD_BATCH_COOLDOWN ${config.highLoadCooldownMs}ms`);
-      await sleep(config.highLoadCooldownMs);
+      console.log(`[${label}] HIGH_LOAD_BATCH_COOLDOWN`);
+      const deadline = Date.now() + config.highLoadCooldownMs;
+      while (Date.now() < deadline) {
+        if (!await isHighLoadPage(page)) return false;
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) break;
+        if (!await sleepUnlessStopped(Math.min(250, remaining))) return false;
+      }
     }
   }
 }

@@ -1,14 +1,19 @@
 const textSelectors = require('../selectors/text');
 const selectSelectors = require('../selectors/select');
-const { fillText, selectValue, fillJobs } = require('../dom');
+const { selectValue, fillJobs } = require('../dom');
 
 async function fillPersonal1(page, applicant, label) {
   const { personal, address, contact } = applicant;
-  await selectValue(page, selectSelectors.representedByAgent, contact.has_agent);
-  await fillJobs(page, [
+  const agentValue = contact.has_agent;
+  const agentFilled = agentValue ? await selectValue(page, selectSelectors.representedByAgent, agentValue) : false;
+  console.log(`[${label}] ${agentValue ? (agentFilled ? 'FIELD_SET' : 'FIELD_SKIP_MISSING') : 'FIELD_SKIP_EMPTY'} representedByAgent`);
+  const jobs = [
     { selector: 'familyName', value: personal.family_name }, { selector: 'givenName1', value: personal.given_name_1 },
     { selector: 'givenName2', value: personal.given_name_2 }, { selector: 'givenName3', value: personal.given_name_3 },
-    { selector: 'otherNames', value: personal.other_names }, { type: 'select', selector: 'title', value: personal.title },
+    { selector: 'otherNames', value: personal.other_names }, { type: 'select', selector: 'title', value: personal.title }
+  ];
+  if (personal.title === 'Other') jobs.push({ selector: 'otherTitle', value: personal.other_title });
+  jobs.push(
     { selector: 'dateOfBirth', value: personal.date_of_birth }, { type: 'select', selector: 'gender', value: personal.gender },
     { type: 'select', selector: 'countryOfBirth', value: personal.country_of_birth },
     { selector: 'streetNumber', value: address.street_number }, { selector: 'streetName', value: address.street_name },
@@ -16,10 +21,11 @@ async function fillPersonal1(page, applicant, label) {
     { selector: 'province', value: address.province },
     { selector: 'postalCode', value: address.postal_code }, { type: 'select', selector: 'addressCountry', value: address.country },
     { selector: 'phoneDaytime', value: contact.phone_daytime }, { selector: 'phoneNight', value: contact.phone_night, clearEmpty: true },
-    { selector: 'phoneMobile', value: contact.phone_mobile },
+    { selector: 'phoneMobile', value: contact.phone_mobile }, { selector: 'fax', value: contact.fax },
     { selector: 'email', value: contact.email }, { type: 'select', selector: 'communicationMethod', value: contact.communication_method },
     { type: 'select', selector: 'hasCreditCard', value: contact.has_credit_card }
-  ], label);
+  );
+  await fillJobs(page, jobs, label);
 }
 
 async function fillIdentification(page, applicant, label) {

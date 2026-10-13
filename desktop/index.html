@@ -9,90 +9,93 @@
 <body>
   <main class="shell">
     <header class="topbar">
-      <div><p class="eyebrow">IMMIGRATION NZ</p><h1>Runner control</h1></div>
-      <div class="status"><span id="statusDot"></span><span id="statusText">Ready</span></div>
+      <div><p class="eyebrow">INZ RUNNER</p><h1>Điều khiển</h1></div>
+      <div class="status"><span id="statusDot"></span><span id="statusText">Sẵn sàng</span></div>
     </header>
     <nav class="tabs" aria-label="Main sections">
-      <button class="tab active" data-tab="run">Run</button>
-      <button class="tab" data-tab="logs">Runner log</button>
-      <button class="tab" data-tab="data">Applicant data</button>
-      <button class="tab" data-tab="settings">Settings</button>
+      <button class="tab active" data-tab="run">Chạy</button>
+      <button class="tab" data-tab="logs">Nhật ký</button>
+      <button class="tab" data-tab="data">Hồ sơ</button>
+      <button class="tab" data-tab="settings">Cài đặt</button>
     </nav>
     <section class="tab-panel active" data-panel="run">
       <section class="hero">
-        <div><p class="eyebrow">MULTI-PROFILE AUTOMATION</p><h2>Runner control room</h2><p class="muted">Theo dõi trạng thái từng account trong một màn hình.</p></div>
-        <div class="actions"><button id="start" class="primary">Start runner</button><button id="stop" class="secondary" disabled>Stop app</button><button id="resume" class="secondary" disabled>Resume</button><button id="cancel" class="secondary" disabled>Cancel</button></div>
+        <div><p class="eyebrow">CHẠY</p><h2>Bảng điều khiển</h2><p class="muted">Mỗi tài khoản mở một Chrome. Tạm dừng giữ nguyên trang. Huỷ đóng Chrome của lần chạy.</p></div>
+        <div class="actions"><button id="start" class="primary">Bắt đầu</button><button id="stop" class="secondary" disabled>Tạm dừng</button><button id="resume" class="secondary" disabled>Tiếp tục</button><button id="cancel" class="danger-button" disabled>Huỷ</button></div>
       </section>
-      <section class="metrics"><div><span>Profiles</span><strong id="profiles">-</strong></div><div><span>Run time</span><strong id="runTime">00:00:00</strong></div><div><span>Last event</span><strong id="lastEvent">Waiting</strong></div></section>
+      <section class="metrics"><div><span>Số tài khoản</span><strong id="profiles">-</strong></div><div><span>Việc vừa xảy ra</span><strong id="lastEvent">Đang chờ</strong></div></section>
+      <section id="liveProgress" class="live-progress" hidden>
+        <div class="panel-head"><div><p class="eyebrow">ĐANG ĐIỀN</p><h3>Live progress</h3><p class="muted small">The page you are on, and the fields already filled. Nothing extra is clicked on the website.</p></div></div>
+        <div id="liveAccounts" class="live-accounts"></div>
+      </section>
       <section class="accounts-panel">
-        <div class="panel-head dashboard-head"><div><p class="eyebrow">ACCOUNT MONITOR</p><h3>Run results</h3></div><label class="filter-field">Filter full name<input id="nameFilter" type="search" placeholder="Search by name" autocomplete="off"></label></div>
-        <div class="table-wrap"><table><thead><tr><th>Nick</th><th>Username</th><th>Full name</th><th>Started</th><th>Finished</th><th>Duration</th><th>Status</th><th>Payment</th></tr></thead><tbody id="accountRows"></tbody></table></div>
+        <div class="panel-head dashboard-head"><div><p class="eyebrow">LẦN NÀY</p><h3>Đang chạy</h3><p class="muted small">Tên đăng nhập hiện đủ để biết Chrome nào đang ở đâu.</p></div><label class="filter-field">Lọc<input id="nameFilter" type="search" placeholder="Tên hoặc username" autocomplete="off"></label></div>
+        <div class="table-wrap"><table><thead><tr><th>Tài khoản</th><th>Tên đăng nhập</th><th>Họ tên</th><th>Trạng thái</th><th>Thanh toán</th></tr></thead><tbody id="accountRows"></tbody></table></div>
+      </section>
+      <section class="accounts-panel">
+        <div class="panel-head dashboard-head"><div><p class="eyebrow">ĐÃ GHI</p><h3>File kết quả</h3><p class="muted small">Mỗi lần thành công hoặc thất bại thêm một dòng: username, tên, email và link thanh toán. Mở file để sửa hoặc xóa, giống cách sửa whitelist.</p></div><button id="openResults" class="secondary" type="button">Mở file kết quả</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>Email</th><th>Trạng thái</th><th>Ghi chú</th><th>Thanh toán</th></tr></thead><tbody id="historicalResults"></tbody></table></div>
       </section>
     </section>
     <section class="tab-panel" data-panel="logs">
-      <section class="log-panel log-tab-panel"><div class="panel-head"><div><p class="eyebrow">LIVE OUTPUT</p><h3>Runner log</h3></div><button id="clear" class="clear">Clear</button></div><pre id="log"></pre></section>
+      <section class="log-panel log-tab-panel"><div class="panel-head"><div><p class="eyebrow">NHẬT KÝ</p><h3>Nhật ký đang chạy</h3></div><button id="clear" class="clear">Xóa màn hình</button></div><pre id="log"></pre></section>
       <section class="history-panel">
-        <div class="panel-head"><div><p class="eyebrow">ARCHIVE</p><h3>Previous runs</h3><p class="muted small">Chọn một file log để xem toàn bộ nội dung của lần chạy trước.</p></div><button id="refreshLogs" class="secondary">Refresh</button></div>
+        <div class="panel-head"><div><p class="eyebrow">ĐÃ LƯU</p><h3>Các lần chạy trước</h3><p class="muted small">Chọn một file để đọc nhật ký. Đây không phải danh sách kết quả.</p></div><button id="refreshLogs" class="secondary">Tải lại</button></div>
         <div class="history-layout">
-          <aside class="history-list"><label class="filter-field">Filter logs<input id="logFilter" type="search" placeholder="account, date, status" autocomplete="off"></label><div id="logFiles" class="log-files"></div></aside>
+          <aside class="history-list"><label class="filter-field">Lọc log<input id="logFilter" type="search" placeholder="tài khoản, ngày, trạng thái" autocomplete="off"></label><div id="logFiles" class="log-files"></div></aside>
           <article class="history-view"><div class="history-meta"><strong id="selectedLogName">Chưa chọn log</strong><span id="selectedLogSize"></span></div><pre id="historicalLog">Chọn một file log bên trái để xem.</pre></article>
         </div>
-      </section>
-      <section class="history-panel result-panel">
-        <div class="panel-head"><div><p class="eyebrow">ARCHIVED RESULTS</p><h3>Previous results</h3><p class="muted small">Kết quả được tổng hợp từ các account log đã lưu.</p></div></div>
-        <div class="table-wrap"><table><thead><tr><th>Run</th><th>Account</th><th>Username</th><th>Started</th><th>Finished</th><th>Duration</th><th>Status</th><th>Payment</th></tr></thead><tbody id="historicalResults"></tbody></table></div>
       </section>
     </section>
     <section class="tab-panel" data-panel="data">
     <section class="data-panel">
       <div class="panel-head data-head">
-        <div><p class="eyebrow">INPUT WORKSPACE</p><h3>Applicant data</h3><p class="muted small">Nhập JSON trực tiếp hoặc nạp file. Lưu để dùng cho lần chạy tiếp theo.</p></div>
-        <div class="data-actions"><div class="mode-switch"><button id="formMode" class="small-button active" type="button">Form mode</button><button id="jsonMode" class="small-button" type="button">JSON mode</button></div><button id="saveData" class="primary">Save data</button><span id="dataStatus" class="data-status">Loading...</span></div>
+        <div><p class="eyebrow">HỒ SƠ</p><h3>Hồ sơ</h3><p class="muted small">Các trang và câu hỏi theo đúng thứ tự form Working Holiday. Yes/No là danh sách chọn, ngày theo dạng 24 May, 1996.</p></div>
+        <div class="data-actions"><div class="mode-switch"><button id="formMode" class="small-button active" type="button">Form</button><button id="jsonMode" class="small-button" type="button">JSON</button></div><button id="saveData" class="primary">Lưu hồ sơ</button><span id="dataStatus" class="data-status">Đang tải...</span></div>
       </div>
       <div id="formEditor" class="form-editor">
-        <nav class="form-tabs" aria-label="Applicant form sections"><button type="button" class="form-tab active" data-form-tab="personal">Personal</button><button type="button" class="form-tab" data-form-tab="contact">Contact</button><button type="button" class="form-tab" data-form-tab="identity">Identity</button><button type="button" class="form-tab" data-form-tab="application">Application</button><button type="button" class="form-tab" data-form-tab="declarations">Declarations</button><button type="button" class="form-tab" data-form-tab="accounts">Accounts</button></nav>
-        <section class="form-section active" data-form-section="personal"><div class="form-section-title"><p class="eyebrow">PROFILE</p><h4>Personal details</h4></div><div class="form-grid">
-          <label>Title<input data-path="personal.title"></label><label>Family name<input data-path="personal.family_name"></label><label>Given name 1<input data-path="personal.given_name_1"></label><label>Given name 2<input data-path="personal.given_name_2"></label><label>Given name 3<input data-path="personal.given_name_3"></label><label>Date of birth<input data-path="personal.date_of_birth" placeholder="2 September, 2000"></label><label>Gender<input data-path="personal.gender"></label><label>Country of birth<input data-path="personal.country_of_birth"></label>
-        </div></section>
-        <section class="form-section" data-form-section="contact"><div class="form-section-title"><p class="eyebrow">CONTACT</p><h4>Address and contact</h4></div><div class="form-grid">
-          <label>Street number<input data-path="address.street_number"></label><label>Street name<input data-path="address.street_name"></label><label>Suburb<input data-path="address.suburb"></label><label>City<input data-path="address.city"></label><label>Province<input data-path="address.province"></label><label>Postal code<input data-path="address.postal_code"></label><label>Country<input data-path="address.country"></label><label>Email<input data-path="contact.email" type="email"></label><label>Day phone<input data-path="contact.phone_daytime"></label><label>Mobile phone<input data-path="contact.phone_mobile"></label><label>Night phone<input data-path="contact.phone_night"></label><label>Communication method<input data-path="contact.communication_method"></label>
-        </div></section>
-        <section class="form-section" data-form-section="identity"><div class="form-section-title"><p class="eyebrow">IDENTITY</p><h4>Passport and identification</h4></div><div class="form-grid">
-          <label>Passport number<input data-path="identification.passport_number"></label><label>Passport expiry<input data-path="identification.passport_expiry"></label><label>Passport citizenship<input data-path="identification.passport_citizenship"></label><label>ID type<input data-path="identification.id_type"></label><label>ID issue date<input data-path="identification.id_issue_date"></label><label>ID expiry date<input data-path="identification.id_expiry_date"></label>
-        </div></section>
-        <section class="form-section" data-form-section="application"><div class="form-section-title"><p class="eyebrow">APPLICATION</p><h4>Occupation and working holiday</h4></div><div class="form-grid">
-          <label>Industry search<input data-path="occupation.industry_search"></label><label>Occupation search<input data-path="occupation.occupation_search"></label><label>Previous WHS visa<input data-path="whs.previous_whs_visa"></label><label>Travel date<input data-path="whs.travel_date"></label><label>Been to New Zealand<input data-path="whs.been_to_nz"></label><label>When in New Zealand<input data-path="whs.been_to_nz_when"></label><label>Sufficient funds<input data-path="whs.sufficient_funds_holiday"></label><label>Onward ticket funds<input data-path="whs.sufficient_funds_onward_ticket"></label><label>Meet scheme requirements<input data-path="whs.meet_scheme_requirements"></label><label>Scheme country<input data-path="scheme_country"></label>
-        </div></section>
-        <section class="form-section" data-form-section="declarations"><div class="form-section-title"><p class="eyebrow">DECLARATIONS</p><h4>Health, character and payment</h4></div><div class="form-grid">
-          <label>Active TB<input data-path="health.active_tb"></label><label>Cancer<input data-path="health.cancer"></label><label>Heart disease<input data-path="health.heart_disease"></label><label>Disability<input data-path="health.disability"></label><label>Pregnancy<input data-path="health.pregnancy"></label><label>Character charged<input data-path="character.charged"></label><label>Convicted<input data-path="character.convicted"></label><label>Deported<input data-path="character.deported"></label><label>Under investigation<input data-path="character.under_investigation"></label><label>Payer name<input data-path="payment.payer_name"></label>
-        </div></section>
-        <section class="form-section accounts-form-section" data-form-section="accounts"><div class="form-section-title"><p class="eyebrow">ACCESS</p><h4>Accounts</h4><button id="addAccount" class="small-button" type="button">Add account</button></div><div id="accountsFormRows"></div></section>
+        <div id="inzWizard" class="inz"></div>
       </div>
       <div id="jsonEditor" class="editors" hidden>
         <article class="editor-card">
-          <div class="editor-head"><div><strong>Applicant profile</strong><span>applicant.json</span></div><div class="editor-actions"><button id="importApplicant" class="small-button">Import</button><button id="exportApplicant" class="small-button">Export</button></div></div>
+          <div class="editor-head"><div><strong>Hồ sơ</strong><span>applicant.json</span></div><div class="editor-actions"><button id="importApplicant" class="small-button" type="button">Nhập</button><button id="exportApplicant" class="small-button" type="button">Xuất</button></div></div>
           <textarea id="applicantInput" spellcheck="false" aria-label="Applicant JSON"></textarea>
-        </article>
-        <article class="editor-card">
-          <div class="editor-head"><div><strong>Accounts</strong><span>emails.json</span></div><div class="editor-actions"><button id="importAccounts" class="small-button">Import</button><button id="exportAccounts" class="small-button">Export</button></div></div>
-          <textarea id="accountsInput" spellcheck="false" aria-label="Accounts JSON"></textarea>
         </article>
       </div>
     </section>
     </section>
     <section class="tab-panel" data-panel="settings">
     <section class="settings-panel">
-      <div><p class="eyebrow">NOTIFICATIONS</p><h3>Telegram delivery</h3><p class="muted small">Tùy chọn. Để trống nếu không muốn gửi kết quả qua Telegram.</p></div>
+      <div><p class="eyebrow">CÀI ĐẶT</p><h3>Cài đặt</h3><p class="muted small">API key, bot token và chat ID chỉ nằm trên whitelist. Sửa trên sheet. Thiếu một giá trị thì lần chạy dừng. Lưu cài đặt cũng ghi tài khoản.</p></div>
       <div class="settings-grid">
-        <label>Scheme country<input id="schemeCountry" type="text" autocomplete="off" placeholder="CROATIA"></label>
-        <label>CapMonster Cloud API key<input id="capmonsterApiKey" type="password" autocomplete="off" placeholder="CAPMONSTER_API_KEY"></label>
-        <label>Bot token<input id="telegramToken" type="password" autocomplete="off" placeholder="TELEGRAM_BOT_TOKEN"></label>
-        <label>Chat ID<input id="telegramChatId" type="text" autocomplete="off" placeholder="TELEGRAM_CHAT_ID"></label>
-        <div class="settings-save"><button id="saveTelegram" class="secondary">Save settings</button><button id="testTelegram" class="small-button">Send test</button><span id="telegramStatus" class="data-status"></span></div>
+        <label id="whitelistField" class="span-2">Whitelist Google Sheet<input id="whitelistUrl" type="text" readonly tabindex="-1" autocomplete="off" spellcheck="false" aria-readonly="true"></label>
+        <label>Quốc gia chương trình<input id="schemeCountry" type="text" autocomplete="off" placeholder="Japan"></label>
+        <label class="span-2">Danh sách proxy<textarea id="proxyList" spellcheck="false" placeholder="host:port:username:password" aria-label="Danh sách proxy"></textarea><span class="field-hint">Mỗi dòng một proxy. Tài khoản tick Dùng proxy sẽ lấy lần lượt từ trên xuống.</span></label>
+        <label class="span-2">File kết quả<input id="resultsFile" type="text" readonly tabindex="-1" spellcheck="false"><span class="field-hint">App chỉ ghi thêm dòng khi tài khoản thành công hoặc thất bại. Sửa và xóa trực tiếp trong file.</span></label>
+        <div class="settings-save"><button id="saveTelegram" class="secondary">Lưu cài đặt</button><button id="testTelegram" class="small-button" type="button">Gửi thử Telegram</button><button id="openResultsSettings" class="small-button" type="button">Mở file kết quả</button><span id="telegramStatus" class="data-status"></span></div>
+      </div>
+    </section>
+    <section class="settings-panel accounts-settings">
+      <div>
+        <p class="eyebrow">TÀI KHOẢN</p>
+        <h3 id="accountsTitle">Accounts</h3>
+        <p class="muted small">Mỗi dòng là một Chrome. Tick Dùng proxy để lấy dòng tiếp theo trong danh sách phía trên. Chọn JSON để sửa hoặc nhập file, giống hồ sơ. Bấm Lưu tài khoản để ghi.</p>
+      </div>
+      <div>
+        <div class="accounts-toolbar"><span id="accountsStatus" class="data-status"></span><div class="mode-switch"><button id="accountsFormMode" class="small-button active" type="button">Form</button><button id="accountsJsonMode" class="small-button" type="button">JSON</button></div><button id="addAccount" class="small-button" type="button">Add account</button><button id="saveAccounts" class="secondary" type="button">Lưu tài khoản</button></div>
+        <div id="accountsFormPane"><div id="accountsFormRows"></div></div>
+        <div id="accountsJsonEditor" class="editors" hidden>
+          <article class="editor-card">
+            <div class="editor-head"><div><strong>Tài khoản</strong><span>emails.json</span></div><div class="editor-actions"><button id="importAccounts" class="small-button" type="button">Nhập</button><button id="exportAccounts" class="small-button" type="button">Xuất</button></div></div>
+            <textarea id="accountsInput" spellcheck="false" aria-label="Accounts JSON"></textarea>
+          </article>
+        </div>
       </div>
     </section>
     </section>
   </main>
+  <script src="inz-form.js"></script>
+  <script src="live-progress.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

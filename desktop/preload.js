@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('runnerApi', {
   listLogs: () => ipcRenderer.invoke('logs-list'),
   readLog: name => ipcRenderer.invoke('logs-read', name),
   listLogResults: () => ipcRenderer.invoke('logs-results'),
+  openResults: () => ipcRenderer.invoke('results-open'),
   saveData: data => ipcRenderer.invoke('data-save', data),
   loadTelegram: () => ipcRenderer.invoke('telegram-load'),
   saveTelegram: data => ipcRenderer.invoke('telegram-save', data),
@@ -18,5 +19,6 @@ contextBridge.exposeInMainWorld('runnerApi', {
   openFolder: () => ipcRenderer.invoke('runner-open-folder'),
   onOutput: callback => ipcRenderer.on('runner-output', (_, data) => callback(data)),
   onStatus: callback => ipcRenderer.on('runner-status', (_, data) => callback(data)),
-  onExit: callback => ipcRenderer.on('runner-exit', (_, data) => callback(data))
+  onExit: callback => ipcRenderer.on('runner-exit', (_, data) => callback(data)),
+  openExternal: url => ipcRenderer.invoke('open-external', url)
 });

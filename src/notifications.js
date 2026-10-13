@@ -1,10 +1,9 @@
 const config = require('./config');
-const { formatDuration } = require('./timing');
 const { maskUsername } = require('./privacy');
 
 async function sendTelegramMessage(message) {
   if (!config.telegramBotToken || !config.telegramChatId) {
-    console.log('[TELEGRAM] bỏ qua: cần TELEGRAM_BOT_TOKEN và TELEGRAM_CHAT_ID trong .env');
+    console.log('[TELEGRAM] bỏ qua: whitelist không có bot token hoặc chat ID.');
     return false;
   }
   const response = await fetch(`https://api.telegram.org/bot${config.telegramBotToken}/sendMessage`, {
@@ -21,14 +20,10 @@ function applicantSummary(applicant, account) {
   return `Tên: ${name}\nTài khoản: ${maskUsername(account.username)}`;
 }
 
-function buildTelegramSummary(results, totalRuntime) {
-  const captchaRuntime = results.reduce((total, result) => total + result.captchaMs, 0);
-  const lines = ['KẾT QUẢ RUNNER INZ', `Thời gian chạy: ${formatDuration(totalRuntime)} (${totalRuntime} ms)`,
-    `Tổng thời gian giải CAPTCHA: ${formatDuration(captchaRuntime)} (${captchaRuntime} ms)`, ''];
+function buildTelegramSummary(results) {
+  const lines = ['KẾT QUẢ RUNNER INZ', ''];
   for (const result of results) {
-    lines.push(`[${result.status}] ${result.label}`, `Thời gian account: ${formatDuration(result.runtimeMs)} (${result.runtimeMs} ms)`,
-      `Thời gian CAPTCHA: ${formatDuration(result.captchaMs)} (${result.captchaMs} ms)`,
-      `Payment link: ${result.paymentUrl || '(chưa có)'}`, result.applicantInfo, '');
+    lines.push(`[${result.status}] ${result.label}`, `Payment link: ${result.paymentUrl || '(chưa có)'}`, result.applicantInfo, '');
   }
   return lines.join('\n').trim();
 }

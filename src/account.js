@@ -1,10 +1,9 @@
-const config = require('./config');
 const textSelectors = require('./selectors/text');
 const actions = require('./selectors/actions');
 const { initializeAccountLogger, accountLogFile } = require('./logger');
 const { authenticateProxy, getSinglePage } = require('./browser');
 const { login } = require('./auth');
-const { continueToApplication } = require('./entry');
+const { continueToApplication, resumeWhenSchemeReopens } = require('./entry');
 const { detectPage } = require('./detect');
 const { pauseForCaptcha } = require('./captcha');
 const { recoverHighLoad, waitForManualRecovery } = require('./recovery');
@@ -14,9 +13,11 @@ const { fillPersonal1, fillIdentification } = require('./forms/personal');
 const { fillHealth, fillCharacter } = require('./forms/health');
 const { fillWhs } = require('./forms/whs');
 const { fillText, dumpUnknown } = require('./dom');
-const { resetPageScroll } = require('./timing');
+const { resetPageScroll, waitUntilDocumentReady, waitForNextDocument } = require('./timing');
 const { maskUsername } = require('./privacy');
-const { isStopRequested, waitIfPaused } = require('./stop');
+const { isStopRequested, shouldCloseBrowser, waitIfPaused } = require('./stop');
+
+const navigationRace = /Execution context was destroyed|detached Frame|Cannot find context with specified id|Session closed|Navigating frame was detached/i;
 
 async function runApplicant(browser, baseApplicant, account, index) {
   const label = `account ${index + 1}: ${maskUsername(account.username)}`;
@@ -37,15 +38,37 @@ async function runApplicant(browser, baseApplicant, account, index) {
   try {
     await login(page, account.username, account.password, label, stats);
     const entry = await continueToApplication(page, applicant, label, stats);
+    const stopped = stopForExistingApplication(entry, result, finish, label);
+    if (stopped) return stopped;
     if (entry?.startedAt) startedAt = entry.startedAt;
     return await walkWizard(page, applicant, account, label, stats, result, finish);
   } catch (error) {
+    if (isStopRequested()) {
+      console.log(`[${label}] ${shouldCloseBrowser() ? 'CANCEL_APP' : 'STOP_REQUESTED'} dừng`);
+      return finish(shouldCloseBrowser() ? 'CANCELLED' : 'STOPPED_KEEP_BROWSER');
+    }
     console.error(`[${label}] lỗi: ${error.message}`);
+    if (navigationRace.test(error.message)) {
+      console.log(`[${label}] NAVIGATION_INTERRUPTED ${error.message}`);
+      await waitUntilDocumentReady(page);
+      try {
+        const entry = await continueToApplication(page, applicant, label, stats);
+        const stopped = stopForExistingApplication(entry, result, finish, label);
+        if (stopped) return stopped;
+        if (entry?.startedAt) startedAt = entry.startedAt;
+        return await walkWizard(page, applicant, account, label, stats, result, finish);
+      } catch (retryError) {
+        console.error(`[${label}] lỗi: ${retryError.message}`);
+        error = retryError;
+      }
+    }
     try {
       await waitForManualRecovery(page, label, error);
       console.log(`[${label}] MANUAL_RECOVERY_RESUME`);
       await recoverHighLoad(page, label);
       const entry = await continueToApplication(page, applicant, label, stats).catch(() => null);
+      const stopped = stopForExistingApplication(entry, result, finish, label);
+      if (stopped) return stopped;
       if (entry?.startedAt) startedAt = entry.startedAt;
       return await walkWizard(page, applicant, account, label, stats, result, finish);
     } catch (recoveryError) {
@@ -66,16 +89,35 @@ async function walkWizard(page, applicant, account, label, stats, result, finish
     await recoverHighLoad(page, label); await resetPageScroll(page);
     const currentPage = await detectPage(page); const pageLabel = `${label} PAGE ${pageNumber} ${currentPage}`;
     console.log(`[${pageLabel}] URL=${await page.url()}`);
+    if (currentPage === 'quota_closed') {
+      const reopened = await resumeWhenSchemeReopens(page, applicant, label, stats);
+      if (reopened?.stop === 'EXISTING_APPLICATION') return stopForExistingApplication(reopened, result, finish, label);
+      if (reopened?.stop) return finish('STOPPED_KEEP_BROWSER');
+      continue;
+    }
     if (currentPage === 'highload') { await recoverHighLoad(page, label); continue; }
     if (currentPage === 'captcha') { await pauseForCaptcha(page, pageLabel, stats); continue; }
-    if (currentPage === 'login') { await login(page, account.username, account.password, label, stats); await continueToApplication(page, applicant, label, stats); continue; }
+    if (currentPage === 'existing') return stopForExistingApplication({ stop: 'EXISTING_APPLICATION' }, result, finish, label);
+    if (currentPage === 'login') {
+      await login(page, account.username, account.password, label, stats);
+      const entry = await continueToApplication(page, applicant, label, stats);
+      const stopped = stopForExistingApplication(entry, result, finish, label);
+      if (stopped) return stopped;
+      continue;
+    }
     if (currentPage === 'payment') {
       result.paymentUrl = await page.url();
       console.log(`[${label}] PAYMENT_LINK ${result.paymentUrl}`);
       console.log(`[${label}] dừng trước trang thanh toán để không nhập thông tin thẻ.`);
       return finish('STOP_PAYMENT');
     }
-    if (currentPage === 'payer') { await fillText(page, textSelectors.payerName, applicant.payment?.payer_name || applicant.payer_name || 'Vu Quang Nguyen'); await clickLabeled(page, ['OK'], ['PAY NOW', 'PAY LATER', 'NEXT STEP'], pageLabel, stats); continue; }
+    if (currentPage === 'payer') {
+      const payerName = applicant.payment?.payer_name || applicant.payer_name;
+      const payerFilled = await fillText(page, textSelectors.payerName, payerName);
+      console.log(`[${pageLabel}] ${payerName ? (payerFilled ? 'FIELD_SET' : 'FIELD_SKIP_MISSING') : 'FIELD_SKIP_EMPTY'} payerName`);
+      await clickLabeled(page, ['OK'], ['PAY NOW', 'PAY LATER', 'NEXT STEP'], pageLabel, stats);
+      continue;
+    }
     if (currentPage === 'pay_next') { await clickFirstControl(page, ['#ContentPlaceHolder1_onlinePaymentAnchor2', 'a[id$="onlinePaymentAnchor2"]', 'a[href*="PaymentGateway/OnLinePayment"]', 'a[href*="OnLinePayment.aspx"]'], pageLabel, stats); continue; }
     if (currentPage === 'pay_now') { await clickLabeled(page, ['PAY NOW'], ['PAY LATER'], pageLabel, stats); continue; }
     if (currentPage === 'unknown') {
@@ -85,14 +127,14 @@ async function walkWizard(page, applicant, account, label, stats, result, finish
     }
     if (currentPage === 'pending') {
       console.log(`[${pageLabel}] PAGE_PENDING chờ trang sau khi nộp`);
-      await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: config.navigationWaitTimeoutMs }).catch(() => {});
+      if (!await waitForNextDocument(page)) return finish('STOPPED_KEEP_BROWSER');
       continue;
     }
     if (currentPage === 'declaration' || currentPage === 'submit') {
       const declaration = await fillDeclaration(page, applicant, pageLabel);
       if (declaration.total === 0) {
         console.log(`[${pageLabel}] DECLARATION_WAITING_NEXT`);
-        await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: config.navigationWaitTimeoutMs }).catch(() => {});
+        if (!await waitForNextDocument(page)) return finish('STOPPED_KEEP_BROWSER');
         continue;
       }
       await pauseForCaptcha(page, pageLabel, stats);
@@ -109,19 +151,29 @@ async function walkWizard(page, applicant, account, label, stats, result, finish
     if (isStopRequested()) return finish('STOPPED_KEEP_BROWSER');
     const advanced = await advance(page, pageLabel, stats, actions);
     if (advanced === 'saved') {
+      if (isStopRequested()) return finish(shouldCloseBrowser() ? 'CANCELLED' : 'STOPPED_KEEP_BROWSER');
       await waitForManualRecovery(page, pageLabel, new Error('Đã Save nhưng chưa thấy Next/Submit.'));
       continue;
     }
     if (!advanced) {
+      if (isStopRequested()) return finish(shouldCloseBrowser() ? 'CANCELLED' : 'STOPPED_KEEP_BROWSER');
       await waitForManualRecovery(page, pageLabel, new Error('Không tìm thấy Next/Save/Submit.'));
       continue;
     }
     } catch (error) {
+      if (shouldCloseBrowser()) throw error;
       if (!/Execution context was destroyed|Cannot find context with specified id|Session closed/i.test(error.message)) throw error;
       console.log(`[${label}] NAVIGATION_INTERRUPTED ${error.message}`);
-      await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: config.navigationWaitTimeoutMs }).catch(() => {});
+      await waitUntilDocumentReady(page);
     }
   }
+}
+
+function stopForExistingApplication(entry, result, finish, label) {
+  if (!entry?.stop) return null;
+  result.keepBrowser = true;
+  console.log(`[${label}] EXISTING_APPLICATION_STOP danh sách hồ sơ đang hiện. Dừng app, không bấm Edit, Submit hay Delete.`);
+  return finish('STOP_EXISTING_APPLICATION');
 }
 
 module.exports = { runApplicant };

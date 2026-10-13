@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Cài INZ Runner</title>
+  <style>
+    @page { size: A4; margin: 16mm 15mm 18mm; }
+    body { margin: 0; color: #1c1c1c; font-family: Arial, "Helvetica Neue", sans-serif; font-size: 11.5pt; line-height: 1.5; }
+    h1 { font-size: 22pt; margin: 0 0 8px; }
+    h2 { font-size: 15pt; margin: 22px 0 6px; color: #0b3a66; page-break-after: avoid; }
+    p { margin: 0 0 8px; }
+    ol, ul { margin: 6px 0 10px; padding-left: 22px; }
+    li { margin: 0 0 4px; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
+    th, td { border: 1px solid #cfcfcf; padding: 5px 8px; vertical-align: top; text-align: left; }
+    th { background: #eef3f8; }
+    code { font-family: Menlo, Consolas, monospace; font-size: 0.92em; }
+    .kicker { letter-spacing: 0.12em; font-size: 10pt; color: #0b3a66; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <p class="kicker">INZ RUNNER</p>
+  <h1>Cài INZ Runner</h1>
+  <p>Bản cài này dành cho người được phát app. Máy cần có Google Chrome. Lần đầu mở, đơn và tài khoản đều trống. Bạn tự điền, rồi bấm <strong>Bắt đầu</strong>.</p>
+  <p>Username không có trong danh sách được phép thì app dừng và báo <strong>Không có trong whitelist</strong>. Chrome không mở. Nhờ người phát app thêm username đó.</p>
+  <p>Cách điền đơn, chạy và xử lý lỗi nằm trong <code>HUONG_DAN_SU_DUNG.pdf</code>, cùng thư mục với file này.</p>
+
+  <h2>Chọn đúng file</h2>
+  <table>
+    <thead><tr><th>Máy</th><th>Việc cần làm</th></tr></thead>
+    <tbody>
+      <tr><td>Mac chip Apple (M1, M2, M3, M4), macOS 11 trở lên</td><td>Mở thư mục Apple-Silicon, mở file .dmg, kéo INZ Runner vào Applications</td></tr>
+      <tr><td>Mac chip Intel, macOS 11 trở lên</td><td>Mở thư mục Intel, làm tương tự</td></tr>
+      <tr><td>Windows 10 hoặc 11, máy 64-bit</td><td>Bấm đúp <code>INZ-Runner-Setup.exe</code></td></tr>
+    </tbody>
+  </table>
+  <p>Trên Mac, bấm menu Apple, About This Mac. Dòng Chip ghi Apple M thì dùng Apple-Silicon. Dòng Chip ghi Intel thì dùng Intel.</p>
+  <p>Windows 32-bit không được hỗ trợ. File <code>INZ-Runner-Setup.exe</code> là bản 64-bit. Máy Windows chip ARM vẫn mở được file này.</p>
+
+  <h2>Cài Google Chrome trước</h2>
+  <p>App mở đúng Chrome đã cài trên máy.</p>
+  <ol>
+    <li>Vào https://www.google.com/chrome/.</li>
+    <li>Tải bản Chrome đúng hệ điều hành và cài.</li>
+    <li>Mở Chrome một lần, rồi có thể đóng.</li>
+  </ol>
+  <p>Nếu app báo <strong>Không thấy Google Chrome</strong>, cài lại Chrome vào chỗ mặc định rồi mở app lại.</p>
+
+  <h2>Cài trên Windows</h2>
+  <ol>
+    <li>Bấm đúp <code>INZ-Runner-Setup.exe</code>.</li>
+    <li>Nếu Windows hiện SmartScreen màu xanh: bấm <strong>More info</strong>, rồi <strong>Run anyway</strong>.</li>
+    <li>Chọn thư mục cài nếu muốn, rồi bấm cài. Không cần quyền quản trị cả máy.</li>
+    <li>Mở <strong>INZ Runner</strong> từ màn hình desktop hoặc menu Start.</li>
+  </ol>
+  <p>File <code>HUONG_DAN_SU_DUNG.pdf</code> nằm cùng thư mục với <code>INZ Runner.exe</code>.</p>
+
+  <h2>Lần đầu dùng</h2>
+  <ol>
+    <li>Mở app. Tab Hồ sơ đang trống.</li>
+    <li>Điền đơn theo <code>HUONG_DAN_SU_DUNG.pdf</code>. Ngày viết dạng <code>24 May, 1996</code>. Giá trị chọn vẫn là chữ trên website, ví dụ Yes, No, Miss.</li>
+    <li>Sang Cài đặt. Điền quốc gia chương trình đúng chữ trên thẻ quốc gia, ví dụ <code>VIETNAM</code>. Ô này phải giống ô quốc gia trong đơn.</li>
+    <li>Dán danh sách proxy nếu tài khoản cần proxy. Mỗi dòng một proxy <code>host:port:username:password</code>.</li>
+    <li>Thêm một dòng tài khoản: tên đăng nhập, mật khẩu, email. Tick Dùng proxy khi dòng đó phải lấy proxy trong danh sách phía trên.</li>
+    <li>Autocaptcha API key, bot token và chat ID nằm trên whitelist. Sửa trên sheet. App không có ô để nhập ba giá trị này. Thiếu một giá trị thì lần chạy dừng.</li>
+    <li>Bấm Lưu hồ sơ và Lưu cài đặt.</li>
+    <li>Sang tab Chạy, bấm Bắt đầu khi bạn sẵn sàng chờ thẻ quốc gia OPEN.</li>
+  </ol>
+  <p>App dừng trước lúc nhập số thẻ. Nút <strong>Mở trang thanh toán</strong> mở trình duyệt để bạn tự trả.</p>
+
+  <h2>Dữ liệu nằm ở đâu</h2>
+  <ul>
+    <li>Windows: <code>%APPDATA%\inz-puppeteer-multi-tab</code>, thường là <code>C:\Users\&lt;tên bạn&gt;\AppData\Roaming\inz-puppeteer-multi-tab</code></li>
+    <li>Mac: <code>~/Library/Application Support/inz-puppeteer-multi-tab</code></li>
+  </ul>
+  <p>Trong đó có đơn, tài khoản, file cài đặt và thư mục logs. Xóa thư mục này là xóa dữ liệu đã nhập trên máy đó.</p>
+
+  <h2>Gỡ app</h2>
+  <p>Windows: Settings, Apps, chọn INZ Runner, Uninstall. Thư mục dữ liệu ở trên vẫn còn cho đến khi bạn tự xóa.</p>
+  <p>Mac: kéo INZ Runner từ Applications vào Trash.</p>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Cách hoạt động của tool điền Form New Zealand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #241c16;
+      --muted: #5c5348;
+      --paper: #f6f1e8;
+      --card: #fffdf9;
+      --rust: #9a3412;
+      --pine: #1e4a38;
+      --line: #e4d8c8;
+      --soft: #f3e6dc;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: white;
+      font-size: 11.5pt;
+      line-height: 1.55;
+    }
+    h1, h2, h3, p { margin: 0; }
+    .kicker, h2, h3 { break-after: avoid; page-break-after: avoid; }
+    h2 + p, .kicker + h2 { break-before: avoid; page-break-before: avoid; }
+    h1 { font-size: 26pt; line-height: 1.15; letter-spacing: -0.03em; }
+    h2 { font-size: 16pt; line-height: 1.25; letter-spacing: -0.02em; margin-top: 0; }
+    h3 { font-size: 12pt; line-height: 1.3; }
+    .kicker {
+      color: var(--rust);
+      font-weight: 700;
+      font-size: 9pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .lead { margin-top: 10px; font-size: 12.5pt; max-width: 38em; }
+    .muted { color: var(--muted); }
+    section { margin-top: 16px; }
+    .keep { break-inside: avoid; }
+    .cards { display: grid; gap: 10px; }
+    .cards.three { grid-template-columns: 1fr 1fr 1fr; }
+    .cards.two { grid-template-columns: 1fr 1fr; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .card strong { display: block; margin-bottom: 4px; }
+    .offer {
+      background: var(--pine);
+      color: #f6f1e8;
+      border-radius: 16px;
+      padding: 16px 18px;
+    }
+    .offer .kicker { color: #f0c9b0; }
+    .offer p { margin-top: 8px; }
+    .price { font-size: 15pt; font-weight: 700; margin: 6px 0 2px; }
+    .price small { font-size: 9pt; font-weight: 600; color: var(--muted); }
+    .featured { border-color: var(--rust); box-shadow: inset 0 0 0 1px var(--rust); }
+    .tag {
+      display: inline-block;
+      background: var(--soft);
+      color: var(--rust);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    figure { margin: 12px 0 0; }
+    figcaption { font-size: 9.5pt; color: var(--muted); margin-top: 6px; }
+    svg { width: 100%; height: auto; display: block; }
+    .note {
+      background: #f8f3ea;
+      border-left: 4px solid var(--rust);
+      padding: 10px 14px;
+      border-radius: 0 12px 12px 0;
+      margin-top: 12px;
+    }
+    .note p + p { margin-top: 6px; }
+    ol.steps { list-style: none; margin: 12px 0 0; padding: 0; }
+    ol.steps li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 8px;
+      margin-top: 6px;
+      break-inside: avoid;
+    }
+    ol.steps span {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--pine);
+      color: white;
+      font-weight: 700;
+      font-size: 11pt;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    ol.steps p { margin-top: 2px; }
+    .fine { font-size: 9pt; color: var(--muted); margin-top: 10px; }
+    .closing { margin-top: 10px; font-size: 10.5pt; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+    .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+    .stat b { display: block; font-size: 12pt; color: var(--pine); line-height: 1.25; }
+    .stat span { display: block; margin-top: 4px; font-size: 9pt; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10pt; }
+    th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th:nth-child(1), td:nth-child(1) { width: 18%; }
+    th:nth-child(2), td:nth-child(2) { width: 24%; }
+    th:nth-child(3), td:nth-child(3) { width: 16%; }
+    th { font-size: 9pt; color: var(--muted); font-weight: 600; }
+    @page { size: A4; }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="kicker">Cách hoạt động · Không đặt cọc</p>
+    <h1>Có link thanh toán thì mới trả phí dịch vụ.</h1>
+    <p class="lead">Mình gửi tool và tài khoản. Bạn tự mở trên laptop của bạn, hoặc trên máy VPS. Khi tool ra link pay và bạn thanh toán được, mình mới nhận phí dịch vụ. Không ra link, hoặc bạn không thanh toán được, mình không lấy tiền.</p>
+  </header>
+
+  <section class="cards three">
+    <article class="card keep">
+      <strong>Không đặt cọc trước</strong>
+      <p class="muted">Chỉ khi đã xong và thanh toán được thì mới tính phí dịch vụ.</p>
+    </article>
+    <article class="card keep">
+      <strong>Máy là của bạn</strong>
+      <p class="muted">Bạn bật tool trên máy của bạn. Mình không cầm máy, không cầm thẻ, không cầm thiết bị.</p>
+    </article>
+    <article class="card keep">
+      <strong>Tự động chạy reopen</strong>
+      <p class="muted">Tool tự động refresh trang liên tục khi hết slot.</p>
+    </article>
+    <article class="card keep">
+      <strong>Hỗ trợ set up máy chạy tool miễn phí</strong>
+      <p class="muted">Mình gửi hướng dẫn set up máy chạy tool miễn phí nếu bạn thuê máy.</p>
+    </article>
+  </section>
+
+  <section class="keep">
+    <figure>
+      <svg viewBox="0 0 720 132" role="img" aria-label="Hai kết quả: thanh toán được thì trả phí dịch vụ, không được thì không trả.">
+        <rect x="0" y="0" width="350" height="132" rx="16" fill="#e7f3ec"/>
+        <rect x="370" y="0" width="350" height="132" rx="16" fill="#f8f3ea"/>
+        <g font-family="Be Vietnam Pro, sans-serif">
+          <text x="22" y="32" fill="#1e4a38" font-size="15" font-weight="700">Thanh toán được</text>
+          <text x="22" y="58" fill="#241c16" font-size="13">Có link, và bạn trả được lệ phí.</text>
+          <rect x="22" y="76" width="306" height="36" rx="10" fill="#1e4a38"/>
+          <text x="175" y="99" text-anchor="middle" fill="#f6f1e8" font-size="13" font-weight="700">Mình nhận phí dịch vụ đã chốt</text>
+
+          <text x="392" y="32" fill="#9a3412" font-size="15" font-weight="700">Chưa thanh toán được</text>
+          <text x="392" y="58" fill="#241c16" font-size="13">Không có link, hoặc có mà bạn không trả được.</text>
+          <rect x="392" y="76" width="306" height="36" rx="10" fill="#fffdf9"/>
+          <text x="545" y="99" text-anchor="middle" fill="#9a3412" font-size="13" font-weight="700">Mình không lấy tiền</text>
+        </g>
+      </svg>
+      <figcaption>Phí dịch vụ chỉ tính khi bạn đã pay lệ phí cho INZ khi sử dụng tool bên mình.</figcaption>
+    </figure>
+  </section>
+
+  <section class="offer keep">
+    <p class="kicker">Bạn được thử tool miễn phí</p>
+    <h2>Hướng dẫn thuê máy. Tool thử thì miễn phí.</h2>
+    <p>Mình gửi kèm cách thuê máy Azure từ đầu: tạo máy, bật, mở từ laptop, rồi tắt đúng chỗ để hết tính tiền theo giờ. Tool để bạn thử thì mình gửi không lấy phí. Phí dịch vụ chỉ tính khi chạy thật và bạn thanh toán được lệ phí.</p>
+  </section>
+
+  <section>
+    <p class="kicker">Phí dịch vụ</p>
+    <h2>Chọn số tài khoản</h2>
+    <p class="muted" style="margin-top:6px">Mỗi tài khoản là một lượt chạy cùng lúc. Nhiều lượt thì cơ hội cao hơn. Giá là tạm tính, hai bên chốt khi nói chuyện. Chưa gồm tiền thuê máy.</p>
+    <div class="cards three" style="margin-top:12px">
+      <article class="card keep">
+        <span class="tag">Gọn, để làm quen</span>
+        <h3>Cơ bản · 2 tài khoản</h3>
+        <p class="price">16.500.000đ <small>tạm tính</small></p>
+      </article>
+      <article class="card featured keep">
+        <span class="tag">Cân bằng lượt và tiền</span>
+        <h3>Tăng tốc · 5 tài khoản</h3>
+        <p class="price">18.500.000đ <small>tạm tính</small></p>
+        <p class="muted">Tiết kiệm 1.000.000đ so với mua lẻ.</p>
+      </article>
+      <article class="card keep">
+        <span class="tag">Nhiều lượt nhất</span>
+        <h3>Tối đa · 8 tài khoản</h3>
+        <p class="price">20.500.000đ <small>tạm tính</small></p>
+        <p class="muted">Tiết kiệm 2.000.000đ so với mua lẻ.</p>
+      </article>
+    </div>
+    <div class="keep">
+      <p class="kicker">Cách tính thêm tài khoản</p>
+      <p>Gói nào cũng bắt đầu từ 2 tài khoản. Thêm 1 tài khoản là thêm 1.000.000đ. Cứ thêm một cụm 3 tài khoản thì chỉ tính 2.000.000đ. Gói 5 là 2 tài khoản gốc cộng một cụm 3, nên rẻ hơn mua lẻ 1.000.000đ. Gói 8 là hai cụm như vậy, rẻ hơn 2.000.000đ.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="kicker">Một lần chạy thật · 24/09/2026</p>
+    <h2>Phần điền ô xong rất nhanh</h2>
+    <p class="muted" style="margin-top:6px">Một tài khoản, hồ sơ Croatia. Số này chỉ tính lúc tool điền ô và bấm nút, chưa tính thời gian trang web tải về. Không phải lần chạy nào cũng ra đúng các số này.</p>
+    <div class="stats">
+      <article class="stat keep"><b>0,2 giây</b><span>51 ô và 11 dấu tick.</span></article>
+      <article class="stat keep"><b>83 mili giây</b><span>Trang dài nhất, 13 ô.</span></article>
+      <article class="stat keep"><b>1 mili giây</b><span>11 dấu tick.</span></article>
+      <article class="stat keep"><b>dưới 4 mili giây</b><span>Trung bình mỗi ô.</span></article>
+    </div>
+    <div class="cards three" style="margin-top:10px">
+      <article class="card keep"><strong>Điền thẳng vào ô</strong><p class="muted">Tool không gõ từng chữ. Trang dài nhất xong trong 83 mili giây.</p></article>
+      <article class="card keep"><strong>Lần đó không điền lại</strong><p class="muted">Đúng trang thì điền rồi bấm Next. Lần này không lỗi ở khâu điền.</p></article>
+      <article class="card keep"><strong>Mỗi bước có giờ</strong><p class="muted">Log ghi đến mili giây. Bạn mở ra và tự xem.</p></article>
+    </div>
+  </section>
+
+  <section>
+    <p class="kicker">Máy chạy</p>
+    <h2>Chạy trên máy nào cũng được</h2>
+    <div class="cards two" style="margin-top:12px">
+      <article class="card keep">
+        <span class="tag">Không thuê máy</span>
+        <h3>Laptop, máy người thân, hoặc tiệm net</h3>
+        <p class="muted" style="margin-top:6px">Không mất tiền thuê. Đường từ Việt Nam sang New Zealand dài, mỗi vòng hỏi-đáp khoảng 250 mili giây. Hợp nếu bạn mở ít tab và chịu chờ.</p>
+      </article>
+      <article class="card keep">
+        <span class="tag">Thuê theo giờ</span>
+        <h3>Máy ảo đặt tại New Zealand</h3>
+        <p class="muted" style="margin-top:6px">Mỗi vòng khoảng 5 mili giây. Một máy mở nhiều tab mà không chen một đường truyền chậm. Giá ở bảng dưới. Mình có hướng dẫn bấm từng bước trên Azure.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <p class="kicker">Vì sao máy gần New Zealand có ích</p>
+    <h2>Một người chạy đường xa, hay vài người đứng sẵn cạnh quầy.</h2>
+    <figure>
+      <svg viewBox="0 0 720 250" role="img" aria-label="So sánh một người mang hồ sơ từ Việt Nam với vài người đứng cạnh quầy ở New Zealand.">
+        <rect width="720" height="250" rx="16" fill="#fffdf9" stroke="#e4d8c8"/>
+        <text x="24" y="32" fill="#9a3412" font-size="13" font-weight="700" font-family="Be Vietnam Pro, sans-serif">Từ Việt Nam · một người, đường dài</text>
+        <text x="390" y="32" fill="#1e4a38" font-size="13" font-weight="700" font-family="Be Vietnam Pro, sans-serif">Máy ở New Zealand · người đứng cạnh quầy</text>
+        <line x1="360" y1="48" x2="360" y2="230" stroke="#e4d8c8"/>
+
+        <circle cx="58" cy="118" r="16" fill="#9a3412"/>
+        <rect x="50" y="136" width="16" height="26" rx="6" fill="#9a3412"/>
+        <path d="M86 128 C 150 90, 210 160, 280 120" fill="none" stroke="#9a3412" stroke-width="2" stroke-dasharray="5 6"/>
+        <rect x="286" y="96" width="52" height="58" rx="8" fill="#1e4a38"/>
+        <text x="312" y="130" text-anchor="middle" fill="#f6f1e8" font-size="12" font-weight="700" font-family="Be Vietnam Pro, sans-serif">Quầy</text>
+        <text x="24" y="196" fill="#241c16" font-size="12" font-family="Be Vietnam Pro, sans-serif">Xong tập này mới quay lại lấy tập khác.</text>
+        <text x="24" y="220" fill="#5c5348" font-size="12" font-family="Be Vietnam Pro, sans-serif">20 vòng chờ đường ≈ 5 giây</text>
+
+        <rect x="400" y="78" width="58" height="78" rx="8" fill="#1e4a38"/>
+        <text x="429" y="122" text-anchor="middle" fill="#f6f1e8" font-size="12" font-weight="700" font-family="Be Vietnam Pro, sans-serif">Quầy</text>
+        <g fill="#9a3412">
+          <circle cx="500" cy="108" r="13"/><rect x="493" y="122" width="14" height="22" rx="5"/>
+          <circle cx="548" cy="108" r="13"/><rect x="541" y="122" width="14" height="22" rx="5"/>
+          <circle cx="596" cy="108" r="13"/><rect x="589" y="122" width="14" height="22" rx="5"/>
+        </g>
+        <text x="400" y="196" fill="#241c16" font-size="12" font-family="Be Vietnam Pro, sans-serif">Ai xong phần của mình thì đưa ngay.</text>
+        <text x="400" y="220" fill="#5c5348" font-size="12" font-family="Be Vietnam Pro, sans-serif">Cùng 20 vòng ấy ≈ 0,1 giây</text>
+      </svg>
+      <figcaption>Hình để hình dung, không phải sơ đồ mạng. 5 giây và 0,1 giây là 20 vòng hỏi-đáp nhân với độ trễ, chỉ tính lúc chờ đường truyền.</figcaption>
+    </figure>
+    <div class="cards two" style="margin-top:10px">
+      <article class="card keep">
+        <strong>250 ms một vòng từ Việt Nam</strong>
+        <p class="muted">20 vòng × 250 ms = 5 giây chỉ để chờ đường.</p>
+        <svg viewBox="0 0 320 28" aria-hidden="true" style="margin-top:8px">
+          <rect x="0" y="6" width="320" height="16" rx="8" fill="#9a3412"/>
+        </svg>
+      </article>
+      <article class="card keep">
+        <strong>5 ms một vòng từ New Zealand</strong>
+        <p class="muted">20 vòng × 5 ms = 0,1 giây. Nhanh hơn khoảng 50 lần.</p>
+        <svg viewBox="0 0 320 28" aria-hidden="true" style="margin-top:8px">
+          <rect x="0" y="6" width="320" height="16" rx="8" fill="#f3e6dc"/>
+          <rect x="0" y="6" width="8" height="16" rx="4" fill="#1e4a38"/>
+        </svg>
+      </article>
+    </div>
+    <p class="fine">Tool mở nhiều tab trên cùng một máy. Đường ngắn, các tab không chen một đường truyền chậm, nên mạng không bị nghẽn.</p>
+  </section>
+
+  <section>
+    <p class="kicker">Nếu thuê máy · giá xem ngày 29/09/2026</p>
+    <h2>Bật bao lâu thì trả bấy lâu</h2>
+    <p class="muted" style="margin-top:6px">Cấu hình tham khảo: 4 nhân CPU, 8 GB RAM, máy đặt tại New Zealand. Mỗi lần thử hoặc chạy thật khoảng 10–15 phút. Vài lần thử cộng một lần chạy thật thường chừng một giờ.</p>
+    <table>
+      <thead>
+        <tr><th>Nơi thuê</th><th>Máy</th><th>Khoảng</th><th>Ghi chú</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Azure<br>Auckland</td>
+          <td>0,386 USD/giờ<br>+ IP 0,005 USD/giờ</td>
+          <td><strong>≈ 10.000đ/giờ</strong></td>
+          <td>Đã gồm Windows. Một giờ khoảng 0,391 USD. Tắt đúng cách thì hết tính tiền giờ.</td>
+        </tr>
+        <tr>
+          <td>Catalyst<br>New Zealand</td>
+          <td>0,2708 NZD/giờ<br>+ IP 0,006 NZD/giờ</td>
+          <td><strong>≈ 4.000đ/giờ</strong></td>
+          <td>Windows tính riêng 26 NZD/tháng cho 4 nhân (≈ 385.000đ), tối thiểu một tháng, chưa gồm thuế GST.</td>
+        </tr>
+        <tr>
+          <td>AWS<br>Auckland</td>
+          <td>Giá máy xem trên trang tính giá của AWS</td>
+          <td>IP ≈ 0,005 USD/giờ</td>
+          <td>Vùng này mở từ 2/9/2025 và phải tự bật trong tài khoản. Mình không chốt giá máy vì nó đổi theo cấu hình bạn chọn.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note keep">
+      <p><strong>Không dùng nữa thì dừng máy.</strong> Trên Azure bấm Stop đến khi thấy Stopped (deallocated). Trên Catalyst bấm Shelve. Tắt trong Windows chưa chắc đã ngừng tính tiền.</p>
+      <p><strong>Xong hẳn thì xoá máy,</strong> kèm ổ đĩa và IP. Chỉ dừng máy thì ổ đĩa và IP vẫn có thể tính một khoản nhỏ.</p>
+    </div>
+    <p class="fine">Giá chưa gồm ổ đĩa, băng thông, thuế và phí đổi tiền. Tỷ giá Vietcombank bán ra ngày 29/09/2026: 1 USD = 26.170đ, 1 NZD = 14.820đ. Giá nhà cung cấp có thể đổi. Xem lại trước khi bấm thuê.</p>
+  </section>
+
+  <section>
+    <p class="kicker">Các bước</p>
+    <h2>Mình gửi tool, bạn tự chạy</h2>
+    <p class="muted" style="margin-top:6px">Mình nhận đăng ký đến 20/10/2026. Sau ngày này mình có thể không còn kịp chuẩn bị cùng bạn.</p>
+    <figure class="keep">
+      <svg viewBox="0 0 720 92" role="img" aria-label="Bốn chặng: bật máy, tool điền, dừng ở trang trả tiền, bạn tự nhập thẻ.">
+        <rect width="720" height="92" rx="16" fill="#fffdf9" stroke="#e4d8c8"/>
+        <g font-family="Be Vietnam Pro, sans-serif" font-size="12" fill="#241c16" text-anchor="middle">
+          <circle cx="70" cy="36" r="16" fill="#1e4a38"/>
+          <text x="70" y="41" fill="#fff" font-weight="700">1</text>
+          <text x="70" y="72">Bạn bật máy</text>
+          <circle cx="250" cy="36" r="16" fill="#1e4a38"/>
+          <text x="250" y="41" fill="#fff" font-weight="700">2</text>
+          <text x="250" y="72">Tool điền hồ sơ</text>
+          <circle cx="450" cy="36" r="16" fill="#1e4a38"/>
+          <text x="450" y="41" fill="#fff" font-weight="700">3</text>
+          <text x="450" y="72">Dừng ở trang trả tiền</text>
+          <circle cx="650" cy="36" r="16" fill="#9a3412"/>
+          <text x="650" y="41" fill="#fff" font-weight="700">4</text>
+          <text x="650" y="72">Bạn tự nhập thẻ</text>
+          <path d="M90 36 H230 M270 36 H430 M470 36 H630" stroke="#c4b6a4" stroke-width="2"/>
+        </g>
+      </svg>
+      <figcaption>Tool dừng trước khi nhập thẻ. Mình không thấy số thẻ và không giữ thẻ.</figcaption>
+    </figure>
+    <ol class="steps">
+      <li class="keep"><span>1</span><div><h3>Bạn chọn số tài khoản</h3><p class="muted">Bạn chọn số tài khoản muốn chạy và gửi hồ sơ đúng như sự thật. Nhiều tài khoản thì nhiều lượt chạy cùng lúc.</p></div></li>
+      <li class="keep"><span>2</span><div><h3>Mình gửi tool và tài khoản</h3><p class="muted">Kèm mật khẩu mình tạo, và cách chọn máy để chạy.</p></div></li>
+      <li class="keep"><span>3</span><div><h3>Bạn thử trước, không mất phí</h3><p class="muted">Nên thử form Nhật vì nó gần form Việt Nam nhất, và dùng thông tin giả. Muốn thử trên máy thuê thì làm theo hướng dẫn Azure.</p></div></li>
+      <li class="keep"><span>4</span><div><h3>Mình giới hạn tool trước ngày mở đơn</h3><p class="muted">Vài ngày trước giờ mở đơn, chỉ những tài khoản mình đã giao cho bạn mới chạy được. Đây là giới hạn của tool, không phải khoá hồ sơ của bạn trên INZ.</p></div></li>
+      <li class="keep"><span>5</span><div><h3>Đến giờ, bạn bật máy</h3><p class="muted">Tool tự chạy. Tới trang trả lệ phí thì dừng lại để bạn tự nhập thẻ.</p></div></li>
+    </ol>
+    <div class="cards two" style="margin-top:14px">
+      <article class="card keep">
+        <strong>Thành công</strong>
+        <p class="muted">Có link và bạn thanh toán được lệ phí cho INZ. Lúc đó mình mới nhận phí dịch vụ, đúng số đã chốt.</p>
+      </article>
+      <article class="card keep">
+        <strong>Chưa được</strong>
+        <p class="muted">Không có link, hoặc có link mà bạn không thanh toán được. Mình không lấy tiền. Kỳ mở lại thì đăng ký tiếp.</p>
+      </article>
+    </div>
+    <p class="closing">Mình không thuộc INZ, không giữ thẻ, và không hứa chắc một suất. Tool chỉ điền hồ sơ và đưa bạn tới trang thanh toán. Suất còn hay hết là việc của kỳ nộp. Muốn nhận tool thử thì nhắn lại tên và email. Muốn chốt số tài khoản thì nhắn số lượng, mình tính lại giá trước khi chạy.</p>
+  </section>
+</body>
+</html>

@@ -8,8 +8,9 @@
     "start": "node src/runner.js",
     "test": "node --test test",
     "desktop": "electron desktop/main.js",
-    "dist:mac": "electron-builder --mac",
-    "dist:win": "electron-builder --win"
+    "dist:mac": "electron-builder --mac --x64 --arm64",
+    "dist:win": "electron-builder --win --x64 --arm64",
+    "dist": "electron-builder --mac --x64 --arm64 --win --x64 --arm64"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
@@ -22,22 +23,52 @@
   "build": {
     "appId": "com.inz.runner",
     "productName": "INZ Runner",
+    "artifactName": "INZ-Runner-${version}-${os}-${arch}.${ext}",
     "asarUnpack": [
-      "src/**/*"
+      "src/**/*",
+      "node_modules/**/*"
     ],
     "files": [
       "desktop/**/*",
       "src/**/*",
-      "applicant.json",
-      "emails.json",
-      ".env.example",
+      "packaging/**/*",
       "package.json"
     ],
+    "extraFiles": [
+      { "from": "packaging/CAI_DAT.pdf", "to": "CAI_DAT.pdf" },
+      { "from": "packaging/HUONG_DAN_SU_DUNG.pdf", "to": "HUONG_DAN_SU_DUNG.pdf" }
+    ],
     "mac": {
-      "target": "dmg"
+      "category": "public.app-category.utilities",
+      "minimumSystemVersion": "11.0",
+      "identity": null,
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ]
+    },
+    "dmg": {
+      "title": "INZ Runner"
     },
     "win": {
-      "target": "nsis"
+      "signAndEditExecutable": false,
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": false,
+      "packElevateHelper": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "INZ Runner",
+      "artifactName": "INZ-Runner-Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "INZ-Runner-${version}-win-${arch}-portable.${ext}"
     }
   },
   "allowScripts": {

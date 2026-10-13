@@ -1,35 +1,27 @@
 const crypto = require('node:crypto');
 const config = require('./config');
-const { sleep, formatDuration } = require('./timing');
+const { sleep, waitForNextDocument, isContextGone } = require('./timing');
 const { firstExisting, firstVisible } = require('./dom');
 const selectors = require('./selectors/actions');
-const { isStopRequested } = require('./stop');
+const { isStopRequested, waitIfPaused } = require('./stop');
 const { accountProxy } = require('./browser');
-const { solveRecaptchaV2 } = require('./capmonster');
+const { solveCaptchaOnPage, showCaptchaKey, collectCaptchaSnapshot, classifyCaptcha, formatAutocaptchaProxy } = require('./autocaptcha');
 
-const captchaStats = { count: 0, totalMs: 0 };
+const captchaStats = { count: 0 };
+
+function accountIndexFromLabel(label) {
+  const match = String(label || '').match(/account\s+(\d+)/i);
+  return match ? Number(match[1]) - 1 : -1;
+}
 
 async function readCaptchaInfo(page) {
-  return page.evaluate(() => {
-    const widget = document.querySelector('.g-recaptcha, [data-sitekey]');
-    const iframe = [...document.querySelectorAll('iframe[src*="captcha"], iframe[src*="recaptcha"]')].find(element => element.src);
-    return {
-      type: iframe?.src.includes('recaptcha') || widget?.classList.contains('g-recaptcha') ? 'recaptcha' : 'captcha',
-      sitekey: widget?.getAttribute('data-sitekey') || '',
-      widgetId: widget?.id || '',
-      iframeSrc: iframe?.src || '',
-      url: location.href
-    };
-  }).catch(() => ({ type: 'unknown', sitekey: '', widgetId: '', iframeSrc: '', url: '' }));
+  const snapshot = await page.evaluate(collectCaptchaSnapshot).catch(() => null);
+  if (!snapshot) return { type: 'unknown', kind: '', sitekey: '', widgetId: '', iframeSrc: '', url: '' };
+  return classifyCaptcha(snapshot);
 }
 
 function getCaptchaId(info) {
   return crypto.createHash('sha1').update(`${info.url}|${info.sitekey}|${info.widgetId}|${info.iframeSrc}`).digest('hex').slice(0, 12);
-}
-
-function accountIndexFromLabel(label) {
-  const match = String(label).match(/account (\d+)/);
-  return match ? Number(match[1]) - 1 : -1;
 }
 
 function logCaptcha(label, id, status, details = {}) {
@@ -38,9 +30,10 @@ function logCaptcha(label, id, status, details = {}) {
 }
 
 async function hasCaptcha(page) {
-  return page.evaluate(() => Boolean(/\/rs-captcha|\/captcha/i.test(location.href) ||
-    document.querySelector('iframe[src*="captcha"], iframe[src*="recaptcha"], .g-recaptcha') ||
-    /captcha|i'm not a robot/i.test(document.body?.innerText || '')));
+  const snapshot = await page.evaluate(collectCaptchaSnapshot).catch(() => null);
+  if (!snapshot) return false;
+  if (classifyCaptcha(snapshot).kind) return true;
+  return /\/rs-captcha|\/captcha/i.test(snapshot.url || '') || /captcha|i'm not a robot/i.test(snapshot.text || '');
 }
 
 async function isDeclarationUi(page) {
@@ -82,41 +75,45 @@ async function clickRecaptchaCheckbox(page) {
 
 async function isCaptchaSolved(page) {
   return page.evaluate(() => {
-    const response = [...document.querySelectorAll('textarea[name="g-recaptcha-response"], textarea#g-recaptcha-response')]
-      .some(element => element.value.trim().length > 0);
+    const filled = selector => [...document.querySelectorAll(selector)].some(element => String(element.value || '').trim().length > 0);
+    const response = filled('textarea[name="g-recaptcha-response"], textarea#g-recaptcha-response, textarea[name="h-captcha-response"], [name="cf-turnstile-response"], #FunCaptcha-Token, input[name="fc-token"], input[name="verification-token"], [name="mtcaptcha-verifiedtoken"], [name="pass_token"], [name="geetest_validate"], [name="geetest_seccode"]');
+    const typed = Boolean(document.querySelector('[data-inz-captcha-answer="1"]'));
     const checked = Boolean(document.querySelector('.recaptcha-checkbox-checked, [aria-checked="true"]'));
     const captchaUrl = /\/rs-captcha|\/captcha/i.test(location.href);
-    return response || checked || (!captchaUrl && !document.querySelector('iframe[src*="captcha"], iframe[src*="recaptcha"], .g-recaptcha'));
+    const widget = document.querySelector('iframe[src*="captcha"], iframe[src*="recaptcha"], iframe[src*="hcaptcha"], iframe[src*="challenges.cloudflare.com"], iframe[src*="arkoselabs"], iframe[src*="funcaptcha"], .g-recaptcha, .h-captcha, .cf-turnstile');
+    return response || typed || checked || (!captchaUrl && !widget);
   }).catch(() => false);
 }
 
 async function pauseForCaptcha(page, label, stats = null) {
   if (!await hasCaptcha(page)) return;
   const info = await readCaptchaInfo(page);
+  info.proxy = formatAutocaptchaProxy(accountProxy(accountIndexFromLabel(label)));
   const id = getCaptchaId(info);
-  const startedAt = Date.now();
-  logCaptcha(label, id, 'FOUND', { type: info.type, sitekey: info.sitekey, widget_id: info.widgetId, url: info.url });
-  const accountIndex = accountIndexFromLabel(label);
-  const capmonsterJob = { cancelled: false };
-  const capmonster = solveRecaptchaV2({
+  logCaptcha(label, id, 'FOUND', { type: info.kind || info.type, sitekey: info.sitekey, widget_id: info.widgetId, url: info.url });
+  const captchaJob = { cancelled: false };
+  const solver = solveCaptchaOnPage({
     page,
     info,
-    proxy: accountProxy(accountIndex),
-    isCancelled: () => capmonsterJob.cancelled,
-    onUpdate: (status, details) => logCaptcha(label, id, `CAPMONSTER_${status.toUpperCase()}`, details)
+    apiKey: config.capmonsterApiKey,
+    source: config.capmonsterApiKeySource || 'whitelist',
+    isCancelled: () => captchaJob.cancelled,
+    isSolved: () => isCaptchaSolved(page),
+    onUpdate: (status, details) => {
+      logCaptcha(label, id, `AUTOCAPTCHA_${status.toUpperCase()}`, details);
+      if (status === 'key' && details.key) page.evaluate(showCaptchaKey, details.key, details.source || '').catch(() => {});
+    }
   }).catch(error => {
-    if (!capmonsterJob.cancelled) logCaptcha(label, id, 'CAPMONSTER_FAILED', { message: error.message });
+    if (!captchaJob.cancelled) logCaptcha(label, id, 'AUTOCAPTCHA_FAILED', { message: error.message });
   });
   try {
     captchaStats.count += 1;
-    let nextClickAt = startedAt;
     let opened = false;
     while (!isStopRequested()) {
+      await waitIfPaused();
+      if (isStopRequested()) break;
       if (await isCaptchaSolved(page)) {
-        const duration = Date.now() - startedAt;
-        captchaStats.totalMs += duration;
-        if (stats) stats.captchaMs += duration;
-        logCaptcha(label, id, 'SOLVED', { elapsed_ms: duration, duration: formatDuration(duration), result: 'solved' });
+        logCaptcha(label, id, 'SOLVED', { result: 'solved' });
         const submitSelector = await firstVisible(page, selectors.submit);
         if (!submitSelector) throw new Error('CAPTCHA đã giải nhưng không tìm thấy nút SUBMIT đang hiển thị');
         const submitState = await page.$eval(submitSelector, element => ({
@@ -126,32 +123,39 @@ async function pauseForCaptcha(page, label, stats = null) {
         }));
         if (submitState.disabled) throw new Error(`Nút SUBMIT đang disabled: ${submitSelector}`);
         console.log(`[${label}] CAPTCHA solved, click SUBMIT selector=${submitSelector} id=${submitState.id}`);
-        // Chờ navigation thật sự để vòng wizard không click lại trên context cũ.
-        await Promise.all([
-          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 5000 }).catch(() => {}),
-          page.$eval(submitSelector, element => {
+        const previousUrl = await page.url();
+        const nextDocument = waitForNextDocument(page, previousUrl);
+        try {
+          await page.$eval(submitSelector, element => {
             element.focus();
             element.click();
-          })
-        ]);
-        logCaptcha(label, id, 'SUBMIT_SENT', { elapsed_ms: Date.now() - startedAt, result: 'submit_clicked' });
+          });
+        } catch (error) {
+          if (!isContextGone(error)) {
+            nextDocument.cancel();
+            await nextDocument;
+            throw error;
+          }
+        }
+        if (!await nextDocument) return;
+        logCaptcha(label, id, 'SUBMIT_SENT', { result: 'submit_clicked' });
         return;
       }
-      if (!opened && Date.now() >= nextClickAt) {
+      if (!opened && info.kind && info.kind !== 'recaptcha_v2' && info.kind !== 'recaptcha') opened = true;
+      if (!opened) {
         const checkbox = await clickRecaptchaCheckbox(page);
         if (checkbox === 'clicked' || checkbox === 'checked' || checkbox === 'challenge') opened = true;
-        if (checkbox === 'clicked') logCaptcha(label, id, 'CHECKBOX_CLICKED', { elapsed_ms: Date.now() - startedAt });
-        nextClickAt = Date.now() + 2000;
+        if (checkbox === 'clicked') logCaptcha(label, id, 'CHECKBOX_CLICKED');
       }
       await sleep(config.captchaPollMs);
     }
     throw new Error('Đã yêu cầu dừng khi đang chờ CAPTCHA');
   } catch (error) {
-    logCaptcha(label, id, 'FAILED', { elapsed_ms: Date.now() - startedAt, result: 'failed', message: error.message });
+    if (!isStopRequested()) logCaptcha(label, id, 'FAILED', { result: 'failed', message: error.message });
     throw error;
   } finally {
-    capmonsterJob.cancelled = true;
-    capmonster.catch(() => {});
+    captchaJob.cancelled = true;
+    solver.catch(() => {});
   }
 }
 

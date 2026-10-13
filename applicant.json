@@ -1,17 +1,18 @@
 {
   "address": {
-    "city": "CCity",
+    "city": "Hai Duong",
     "country": "Vietnam",
     "postal_code": "100000",
-    "province": "PProvince",
-    "street_name": "CStreet Name",
-    "street_number": "6543",
-    "suburb": "DSub burb"
+    "province": "Hai Duong",
+    "street_name": "Tenduong",
+    "street_number": "9999",
+    "suburb": "khuvuc"
   },
   "character": {
     "charged": "No",
     "convicted": "No",
     "deported": "No",
+    "removal_order": "No",
     "details": "",
     "excluded": "No",
     "imprisonment_12_months": "No",
@@ -35,13 +36,13 @@
   },
   "contact": {
     "communication_method": "Email",
-    "email": "email.ftuforum@gmail.com",
+    "email": "ngotatto@gmail.com",
     "fax": "",
     "has_agent": "No",
     "has_credit_card": "Yes",
-    "phone_daytime": "09876546789",
-    "phone_mobile": "09876578986",
-    "phone_night": ""
+    "phone_daytime": "07562892815",
+    "phone_mobile": "07562892815",
+    "phone_night": "07562892815"
   },
   "health": {
     "active_tb": "No",
@@ -56,12 +57,12 @@
     "tb_risk": "Yes"
   },
   "identification": {
-    "id_expiry_date": "26 September, 2034",
-    "id_issue_date": "26 September, 2024",
+    "id_expiry_date": "23 June, 2034",
+    "id_issue_date": "23 June, 2024",
     "id_type": "National ID",
-    "passport_citizenship": "Vietnam",
-    "passport_expiry": "8 September, 2033",
-    "passport_number": "E08977456"
+    "passport_citizenship": "Japan",
+    "passport_expiry": "22 May, 2033",
+    "passport_number": "E01235456"
   },
   "occupation": {
     "industry_search": "",
@@ -70,26 +71,26 @@
   "whs": {
     "previous_whs_visa": "No",
     "sufficient_funds_holiday": "Yes",
-    "travel_date": "24 December, 2026",
+    "travel_date": "22 December, 2026",
     "been_to_nz": "No",
     "been_to_nz_when": "",
     "sufficient_funds_onward_ticket": "Yes",
     "meet_scheme_requirements": "Yes"
   },
   "payment": {
-    "payer_name": "Vu Quang Nguyen"
+    "payer_name": "Tat To Ngo"
   },
   "personal": {
     "country_of_birth": "Japan",
-    "date_of_birth": "24 May, 1996",
-    "family_name": "Afami lyname",
-    "gender": "Female",
-    "given_name_1": "Bgiven name",
+    "date_of_birth": "22 May, 1997",
+    "family_name": "Ngo",
+    "gender": "Male",
+    "given_name_1": "Tat To",
     "given_name_2": "",
     "given_name_3": "",
     "other_names": "",
     "other_title": "",
-    "title": "Miss"
+    "title": "Mr"
   },
-  "scheme_country": "CROATIA"
+  "scheme_country": "JAPAN"
 }

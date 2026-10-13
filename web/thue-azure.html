@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Hướng dẫn thuê máy ảo Windows trên Azure tại New Zealand và điều khiển máy đó từ laptop.">
+  <title>Hướng dẫn thuê VPS Azure</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="guide">
+  <header class="site-head">
+    <div class="wrap head-row">
+      <a class="brand" href="index.html">
+        <span class="mark" aria-hidden="true">NZ</span>
+        <span>
+          <span class="eyebrow">Hướng dẫn cho người mới</span>
+          <strong>Thuê VPS Azure</strong>
+        </span>
+      </a>
+      <a class="head-link" href="index.html#uu-dai">Về bảng giá</a>
+    </div>
+  </header>
+
+  <main class="wrap panel">
+    <nav class="guide-nav" aria-label="Các bước">
+      <a href="#chuan-bi">Chuẩn bị</a>
+      <a href="#tao-may">Tạo máy</a>
+      <a href="#man-hinh">Đọc màn hình</a>
+      <a href="#bat-may">Bật và kết nối</a>
+      <a href="#tat-may">Tắt và xoá</a>
+    </nav>
+
+    <header class="hero block">
+      <p class="eyebrow">Làm lần lượt, không cần biết trước</p>
+      <h1>Thuê một máy Windows đặt tại New Zealand, rồi điều khiển nó từ laptop của bạn.</h1>
+      <p class="lead">Máy này gọi là VPS: một máy tính để trên đám mây, bạn mở màn hình của nó qua mạng. Ảnh trong trang là một máy thật tên ToolNZ. Bạn tạo máy của mình, tên và địa chỉ IP sẽ khác. Đừng kết nối vào máy trong ảnh.</p>
+    </header>
+
+    <section class="block" id="chuan-bi">
+      <div class="section-head">
+        <p class="eyebrow">Bước 0</p>
+        <h2>Chuẩn bị trước khi bấm</h2>
+      </div>
+      <div class="reason-grid">
+        <article>
+          <h3>Tài khoản Microsoft</h3>
+          <p>Email dùng để đăng nhập Outlook, Hotmail hoặc tài khoản tạo mới cũng được. Vào <a href="https://portal.azure.com">portal.azure.com</a>.</p>
+        </article>
+        <article>
+          <h3>Thẻ thanh toán</h3>
+          <p>Azure hỏi thẻ để mở tài khoản. Máy chỉ tốn tiền khi đang bật. Tắt đúng cách thì ngừng tính tiền CPU.</p>
+        </article>
+        <article>
+          <h3>Mật khẩu máy</h3>
+          <p>Tự đặt một mật khẩu dài, có chữ hoa, chữ thường, số và một ký tự như ! hoặc @. Ghi vào nơi chỉ mình bạn xem. Azure không gửi lại mật khẩu này.</p>
+        </article>
+      </div>
+      <aside class="note-box">
+        <p>Cổng Azure trong ảnh đang là tiếng Anh. Làm theo đúng chữ trên nút. Không cần dùng hai nút phía trên cùng, “Help me copy this VM” và “Manage this VM with Azure CLI”.</p>
+      </aside>
+    </section>
+
+    <section class="block" id="tao-may">
+      <div class="section-head">
+        <p class="eyebrow">Bước 1</p>
+        <h2>Tạo máy</h2>
+        <p>Mỗi mục dưới đây là một ô trên form tạo máy. Điền xong mới bấm tạo.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <span>1</span>
+          <div>
+            <h3>Mở danh sách máy ảo</h3>
+            <p>Đăng nhập portal.azure.com. Bấm ô Search phía trên, gõ <strong>Virtual machines</strong>, rồi mở dịch vụ đó. Bấm <strong>Create</strong>, chọn <strong>Azure virtual machine</strong>.</p>
+          </div>
+        </li>
+        <li>
+          <span>2</span>
+          <div>
+            <h3>Đặt tên nhóm và tên máy</h3>
+            <p>Subscription: chọn gói bạn vừa mở. Resource group: bấm Create new. Trong ảnh, nhóm tên <strong>28NZ</strong>. Virtual machine name: trong ảnh là <strong>ToolNZ</strong>. Bạn có thể đặt tên khác, miễn không có dấu cách.</p>
+          </div>
+        </li>
+        <li>
+          <span>3</span>
+          <div>
+            <h3>Chọn đúng chỗ đặt máy</h3>
+            <p>Region: <strong>New Zealand North</strong>. Đây là Auckland, sát nơi trang cần mở. Availability options: Availability zone. Availability zone: <strong>1</strong>, giống dòng Location trong ảnh: New Zealand North (Zone 1).</p>
+          </div>
+        </li>
+        <li>
+          <span>4</span>
+          <div>
+            <h3>Chọn Windows và kích thước</h3>
+            <p>Image: một bản Windows có màn hình desktop, ví dụ Windows 11 Pro. Size: bấm See all sizes. Ảnh ví dụ đang là <strong>Standard D8ads v6</strong>, 8 vCPU và 32 GB RAM. Bảng giá dùng mức tham khảo nhỏ hơn, 4 vCPU và 8 GB (D4als_v6), khoảng 10.000đ mỗi giờ. Chọn mức bạn chịu được. Hướng dẫn này đúng với cả hai mức.</p>
+          </div>
+        </li>
+        <li>
+          <span>5</span>
+          <div>
+            <h3>Tạo tài khoản đăng nhập của chính máy</h3>
+            <p>Username: đừng dùng các tên admin, administrator, root. Password: mật khẩu bạn đã chuẩn bị. Đây là mật khẩu để mở màn hình máy, khác với mật khẩu đăng nhập Azure.</p>
+          </div>
+        </li>
+        <li>
+          <span>6</span>
+          <div>
+            <h3>Mở cổng để lát nữa kết nối được</h3>
+            <p>Public inbound ports: <strong>Allow selected ports</strong>. Select inbound ports: tick <strong>RDP (3389)</strong>. Không tick cổng này thì laptop không mở được màn hình máy.</p>
+          </div>
+        </li>
+        <li>
+          <span>7</span>
+          <div>
+            <h3>Tạo</h3>
+            <p>Các tab Disks và Networking để mặc định nếu bạn chưa cần đổi. Bấm <strong>Review + create</strong>. Ô nào đỏ thì quay lại sửa ô đó. Khi không còn lỗi, bấm <strong>Create</strong>. Đợi đến khi thấy deployment hoàn tất, rồi bấm <strong>Go to resource</strong>.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block" id="man-hinh">
+      <div class="section-head">
+        <p class="eyebrow">Bước 2</p>
+        <h2>Đọc màn hình điều khiển</h2>
+        <p>Sau khi vào máy, bạn đứng ở mục Overview. Ảnh dưới là máy ToolNZ đang tắt. Máy của bạn trông giống vậy, khác tên và khác IP.</p>
+      </div>
+      <figure class="figure">
+        <img src="images/azure-toolnz.png" alt="Màn hình Overview của máy ảo ToolNZ trên Azure, đặt tại New Zealand North, trạng thái Stopped deallocated, với các nút Connect, Start, Restart và Stop.">
+        <figcaption>Ví dụ màn hình điều khiển. Status đang là Stopped (deallocated): máy tắt và không còn tính tiền CPU. IP trong ảnh không phải máy của bạn.</figcaption>
+      </figure>
+      <div class="table-wrap">
+        <table class="guide-table">
+          <thead>
+            <tr><th>Chỗ trên màn hình</th><th>Nghĩa là gì</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Overview</td><td>Trang chính. Ngày thường chỉ cần đứng ở đây.</td></tr>
+            <tr><td>Connect</td><td>Lấy đường vào màn hình máy từ laptop của bạn.</td></tr>
+            <tr><td>Start</td><td>Bật máy. Bấm nút này trước khi Connect.</td></tr>
+            <tr><td>Restart</td><td>Khởi động lại. Máy vẫn đang chạy, vẫn tính tiền.</td></tr>
+            <tr><td>Stop</td><td>Tắt hẳn. Khi Status thành Stopped (deallocated) thì ngừng tính tiền CPU.</td></tr>
+            <tr><td>Hibernate</td><td>Ngủ đông. Không dùng nút này để tiết kiệm tiền.</td></tr>
+            <tr><td>Resource group</td><td>Túi chứa máy, ổ đĩa và IP. Trong ảnh là 28NZ. Xoá cả túi này khi không dùng nữa.</td></tr>
+            <tr><td>Status</td><td>Running là đang bật. Stopped (deallocated) là đang tắt đúng cách.</td></tr>
+            <tr><td>Location</td><td>Phải là New Zealand North. Zone 1 là khu trong vùng đó.</td></tr>
+            <tr><td>Operating system</td><td>Windows, để có màn hình desktop.</td></tr>
+            <tr><td>Size</td><td>Độ mạnh của máy. Ảnh là D8ads v6. Máy bạn tạo có thể nhỏ hơn.</td></tr>
+            <tr><td>Primary NIC public IP</td><td>Địa chỉ để laptop tìm thấy máy. Chỉ dùng IP của máy bạn, không dùng IP trong ảnh.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="fine-print">Cột trái còn Activity log, Networking, Monitoring. Bỏ qua khi mới bắt đầu. Việc hằng ngày là Start, Connect và Stop.</p>
+    </section>
+
+    <section class="block" id="bat-may">
+      <div class="section-head">
+        <p class="eyebrow">Bước 3</p>
+        <h2>Bật máy và mở màn hình từ laptop</h2>
+      </div>
+      <ol class="steps">
+        <li>
+          <span>1</span>
+          <div>
+            <h3>Bấm Start</h3>
+            <p>Đợi Status đổi thành <strong>Running</strong>. Lần đầu có thể mất một hoặc hai phút. Khi đang Running, dòng Primary NIC public IP là địa chỉ của máy bạn.</p>
+          </div>
+        </li>
+        <li>
+          <span>2</span>
+          <div>
+            <h3>Nếu laptop của bạn là Windows</h3>
+            <p>Bấm <strong>Connect</strong>, chọn kết nối RDP (Native RDP), rồi tải file .rdp. Mở file đó, bấm Connect. Nhập username và password đã đặt lúc tạo máy. Nếu Windows hỏi chứng chỉ, chọn Connect anyway hoặc Yes.</p>
+          </div>
+        </li>
+        <li>
+          <span>3</span>
+          <div>
+            <h3>Nếu laptop của bạn là Mac</h3>
+            <p>Vào App Store, cài <strong>Windows App</strong> (trước đây tên là Microsoft Remote Desktop). Bấm dấu cộng, Add PC. PC name: dán public IP của máy bạn. User account: Add User Account, điền username và password của máy Azure. Bấm đúp vào máy vừa thêm để vào.</p>
+          </div>
+        </li>
+        <li>
+          <span>4</span>
+          <div>
+            <h3>Bạn đang ở trong máy</h3>
+            <p>Thấy màn hình Windows là đã điều khiển được. Cài Chrome trên máy đó nếu cần. Khi mình gửi tool test, tải file vào máy này rồi mở, giống như mở trên laptop. Tool chạy nhiều tab trên chính máy này, đường mạng ngắn nên các tab không bị nghẽn.</p>
+          </div>
+        </li>
+      </ol>
+      <aside class="note-box">
+        <p>Không vào được: xem máy đã Running chưa, IP có đúng IP trên trang Overview không, password có đúng password của máy không. Vào Networking, kiểm tra inbound rule còn cổng RDP 3389. Quên password thì ở trang máy, tìm Reset password và đặt lại. Không tạo máy mới chỉ vì quên mật khẩu.</p>
+      </aside>
+    </section>
+
+    <section class="block" id="tat-may">
+      <div class="section-head">
+        <p class="eyebrow">Bước 4</p>
+        <h2>Tắt để ngừng tính tiền, xoá khi xong hẳn</h2>
+        <p>Một lần test khoảng 10–15 phút. Vài lần test cộng một lần chạy thật thường chừng một giờ máy bật. Trên mức 4 vCPU của bảng giá, một giờ khoảng 10.000đ.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <span>1</span>
+          <div>
+            <h3>Tắt bằng nút Stop trên Azure</h3>
+            <p>Đóng cửa sổ điều khiển trên laptop chưa đủ. Vào Overview, bấm <strong>Stop</strong>, xác nhận. Đợi Status thành <strong>Stopped (deallocated)</strong>, đúng chữ trong ảnh. Lúc đó mới ngừng tính tiền CPU.</p>
+          </div>
+        </li>
+        <li>
+          <span>2</span>
+          <div>
+            <h3>Đừng chỉ tắt trong Windows</h3>
+            <p>Bấm Shut down trong menu Start của Windows có thể để máy vẫn ở trạng thái allocated. Azure vẫn tính tiền máy. Luôn kiểm tra chữ deallocated trên portal.</p>
+          </div>
+        </li>
+        <li>
+          <span>3</span>
+          <div>
+            <h3>Xong việc thì xoá cả nhóm</h3>
+            <p>Ổ đĩa và IP vẫn có thể tính một khoản nhỏ khi máy đã deallocated. Bấm tên resource group (trong ảnh là 28NZ), chọn Delete resource group, gõ lại đúng tên nhóm để xác nhận. Máy, ổ đĩa và IP biến mất, ngừng tính tiền hoàn toàn.</p>
+          </div>
+        </li>
+      </ol>
+      <p class="cta-row"><a class="button button-primary" href="index.html#vps">Xem lại bảng giá theo giờ</a> <button class="button button-ghost" type="button" data-open-free>Đăng ký nhận tool miễn phí</button></p>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="wrap">
+      <p>Tool test được gửi miễn phí. Phí dịch vụ chỉ tính khi chạy thật và thanh toán được lệ phí.</p>
+      <p>Giá máy lấy từ bảng tham khảo ngày 29/09/2026. Kiểm tra lại trên Azure trước khi bấm Create.</p>
+    </div>
+  </footer>
+
+  <div class="free-dock">
+    <button class="free-launch" type="button" data-open-free aria-haspopup="dialog" aria-controls="freeDialog">
+      <span class="free-launch-kicker">Miễn phí · chỉ cần tên và email</span>
+      <strong>ĐĂNG KÝ NHẬN TOOL MIỄN PHÍ NGAY HÔM NAY</strong>
+      <span class="free-launch-action">Điền ngay</span>
+    </button>
+  </div>
+
+  <dialog class="free-dialog" id="freeDialog" aria-labelledby="freeTitle">
+    <form id="freeForm" novalidate>
+      <div class="free-dialog-head">
+        <div>
+          <p class="eyebrow">Tool test miễn phí</p>
+          <h2 id="freeTitle">Điền tên và email</h2>
+        </div>
+        <button class="icon-close" type="button" data-close-free aria-label="Đóng">×</button>
+      </div>
+      <p class="free-dialog-lead">Mình gửi tool để bạn tự test. Phí dịch vụ chỉ tính khi chạy thật và thanh toán được lệ phí.</p>
+      <label class="field" for="freeName">
+        <span>Họ và tên</span>
+        <input id="freeName" name="freeName" type="text" autocomplete="name" maxlength="80" required aria-describedby="freeNameError">
+        <small class="error" id="freeNameError"></small>
+      </label>
+      <label class="field" for="freeEmail">
+        <span>Email</span>
+        <input id="freeEmail" name="freeEmail" type="email" autocomplete="email" inputmode="email" maxlength="120" required aria-describedby="freeEmailError">
+        <small class="error" id="freeEmailError"></small>
+      </label>
+      <button class="button button-primary free-submit" type="submit">Đăng ký nhận tool</button>
+      <p class="form-status" id="freeStatus" role="status"></p>
+      <p class="fine-print">Bấm gửi là họ tên và email được ghi vào Google Sheet.</p>
+      <a class="text-button" href="index.html#dang-ky">Muốn chọn số tài khoản</a>
+    </form>
+    <div id="freeDone" hidden></div>
+  </dialog>
+  <script src="sheet-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

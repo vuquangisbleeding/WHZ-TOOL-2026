@@ -2,5 +2,6 @@ node_modules/
 .env
 chrome-profiles/
 logs/
+results.csv
 dist/
 

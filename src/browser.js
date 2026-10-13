@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 const config = require('./config');
+const { findChrome } = require('./chrome-path');
 const { fs, path } = require('./io');
 const { startAuthProxy } = require('./proxy-forward');
 
@@ -73,12 +74,19 @@ function accountProxy(accountIndex) {
   return accountProxies.get(accountIndex) || null;
 }
 
+async function clearRestoredTabs(profilePath) {
+  const sessionDir = path.join(profilePath, 'Default');
+  await Promise.all(['Last Session', 'Current Session', 'Last Tabs', 'Current Tabs'].map(name => fs.rm(path.join(sessionDir, name), { force: true })));
+  await fs.rm(path.join(sessionDir, 'Sessions'), { recursive: true, force: true });
+}
+
 async function launchBrowser(args, index, proxy) {
   noteAccountProxy(index, proxy);
   const profilePath = path.join(config.profileRoot, `account-${index + 1}`);
   await fs.mkdir(profilePath, { recursive: true });
+  await clearRestoredTabs(profilePath);
   const normalizedProxy = normalizeProxy(proxy);
-  const launchArgs = [...args];
+  const launchArgs = [...args, '--disable-session-crashed-bubble', '--hide-crash-restore-bubble'];
   const proxyEndpoint = normalizedProxy ? new URL(normalizedProxy.server) : null;
   const forwarder = normalizedProxy?.username
     ? await startAuthProxy({
@@ -93,11 +101,13 @@ async function launchBrowser(args, index, proxy) {
   } else if (normalizedProxy) {
     launchArgs.push(`--proxy-server=${normalizedProxy.server}`, '--proxy-bypass-list=<-loopback>');
   }
+  const executablePath = findChrome(config.chromeExecutablePath);
+  if (!executablePath) throw new Error('Không thấy Google Chrome. Hãy cài Chrome rồi mở lại app.');
   console.log(`[account ${index + 1}] Chrome profile: ${profilePath}`);
   if (normalizedProxy) console.log(`[account ${index + 1}] Proxy: ${normalizedProxy.server}${forwarder ? ` qua cổng nội bộ ${forwarder.port}` : ''}`);
   let browser;
   try {
-    browser = await puppeteer.launch({ headless: config.headless, executablePath: config.chromeExecutablePath, userDataDir: profilePath, args: launchArgs, defaultViewport: null });
+    browser = await puppeteer.launch({ headless: config.headless, executablePath, userDataDir: profilePath, args: launchArgs, defaultViewport: null });
   } catch (error) {
     forwarder?.close();
     throw error;
@@ -128,6 +138,8 @@ async function getSinglePage(browser) {
   const pages = await browser.pages();
   const page = pages[0] || await browser.newPage();
   await Promise.all(pages.slice(1).map(extraPage => extraPage.close().catch(() => {})));
+  page.setDefaultNavigationTimeout?.(0);
+  page.setDefaultTimeout?.(0);
   return page;
 }
 

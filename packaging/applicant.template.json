@@ -1,0 +1,97 @@
+{
+  "scheme_country": "",
+  "personal": {
+    "family_name": "",
+    "given_name_1": "",
+    "given_name_2": "",
+    "given_name_3": "",
+    "other_names": "",
+    "title": "",
+    "other_title": "",
+    "gender": "",
+    "date_of_birth": "",
+    "country_of_birth": ""
+  },
+  "address": {
+    "street_number": "",
+    "street_name": "",
+    "suburb": "",
+    "city": "",
+    "province": "",
+    "postal_code": "",
+    "country": ""
+  },
+  "contact": {
+    "has_agent": "",
+    "phone_daytime": "",
+    "phone_night": "",
+    "phone_mobile": "",
+    "fax": "",
+    "email": "",
+    "communication_method": "",
+    "has_credit_card": ""
+  },
+  "identification": {
+    "passport_number": "",
+    "passport_expiry": "",
+    "passport_citizenship": "",
+    "id_type": "",
+    "id_issue_date": "",
+    "id_expiry_date": ""
+  },
+  "occupation": {
+    "industry_search": "",
+    "occupation_search": ""
+  },
+  "health": {
+    "renal_dialysis": "",
+    "active_tb": "",
+    "cancer": "",
+    "heart_disease": "",
+    "disability": "",
+    "hospitalisation": "",
+    "residential_care": "",
+    "pregnancy": "",
+    "tb_risk": "",
+    "medical_details": ""
+  },
+  "character": {
+    "imprisonment_5_years": "",
+    "imprisonment_12_months": "",
+    "deported": "",
+    "removal_order": "",
+    "charged": "",
+    "convicted": "",
+    "under_investigation": "",
+    "excluded": "",
+    "removed": "",
+    "details": ""
+  },
+  "whs": {
+    "previous_whs_visa": "",
+    "sufficient_funds_holiday": "",
+    "travel_date": "",
+    "been_to_nz": "",
+    "been_to_nz_when": "",
+    "sufficient_funds_onward_ticket": "",
+    "meet_scheme_requirements": "",
+    "length_of_stay": ""
+  },
+  "declaration": {
+    "all_yes": false,
+    "false_statement": "No",
+    "notes_and_questions": "No",
+    "changed_circumstances": "No",
+    "good_character": "No",
+    "information_sharing": "No",
+    "health_information": "No",
+    "advice": "No",
+    "occupation_registration": "No",
+    "entitlement": "No",
+    "permit_expiry": "No",
+    "medical_insurance": "No"
+  },
+  "payment": {
+    "payer_name": ""
+  }
+}

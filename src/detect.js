@@ -4,14 +4,19 @@ const actions = require('./selectors/actions');
 const { firstExisting, firstVisible } = require('./dom');
 const { hasCaptcha } = require('./captcha');
 const { isHighLoadPage } = require('./recovery');
+const { isQuotaClosedText } = require('./quota');
 
 async function detectPage(page) {
   // Thứ tự kiểm tra quan trọng: trạng thái đặc biệt phải được bắt trước form.
   const url = await page.url();
   const body = await page.evaluate(() => document.body?.innerText || '');
   if (/\/rs-captcha|\/captcha/i.test(url)) return 'captcha';
+  if (isQuotaClosedText(body)) return 'quota_closed';
   if (await isHighLoadPage(page)) return 'highload';
   if (await firstExisting(page, textSelectors.username)) return 'login';
+  if (/\/Application\/Delete\.aspx/i.test(url)) return 'existing';
+  if (await page.$("a[id^='ContentPlaceHolder1_applicationList_applicationsDataGrid_editHyperLink_']")) return 'existing';
+  if (/Existing Applications/i.test(body) && /Submit\s*Delete/i.test(body)) return 'existing';
   if (/paystation|paymark|paymentexpress|pxpay|cardnumber/i.test(url) || await page.$('input[autocomplete="cc-number"], iframe[src*="payment"]')) return 'payment';
   if (/submitreceived|onlinesubmit/i.test(url) || /SUBMIT RECEIVED[\s\S]*PAY LATER/i.test(body)) return 'pay_now';
   if (await page.$('#ContentPlaceHolder1_onlinePaymentAnchor2, a[id$="onlinePaymentAnchor2"], a[href*="PaymentGateway/OnLinePayment"], a[href*="OnLinePayment.aspx"]') || /NEXT STEP[\s\S]*(SECURE PAYMENT|TOTAL CHARGE)/i.test(body)) return 'pay_next';

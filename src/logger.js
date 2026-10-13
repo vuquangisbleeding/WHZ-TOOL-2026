@@ -12,7 +12,7 @@ async function initializeLogger() {
   const originalLog = console.log.bind(console);
   const originalError = console.error.bind(console);
   const write = (original, values) => {
-    const line = `[${String(++state.sequence).padStart(4, '0')}] [${new Date().toISOString()}] ${format(...values)}\n`;
+    const line = `[${String(++state.sequence).padStart(4, '0')}] ${format(...values)}\n`;
     original(line.trimEnd());
     state.queue = state.queue.then(() => fs.appendFile(state.file, line));
     const match = line.match(/\[account (\d+)(?:: [^\]]+)?\]/);
