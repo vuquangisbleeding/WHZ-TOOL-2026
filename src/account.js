@@ -3,7 +3,8 @@ const actions = require('./selectors/actions');
 const { initializeAccountLogger, accountLogFile } = require('./logger');
 const { authenticateProxy, getSinglePage } = require('./browser');
 const { login } = require('./auth');
-const { continueToApplication, resumeWhenSchemeReopens } = require('./entry');
+const { continueToApplication } = require('./entry');
+const { refreshUntilSubmit } = require('./quota');
 const { detectPage } = require('./detect');
 const { pauseForCaptcha } = require('./captcha');
 const { recoverHighLoad, waitForManualRecovery } = require('./recovery');
@@ -90,9 +91,7 @@ async function walkWizard(page, applicant, account, label, stats, result, finish
     const currentPage = await detectPage(page); const pageLabel = `${label} PAGE ${pageNumber} ${currentPage}`;
     console.log(`[${pageLabel}] URL=${await page.url()}`);
     if (currentPage === 'quota_closed') {
-      const reopened = await resumeWhenSchemeReopens(page, applicant, label, stats);
-      if (reopened?.stop === 'EXISTING_APPLICATION') return stopForExistingApplication(reopened, result, finish, label);
-      if (reopened?.stop) return finish('STOPPED_KEEP_BROWSER');
+      if (await refreshUntilSubmit(page, label, stats) === 'stopped') return finish('STOPPED_KEEP_BROWSER');
       continue;
     }
     if (currentPage === 'highload') { await recoverHighLoad(page, label); continue; }

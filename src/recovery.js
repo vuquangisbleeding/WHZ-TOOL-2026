@@ -8,7 +8,7 @@ async function isHighLoadPage(page) {
     await waitIfPaused();
     try {
       const content = await page.evaluate(() => `${location.href} ${document.body?.innerText || ''}`);
-      return /site is under high load|currently experiencing high demand|system is busy|please try again later|try again later/i.test(content);
+      return /site is under high load|currently experiencing high demand|system is busy|please try again later|try again later|502 bad gateway|503 service unavailable|504 gateway time-?out|http error 50[234]|502 - web server received an invalid response/i.test(content);
     } catch (error) {
       if (!isContextGone(error)) {
         console.log(`[HIGH_LOAD_PROBE_ERROR] không đọc được trang: ${error.message}`);

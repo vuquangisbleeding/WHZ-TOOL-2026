@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Giải thích cách tool vận hành qua máy chủ và proxy.">
+  <title>Thông tin vận hành · Hello!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="guide operations-page">
+  <header class="site-head">
+    <div class="wrap head-row">
+      <a class="brand" href="index.html">
+        <span class="mark" aria-hidden="true">✦</span>
+        <span><span class="eyebrow">Hello, bạn ơi!</span><strong>Thông tin vận hành</strong></span>
+      </a>
+      <nav class="head-links" aria-label="Điều hướng">
+        <a class="head-link" href="index.html">Điền thông tin</a>
+        <a class="head-link" href="#mo-hinh">Xem mô hình</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap operations-main">
+    <header class="hero operations-hero">
+      <p class="eyebrow">Mình hoạt động như thế nào?</p>
+      <h1>Tool tự động điền thông tin trên máy chủ tại New Zealand.</h1>
+      <p class="lead">Bạn điền thông tin một lần. Sau đó tool sẽ dùng các máy chủ và trình duyệt riêng để xử lý từng tài khoản, thay vì gom tất cả vào một tab duy nhất.</p>
+    </header>
+
+    <section class="info-card info-card-highlight">
+      <p class="eyebrow">Ví dụ với 20 tài khoản</p>
+      <h2>Chia nhỏ để các tài khoản không ảnh hưởng lẫn nhau</h2>
+      <div class="capacity-grid">
+        <div><strong>4</strong><span>máy chủ</span></div>
+        <div><strong>5</strong><span>tab mỗi máy</span></div>
+        <div><strong>64 GB</strong><span>cấu hình khoảng mỗi máy</span></div>
+      </div>
+      <p>Mỗi account tương ứng với một tab trình duyệt. Mỗi tab được gán một IP proxy riêng để các phiên làm việc có đường mạng tách biệt.</p>
+    </section>
+
+    <section class="info-card" id="mo-hinh">
+      <div class="section-head">
+        <p class="eyebrow">Minh hoạ đường truyền</p>
+        <h2>Không qua proxy và đi qua proxy</h2>
+      </div>
+      <div class="diagram-grid">
+        <article class="diagram diagram-direct">
+          <div class="diagram-title"><span class="diagram-dot"></span>Không qua proxy</div>
+          <div class="flow">
+            <div class="flow-node"><b>Máy chủ</b><small>1 IP nguồn</small></div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="flow-node"><b>20 tab</b><small>chung đường mạng</small></div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="flow-node flow-server"><b>Website</b><small>thấy cùng IP</small></div>
+          </div>
+          <p>Toàn bộ tab cùng đi ra từ một địa chỉ IP của máy chủ. Khi chạy nhiều tài khoản đồng thời, các phiên có thể dễ bị ảnh hưởng bởi cùng một đường truyền.</p>
+        </article>
+        <article class="diagram diagram-proxy">
+          <div class="diagram-title"><span class="diagram-dot"></span>Đi qua proxy</div>
+          <div class="flow flow-proxy">
+            <div class="flow-node"><b>Máy chủ</b><small>4 máy / 20 tab</small></div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="proxy-stack">
+              <div class="flow-node proxy-node"><b>Proxy 01</b><small>Tab 01 · IP riêng</small></div>
+              <div class="flow-node proxy-node"><b>Proxy 02</b><small>Tab 02 · IP riêng</small></div>
+              <div class="flow-node proxy-node"><b>… Proxy 20</b><small>mỗi tab một IP</small></div>
+            </div>
+            <span class="flow-arrow" aria-hidden="true">→</span>
+            <div class="flow-node flow-server"><b>Website</b><small>các IP proxy</small></div>
+          </div>
+          <p>Proxy là mạng trung gian: website nhận kết nối từ IP proxy thay vì IP trực tiếp của máy chủ. Đây là cách tách đường mạng giữa các tab, nhưng không phải cam kết tuyệt đối rằng website không thể nhận diện các tín hiệu khác.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="info-card">
+      <div class="section-head">
+        <p class="eyebrow">Cần thuê gì?</p>
+        <h2>Chi phí hạ tầng phụ thuộc số tài khoản</h2>
+      </div>
+      <div class="rental-list">
+        <div class="rental-item"><strong>Máy tính / máy chủ</strong><span>Ví dụ 20 tài khoản: khoảng 4 máy, mỗi máy 5 tab.</span></div>
+        <div class="rental-item"><strong>Proxy</strong><span>Ví dụ cần 20 IP riêng; hiện đã có sẵn 4 IP nên cần thuê thêm khoảng 16 proxy.</span></div>
+      </div>
+      <div class="notice">
+        <strong>Lưu ý về giới hạn nhà cung cấp</strong>
+        <p>Nhà cung cấp đang giới hạn số lượng máy chủ mỗi người có thể thuê. Vì vậy hiện chưa chắc có đủ máy để chạy cho tất cả mọi người cùng lúc; số lượng và thời điểm chạy sẽ được sắp xếp theo hạ tầng thực tế.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="wrap"><p>Proxy và máy chủ là hạ tầng thuê ngoài, có thể thay đổi theo nhà cung cấp và tình trạng sẵn có.</p></div>
+  </footer>
+</body>
+</html>

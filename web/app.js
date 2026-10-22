@@ -80,7 +80,7 @@ function initTabs() {
   });
   const initial = location.hash.replace("#", "");
   if (TABS.includes(initial)) showTab(initial, { scroll: false });
-  else showTab("hoat-dong", { scroll: false, updateHash: false });
+  else showTab("dang-ky", { scroll: false, updateHash: false });
 }
 
 function initDeadline() {
@@ -93,7 +93,7 @@ function initDeadline() {
   if (days > 1) node.textContent = `Còn ${days} ngày · hạn đăng ký 20/10/2026`;
   else if (days === 1) node.textContent = "Còn 1 ngày · hạn đăng ký 20/10/2026";
   else if (days === 0) node.textContent = "Hôm nay là hạn đăng ký 20/10/2026";
-  else node.textContent = "Đã qua hạn 20/10/2026 · đăng ký muộn có thể không kịp";
+  else node.textContent = "Mình vẫn nhận thông tin · cứ điền form nhé";
 }
 
 function readQuantity() {

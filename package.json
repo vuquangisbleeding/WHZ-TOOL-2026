@@ -8,7 +8,7 @@
     "start": "node src/runner.js",
     "test": "node --test test",
     "desktop": "electron desktop/main.js",
-    "dist:mac": "electron-builder --mac --x64 --arm64",
+    "dist:mac": "electron-builder --mac dmg --arm64",
     "dist:win": "electron-builder --win --x64 --arm64",
     "dist": "electron-builder --mac --x64 --arm64 --win --x64 --arm64"
   },
@@ -42,13 +42,14 @@
       "category": "public.app-category.utilities",
       "minimumSystemVersion": "11.0",
       "identity": null,
+      "artifactName": "INZ-Runner-Mac.${ext}",
       "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] },
-        { "target": "zip", "arch": ["x64", "arm64"] }
+        { "target": "dmg", "arch": ["arm64"] }
       ]
     },
     "dmg": {
-      "title": "INZ Runner"
+      "title": "INZ Runner",
+      "artifactName": "INZ-Runner-Mac.${ext}"
     },
     "win": {
       "signAndEditExecutable": false,

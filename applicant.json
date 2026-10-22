@@ -1,7 +1,7 @@
 {
   "address": {
     "city": "Hai Duong",
-    "country": "Vietnam",
+    "country": "Chile",
     "postal_code": "100000",
     "province": "Hai Duong",
     "street_name": "Tenduong",
@@ -60,7 +60,7 @@
     "id_expiry_date": "23 June, 2034",
     "id_issue_date": "23 June, 2024",
     "id_type": "National ID",
-    "passport_citizenship": "Japan",
+    "passport_citizenship": "CHILE",
     "passport_expiry": "22 May, 2033",
     "passport_number": "E01235456"
   },
@@ -81,7 +81,7 @@
     "payer_name": "Tat To Ngo"
   },
   "personal": {
-    "country_of_birth": "Japan",
+    "country_of_birth": "CHILE",
     "date_of_birth": "22 May, 1997",
     "family_name": "Ngo",
     "gender": "Male",
@@ -92,5 +92,5 @@
     "other_title": "",
     "title": "Mr"
   },
-  "scheme_country": "JAPAN"
+  "scheme_country": "CHILE"
 }

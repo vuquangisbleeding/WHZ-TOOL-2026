@@ -6,7 +6,6 @@ const { recoverHighLoad } = require('./recovery');
 const { pauseForCaptcha } = require('./captcha');
 const { watchClickedAction, loadDocument, documentLoadOptions, waitUntilDocumentReady, isContextGone } = require('./timing');
 const { isStopRequested, waitIfPaused, sleepUnlessStopped } = require('./stop');
-const { isQuotaClosed } = require('./quota');
 
 async function isExistingApplicationScreen(page) {
   let url = '';
@@ -67,8 +66,7 @@ async function continueToApplication(page, applicant, label, stats) {
     if (!isContextGone(error)) console.log(`[${label}] ENTRY_WAIT ${error.message}`);
   });
   if (await isExistingApplicationScreen(page)) return { stop: 'EXISTING_APPLICATION' };
-  const quotaClosed = await isQuotaClosed(page);
-  if (!quotaClosed && (/wizard/i.test(await page.url()) || await firstExisting(page, textSelectors.familyName))) return;
+  if (/wizard/i.test(await page.url()) || await firstExisting(page, textSelectors.familyName)) return;
   const country = config.schemeCountry || applicant.scheme_country;
   if (await page.$("[id^='ContentPlaceHolder1_countryRepeater_countryName_']")) {
     if (!country) throw new Error('Chưa cấu hình scheme country');
@@ -86,24 +84,4 @@ async function continueToApplication(page, applicant, label, stats) {
   throw new Error(`Không tìm thấy entry hồ sơ sau login. ${(await page.evaluate(() => document.body?.innerText || '')).slice(0, 250)}`);
 }
 
-async function openSchemeList(page, label) {
-  const target = config.loginUrl;
-  try {
-    if (target && typeof page.goto === 'function') await loadDocument(page, () => page.goto(target, documentLoadOptions));
-    else await loadDocument(page, () => page.reload(documentLoadOptions));
-  } catch (error) {
-    console.log(`[${label}] QUOTA_REOPEN_NAV_FAILED ${error.message}`);
-  }
-}
-
-async function resumeWhenSchemeReopens(page, applicant, label, stats) {
-  console.log(`[${label}] QUOTA_CLOSED hết slot. Quay lại danh sách quốc gia và chờ OPEN.`);
-  await openSchemeList(page, label);
-  await recoverHighLoad(page, label);
-  await pauseForCaptcha(page, label, stats);
-  if (await isExistingApplicationScreen(page)) return { stop: 'EXISTING_APPLICATION' };
-  if (await page.$('input[name="username"]')) return null;
-  return continueToApplication(page, applicant, label, stats);
-}
-
-module.exports = { continueToApplication, isExistingApplicationScreen, selectSchemeCountry, resumeWhenSchemeReopens };
+module.exports = { continueToApplication, isExistingApplicationScreen, selectSchemeCountry };

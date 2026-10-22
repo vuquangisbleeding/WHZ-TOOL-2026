@@ -7,11 +7,12 @@
  * 3. Deploy → New deployment → Web app.
  *    Execute as: Me. Who has access: Anyone.
  * 4. Copy link kết thúc bằng /exec vào web/sheet-config.js
+ * 5. Project Settings → Script properties: thêm WHITELIST_URL bằng URL whitelist.
  *
  * Sheet không cần share công khai. Mở file trên Google Sheet để đọc các dòng mới.
  */
 function headers_() {
-  return ["created_at", "kind", "id", "full_name", "birth_date", "email", "facebook", "note", "quantity", "package_name", "price", "saved"];
+  return ["created_at", "kind", "id", "full_name", "birth_date", "email", "facebook", "note", "quantity", "package_name", "price", "saved", "profile_json"];
 }
 
 function sheet_() {
@@ -28,9 +29,15 @@ function ensureHeader_(sheet) {
     sheet.appendRow(headers);
     return;
   }
-  const first = String(sheet.getRange(1, 1).getValue() || "");
+  const width = Math.max(sheet.getLastColumn(), 1);
+  const current = sheet.getRange(1, 1, 1, width).getValues()[0].map(function (value) { return String(value); });
+  const first = current[0] || "";
   if (first !== headers[0]) {
     sheet.insertRowBefore(1);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    return;
+  }
+  if (current.length < headers.length || current[headers.length - 1] !== headers[headers.length - 1]) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   }
 }
@@ -67,12 +74,57 @@ function append_(data) {
   }
 }
 
+function whitelistTelegram_() {
+  var properties = PropertiesService.getScriptProperties();
+  var whitelistUrl = String(properties.getProperty("WHITELIST_URL") || "").trim();
+  if (!whitelistUrl) return { token: "", chatId: "" };
+  var rows = SpreadsheetApp.openByUrl(whitelistUrl).getSheets()[0].getDataRange().getValues();
+  if (!rows.length) return { token: "", chatId: "" };
+  var headers = rows[0].map(function (value) {
+    return String(value || "").toLowerCase().replace(/[\s_-]+/g, "");
+  });
+  var tokenColumn = headers.indexOf("bottoken");
+  var chatColumn = headers.indexOf("chatid");
+  if (tokenColumn < 0 || chatColumn < 0) return { token: "", chatId: "" };
+  for (var index = 1; index < rows.length; index += 1) {
+    var token = String(rows[index][tokenColumn] || "").trim();
+    var chatId = String(rows[index][chatColumn] || "").trim();
+    if (token && chatId) return { token: token, chatId: chatId };
+  }
+  return { token: "", chatId: "" };
+}
+
+function sendTelegram_(data) {
+  var telegram = whitelistTelegram_();
+  if (!telegram.token || !telegram.chatId) throw new Error("Whitelist chưa có bot token hoặc chat ID.");
+  var message = [
+    "HỒ SƠ ĐĂNG KÝ MỚI",
+    "Facebook: " + String(data.facebook || ""),
+    "Số tài khoản: " + String(data.quantity || ""),
+    "Thời gian: " + String(data.created_at || ""),
+    "",
+    "Hồ sơ:",
+    String(data.profile_json || "{}")
+  ].join("\n");
+  for (var start = 0; start < message.length; start += 3800) {
+    var response = UrlFetchApp.fetch("https://api.telegram.org/bot" + telegram.token + "/sendMessage", {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({ chat_id: telegram.chatId, text: message.slice(start, start + 3800) }),
+      muteHttpExceptions: true
+    });
+    if (response.getResponseCode() >= 300) throw new Error("Telegram HTTP " + response.getResponseCode());
+  }
+}
+
 function doPost(e) {
   try {
-    append_(JSON.parse(e.postData.contents));
+    var data = JSON.parse(e.postData.contents);
+    append_(data);
+    sendTelegram_(data);
     return json_({ ok: true });
   } catch (error) {
-    return json_({ ok: false });
+    return json_({ ok: false, error: String(error) });
   }
 }
 

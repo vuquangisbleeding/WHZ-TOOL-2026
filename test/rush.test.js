@@ -126,6 +126,28 @@ test('a slow high-load page is read and refreshed without the old 1s or 8s cutof
   }
 });
 
+test('a 502 gateway page is reloaded immediately instead of waiting for a person', async () => {
+  const previousBackoff = config.highLoadBackoffMs;
+  config.highLoadBackoffMs = 0;
+  const page = {
+    body: '502 Bad Gateway nginx',
+    reloads: [],
+    async evaluate() { return page.body; },
+    async reload(options = {}) {
+      page.reloads.push(options.timeout);
+      page.body = 'Working Holiday scheme list';
+    }
+  };
+  try {
+    assert.equal(await isHighLoadPage(page), true);
+    assert.equal(await isHighLoadPage({ async evaluate() { return 'Family name Application 5021'; } }), false);
+    assert.equal(await recoverHighLoad(page, 'run'), false);
+    assert.deepEqual(page.reloads, [0]);
+  } finally {
+    config.highLoadBackoffMs = previousBackoff;
+  }
+});
+
 test('the first high-load refresh starts at once and the next one waits', async () => {
   const previousBackoff = config.highLoadBackoffMs;
   config.highLoadBackoffMs = 200;
