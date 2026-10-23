@@ -67,7 +67,6 @@ const sections = [
 const form = document.querySelector("#profileForm");
 const status = document.querySelector("#profileStatus");
 const submitButton = document.querySelector("#submitProfile");
-const copyButton = document.querySelector("#copyJson");
 const supabaseClient = window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY
   ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
   : null;
@@ -137,28 +136,6 @@ function readRegistration() {
     quantity: Number(form.querySelector("#accountCount")?.value || 0),
     profile: readProfile()
   };
-}
-async function copyJson() {
-  const json = JSON.stringify(readRegistration(), null, 2);
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(json);
-    } else {
-      const textarea = document.createElement("textarea");
-      textarea.value = json;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.append(textarea);
-      textarea.select();
-      if (!document.execCommand("copy")) throw new Error("Copy command failed");
-      textarea.remove();
-    }
-    showStatus("Đã copy toàn bộ thông tin form dưới dạng JSON.");
-  } catch (error) {
-    console.error("Không thể copy JSON:", error);
-    showStatus("Không thể copy JSON. Hãy kiểm tra quyền clipboard của trình duyệt.");
-  }
 }
 async function submitProfile() {
   const fields = [...form.querySelectorAll("[required]")];
@@ -230,8 +207,6 @@ form.addEventListener("change", event => {
     form.querySelectorAll('[data-path^="declaration."]:not([data-path="declaration.all_yes"])').forEach(control => { control.value = "Yes"; });
   }
 });
-copyButton?.addEventListener("click", copyJson);
-
 document.querySelector("#lookupForm")?.addEventListener("submit", async event => {
   event.preventDefault();
   const result = document.querySelector("#lookupResult");
