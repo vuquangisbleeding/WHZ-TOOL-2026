@@ -67,9 +67,12 @@ const sections = [
 const form = document.querySelector("#profileForm");
 const status = document.querySelector("#profileStatus");
 const submitButton = document.querySelector("#submitProfile");
+const discardButton = document.querySelector("#discardProfile");
 const supabaseClient = window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY
   ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
   : null;
+let editingCustomer = null;
+let showWizardStep = null;
 const inputId = path => `profile-${path.replaceAll(".", "-")}`;
 const getValue = (object, path) => path.split(".").reduce((value, key) => value?.[key], object) ?? "";
 function setValue(object, path, value) {
@@ -107,6 +110,45 @@ function buildForm() {
     });
     section.append(grid); form.append(section);
   });
+  initWizard();
+}
+function initWizard() {
+  const steps = [...form.querySelectorAll(".profile-section")];
+  let currentStep = 0;
+  const previousButton = document.querySelector("#previousStep");
+  const nextButton = document.querySelector("#nextStep");
+  const indicator = document.querySelector("#stepIndicator");
+  function renderStep() {
+    steps.forEach((step, index) => { step.hidden = index !== currentStep; });
+    previousButton.hidden = currentStep === 0;
+    nextButton.hidden = currentStep === steps.length - 1;
+    submitButton.hidden = !editingCustomer && currentStep !== steps.length - 1;
+    discardButton.hidden = !editingCustomer;
+    indicator.textContent = `Bước ${currentStep + 1}/${steps.length}`;
+    status.textContent = "";
+    window.scrollTo({ top: form.offsetTop - 24, behavior: "smooth" });
+  }
+  showWizardStep = step => {
+    currentStep = Math.max(0, Math.min(step, steps.length - 1));
+    renderStep();
+  };
+  previousButton.addEventListener("click", () => {
+    if (currentStep > 0) { currentStep -= 1; renderStep(); }
+  });
+  nextButton.addEventListener("click", () => {
+    if (currentStep < steps.length - 1) { currentStep += 1; renderStep(); }
+  });
+  discardButton.addEventListener("click", () => {
+    if (!editingCustomer) return;
+    fillProfile(editingCustomer.profile || {});
+    const quantity = form.querySelector("#accountCount");
+    if (quantity) quantity.value = String(editingCustomer.quantity || 1);
+    editingCustomer = null;
+    submitButton.textContent = "Lưu thông tin";
+    showWizardStep?.(0);
+    showStatus("Đã hủy thay đổi.");
+  });
+  renderStep();
 }
 function readProfile() {
   const profile = {};
@@ -116,6 +158,13 @@ function readProfile() {
   profile.declaration ||= {};
   profile.declaration.all_yes = form.querySelector(`[data-path="declaration.all_yes"]`)?.checked || false;
   return profile;
+}
+function fillProfile(profile) {
+  form.querySelectorAll("[data-path]").forEach(control => {
+    const value = getValue(profile, control.dataset.path);
+    if (control.type === "checkbox") control.checked = value === true || value === "true";
+    else control.value = value;
+  });
 }
 function dateForTool(value) {
   if (!value) return "";
@@ -161,14 +210,17 @@ async function submitProfile() {
     showStatus("Số lượng tài khoản phải từ 1 đến 30.");
     return;
   }
-  const id = profileId();
+  const isEditing = Boolean(editingCustomer?.id);
+  const id = editingCustomer?.id || profileId();
+  const lastEditedAt = new Date().toISOString();
   const payload = {
+    ...(editingCustomer || {}),
     id,
     facebook: "",
     quantity,
     profile,
-    accounts: [],
-    updatedAt: new Date().toISOString()
+    updatedAt: lastEditedAt,
+    lastEditedAt
   };
   submitButton.disabled = true;
   submitButton.textContent = "Đang gửi...";
@@ -177,16 +229,19 @@ async function submitProfile() {
     const { error } = await supabaseClient.from("customers").upsert({
       id,
       data: payload,
-      updated_at: payload.updatedAt
+      updated_at: payload.updatedAt,
+      last_edited_at: payload.lastEditedAt
     });
     if (error) throw error;
-    showStatus("Đã lưu hồ sơ thành công. Bạn có thể dùng họ, tên và ngày sinh để kiểm tra lại.");
+    editingCustomer = payload;
+    submitButton.textContent = "Lưu thay đổi";
+    showStatus(isEditing ? "Đã lưu thay đổi hồ sơ thành công." : "Đã lưu hồ sơ thành công. Bạn có thể dùng họ, tên và ngày sinh để kiểm tra lại.");
   } catch (error) {
     console.error("Không thể lưu hồ sơ:", error);
     showStatus(`Lưu hồ sơ chưa thành công: ${error.message}`);
   } finally {
     submitButton.disabled = false;
-    submitButton.textContent = "Gửi hồ sơ";
+    submitButton.textContent = editingCustomer ? "Lưu thay đổi" : "Lưu thông tin";
   }
 }
 buildForm();
@@ -227,9 +282,28 @@ document.querySelector("#lookupForm")?.addEventListener("submit", async event =>
         && String(profile.personal?.given_name_1 || "").trim().toLowerCase() === givenName
         && profile.personal?.date_of_birth === dob;
     });
-    result.textContent = match
-      ? `Đã tìm thấy hồ sơ của ${match.profile.personal.family_name} ${match.profile.personal.given_name_1}. Email: ${match.profile.contact?.email || "chưa có"}.`
-      : "Không tìm thấy hồ sơ trùng khớp.";
+    if (!match) {
+      editingCustomer = null;
+      result.textContent = "Không tìm thấy hồ sơ trùng khớp.";
+      return;
+    }
+    editingCustomer = match;
+    fillProfile(match.profile || {});
+    const quantity = form.querySelector("#accountCount");
+    if (quantity) quantity.value = String(match.quantity || 1);
+    submitButton.textContent = "Lưu thay đổi";
+    result.textContent = "";
+    const message = document.createElement("span");
+    message.textContent = `Đã tìm thấy hồ sơ của ${match.profile.personal.family_name} ${match.profile.personal.given_name_1}.`;
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "button button-ghost button-small";
+    editButton.textContent = "Xem và sửa hồ sơ";
+    editButton.addEventListener("click", () => {
+      showWizardStep?.(0);
+      form.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    result.append(message, editButton);
   } catch (error) {
     console.error("Không thể tra cứu hồ sơ:", error);
     result.textContent = `Tra cứu chưa thành công: ${error.message}`;

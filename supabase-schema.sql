@@ -1,8 +1,12 @@
 create table if not exists public.customers (
   id text primary key,
   data jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  last_edited_at timestamptz not null default now()
 );
+
+alter table public.customers
+  add column if not exists last_edited_at timestamptz not null default now();
 
 alter table public.customers enable row level security;
 

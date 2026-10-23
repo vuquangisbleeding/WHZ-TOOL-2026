@@ -486,6 +486,11 @@ button { cursor: pointer; }
 .profile-field textarea { min-height: 100px; resize: vertical; }
 .profile-wide { grid-column: 1 / -1; }
 .profile-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 28px; }
+.profile-step-actions { display: flex; align-items: center; gap: 12px; width: 100%; }
+.profile-step-actions .button { min-width: 120px; }
+.step-indicator { color: var(--muted); font-size: 13px; font-weight: 700; }
+.profile-actions #submitProfile[hidden] { display: none; }
+.profile-actions #discardProfile[hidden] { display: none; }
 .profile-actions .form-status { flex-basis: 100%; }
 .profile-actions #submitProfile { color: #30243a; }
 .button-small { min-height: 38px; padding: 8px 12px; font-size: 13px; }
@@ -497,7 +502,7 @@ button { cursor: pointer; }
 .lookup-card { margin: 0 auto 80px; padding: 24px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); box-shadow: var(--shadow); }
 .lookup-form { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 14px; align-items: end; }
 .lookup-form .button { min-height: 46px; }
-.lookup-result { min-height: 24px; margin-top: 16px; color: var(--pine); font-weight: 600; }
+.lookup-result { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 24px; margin-top: 16px; color: var(--pine); font-weight: 600; }
 .customer-layout { display: grid; gap: 24px; align-items: start; margin-top: 24px; }
 .customer-sidebar, .customer-table-card, .customer-editor { border: 1px solid var(--line); border-radius: 18px; background: var(--card); box-shadow: var(--shadow); }
 .customer-sidebar { position: sticky; top: 112px; overflow: hidden; }

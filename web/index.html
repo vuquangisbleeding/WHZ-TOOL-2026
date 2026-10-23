@@ -44,7 +44,13 @@
       </section>
     </form>
     <div class="profile-actions">
+      <div class="profile-step-actions">
+        <button class="button button-ghost" id="previousStep" type="button">← Trước</button>
+        <span id="stepIndicator" class="step-indicator"></span>
+        <button class="button button-primary" id="nextStep" type="button">Tiếp theo →</button>
+      </div>
       <button class="button button-primary" id="submitProfile" type="submit" form="profileForm">Lưu thông tin</button>
+      <button class="button button-ghost" id="discardProfile" type="button" hidden>Hủy thay đổi</button>
       <p id="profileStatus" class="form-status" role="status"></p>
     </div>
   </main>

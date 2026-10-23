@@ -99,18 +99,18 @@ async function loadCustomers() {
     renderList();
     return;
   }
-  const { data, error } = await supabaseClient.from("customers").select("id,data,updated_at").order("updated_at", { ascending: false });
+  const { data, error } = await supabaseClient.from("customers").select("id,data,updated_at,last_edited_at").order("last_edited_at", { ascending: false });
   if (error) {
     console.error("Không thể tải khách hàng:", error);
     setStatus(`Không thể tải dữ liệu: ${error.message}`);
     return;
   }
-  customers = (data || []).map(row => normalizeCustomer({ ...row.data, id: row.id, updatedAt: row.updated_at }, 0));
+  customers = (data || []).map(row => normalizeCustomer({ ...row.data, id: row.id, updatedAt: row.updated_at, lastEditedAt: row.last_edited_at }, 0));
   renderList();
 }
 async function upsertCustomer(customer) {
   if (!backendReady()) throw new Error("Chưa cấu hình Supabase.");
-  const row = { id: customer.id, data: customer, updated_at: customer.updatedAt };
+  const row = { id: customer.id, data: customer, updated_at: customer.updatedAt, last_edited_at: customer.lastEditedAt };
   const { error } = await supabaseClient.from("customers").upsert(row);
   if (error) throw error;
 }
@@ -135,7 +135,8 @@ function normalizeCustomer(item, index) {
     price: Number(item.price || item.amount || 0),
     profile,
     accounts: Array.isArray(item.accounts) ? item.accounts.map(normalizeAccount) : [],
-    updatedAt: item.updatedAt || item.created_at || new Date().toISOString()
+    updatedAt: item.updatedAt || item.created_at || new Date().toISOString(),
+    lastEditedAt: item.lastEditedAt || item.updatedAt || item.created_at || new Date().toISOString()
   };
 }
 function normalizeAccount(account = {}) {
@@ -163,8 +164,11 @@ async function importCustomers() {
       if (!imported.length) throw new Error("empty");
       if (!backendReady()) throw new Error("Chưa cấu hình Supabase.");
       const now = new Date().toISOString();
-      imported.forEach(customer => { customer.updatedAt = customer.updatedAt || now; });
-      const { error } = await supabaseClient.from("customers").upsert(imported.map(customer => ({ id: customer.id, data: customer, updated_at: customer.updatedAt })));
+      imported.forEach(customer => {
+        customer.updatedAt = customer.updatedAt || now;
+        customer.lastEditedAt = customer.lastEditedAt || customer.updatedAt;
+      });
+      const { error } = await supabaseClient.from("customers").upsert(imported.map(customer => ({ id: customer.id, data: customer, updated_at: customer.updatedAt, last_edited_at: customer.lastEditedAt })));
       if (error) throw error;
       customers = [...imported, ...customers.filter(existing => !imported.some(item => item.id === existing.id))];
       selectedId = imported[0].id;
@@ -330,7 +334,7 @@ function renderList() {
     const stats = accountStats(customer);
     const row = document.createElement("tr");
     row.className = customer.id === selectedId ? "is-selected" : "";
-    row.innerHTML = `<td><strong>${customerName(customer)}</strong></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td>${stats.required}</td><td>${stats.added}</td><td><span class="status-badge ${stats.complete ? "status-complete" : "status-missing"}">${stats.complete ? "Đủ" : `Thiếu ${stats.required - stats.added}`}</span></td><td>${formatPrice(customer.price)}</td><td>${new Date(customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-open" type="button">Mở</button></td>`;
+    row.innerHTML = `<td><strong>${customerName(customer)}</strong></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td>${stats.required}</td><td>${stats.added}</td><td><span class="status-badge ${stats.complete ? "status-complete" : "status-missing"}">${stats.complete ? "Đủ" : `Thiếu ${stats.required - stats.added}`}</span></td><td>${formatPrice(customer.price)}</td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-open" type="button">Mở</button></td>`;
     row.querySelector(".table-open").addEventListener("click", () => openCustomer(customer.id));
     row.addEventListener("dblclick", () => openCustomer(customer.id));
     customerList.append(row);
@@ -353,7 +357,8 @@ async function saveCustomer(event) {
     invalid.focus(); status.textContent = "Bạn hãy điền các mục bắt buộc trước khi lưu."; return;
   }
   const data = readForm();
-  const customer = { ...data, id: selectedId || `KH-${Date.now()}`, updatedAt: new Date().toISOString() };
+  const lastEditedAt = new Date().toISOString();
+  const customer = { ...data, id: selectedId || `KH-${Date.now()}`, updatedAt: lastEditedAt, lastEditedAt };
   try {
     await upsertCustomer(customer);
     const index = customers.findIndex(item => item.id === customer.id);
