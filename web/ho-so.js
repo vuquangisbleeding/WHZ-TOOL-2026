@@ -140,9 +140,7 @@ function initWizard() {
   });
   discardButton.addEventListener("click", () => {
     if (!editingCustomer) return;
-    fillProfile(editingCustomer.profile || {});
-    const quantity = form.querySelector("#accountCount");
-    if (quantity) quantity.value = String(editingCustomer.quantity || 1);
+    fillCustomer(editingCustomer);
     editingCustomer = null;
     submitButton.textContent = "Lưu thông tin";
     showWizardStep?.(0);
@@ -165,6 +163,13 @@ function fillProfile(profile) {
     if (control.type === "checkbox") control.checked = value === true || value === "true";
     else control.value = value;
   });
+}
+function fillCustomer(customer) {
+  fillProfile(customer.profile || {});
+  const facebook = form.querySelector("#facebook");
+  const quantity = form.querySelector("#accountCount");
+  if (facebook) facebook.value = customer.facebook || "";
+  if (quantity) quantity.value = String(customer.quantity || 1);
 }
 function dateForTool(value) {
   if (!value) return "";
@@ -216,7 +221,7 @@ async function submitProfile() {
   const payload = {
     ...(editingCustomer || {}),
     id,
-    facebook: "",
+    facebook: form.querySelector("#facebook")?.value.trim() || "",
     quantity,
     profile,
     updatedAt: lastEditedAt,
@@ -288,9 +293,7 @@ document.querySelector("#lookupForm")?.addEventListener("submit", async event =>
       return;
     }
     editingCustomer = match;
-    fillProfile(match.profile || {});
-    const quantity = form.querySelector("#accountCount");
-    if (quantity) quantity.value = String(match.quantity || 1);
+    fillCustomer(match);
     submitButton.textContent = "Lưu thay đổi";
     result.textContent = "";
     const message = document.createElement("span");
