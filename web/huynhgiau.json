@@ -1,0 +1,101 @@
+{
+  "facebook": "Huynh Giau",
+  "quantity": 7,
+  "profile": {
+    "scheme_country": "Vietnam",
+    "contact": {
+      "has_agent": "",
+      "phone_daytime": "0837072382",
+      "phone_night": "0837072382",
+      "phone_mobile": "0949627381",
+      "fax": "",
+      "email": "hgiau136@gmail.com",
+      "communication_method": "Email",
+      "has_credit_card": "Yes"
+    },
+    "personal": {
+      "family_name": "Huynh",
+      "given_name_1": "Thi Ngoc Giau",
+      "given_name_2": "",
+      "given_name_3": "",
+      "other_names": "Jadie",
+      "title": "Miss",
+      "other_title": "",
+      "gender": "Female",
+      "date_of_birth": "2001-06-13",
+      "country_of_birth": "Viet Nam"
+    },
+    "address": {
+      "street_number": "581/19A",
+      "street_name": "Mac Cuu",
+      "suburb": "Vinh Quang",
+      "city": "Rach Gia",
+      "province": "Kien Giang",
+      "postal_code": "91118",
+      "country": "Viet Nam"
+    },
+    "identification": {
+      "passport_number": "E02132957",
+      "passport_expiry": "2034-07-08",
+      "passport_citizenship": "Viet Nam",
+      "id_type": "Driver licence",
+      "id_issue_date": "2019-08-20",
+      "id_expiry_date": "2034-08-20"
+    },
+    "occupation": {
+      "industry_search": "Trồng trọt",
+      "occupation_search": "Thực tập sinh"
+    },
+    "health": {
+      "renal_dialysis": "No",
+      "active_tb": "No",
+      "cancer": "No",
+      "heart_disease": "No",
+      "disability": "No",
+      "hospitalisation": "No",
+      "residential_care": "No",
+      "pregnancy": "No",
+      "tb_risk": "No",
+      "medical_details": ""
+    },
+    "character": {
+      "imprisonment_5_years": "No",
+      "imprisonment_12_months": "No",
+      "deported": "No",
+      "removal_order": "No",
+      "charged": "No",
+      "convicted": "No",
+      "under_investigation": "No",
+      "excluded": "No",
+      "removed": "No",
+      "details": ""
+    },
+    "whs": {
+      "previous_whs_visa": "No",
+      "sufficient_funds_holiday": "Yes",
+      "travel_date": "2027-03-23",
+      "been_to_nz": "No",
+      "been_to_nz_when": "",
+      "sufficient_funds_onward_ticket": "Yes",
+      "meet_scheme_requirements": "Yes",
+      "length_of_stay": "12 months"
+    },
+    "declaration": {
+      "all_yes": true,
+      "false_statement": "Yes",
+      "notes_and_questions": "Yes",
+      "changed_circumstances": "Yes",
+      "good_character": "Yes",
+      "information_sharing": "Yes",
+      "health_information": "Yes",
+      "advice": "Yes",
+      "occupation_registration": "Yes",
+      "entitlement": "Yes",
+      "permit_expiry": "Yes",
+      "medical_insurance": "Yes"
+    },
+    "payment": {
+      "payer_name": "Huynh Giau"
+    }
+  }
+}

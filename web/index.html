@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Điền hồ sơ người dùng và đăng ký số lượng tài khoản.">
-  <title>Đăng ký hồ sơ · Hello!</title>
+  <title>Điền thông tin · Hello!</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -15,11 +15,10 @@
     <div class="wrap head-row">
       <a class="brand" href="index.html">
         <span class="mark" aria-hidden="true">✦</span>
-        <span><span class="eyebrow">Hello, bạn ơi!</span><strong>Đăng ký hồ sơ</strong></span>
+        <span><span class="eyebrow">Hello, bạn ơi!</span><strong>Điền thông tin</strong></span>
       </a>
       <nav class="head-links" aria-label="Điều hướng">
         <a class="head-link" href="#profileForm">Điền thông tin</a>
-        <a class="head-link" href="thong-tin-van-hanh.html">Thông tin vận hành</a>
       </nav>
     </div>
   </header>
@@ -28,7 +27,7 @@
     <header class="hero profile-hero">
       <p class="eyebrow">Một biểu mẫu duy nhất</p>
       <h1>Điền thông tin đăng ký</h1>
-      <p class="lead">Facebook, số tài khoản đăng ký và toàn bộ hồ sơ được điền trên cùng một trang. Bạn chỉ cần gửi một lần khi hoàn tất.</p>
+      <p class="lead">Điền thông tin hồ sơ để chúng tôi kiểm tra và lưu lại. Tài khoản sẽ được bổ sung ở trang quản trị.</p>
     </header>
 
     <form id="profileForm" class="profile-form" novalidate>
@@ -38,29 +37,35 @@
           <h2>Thông tin đăng ký</h2>
         </div>
         <div class="profile-grid">
-          <label class="profile-field" for="facebook">
-            <span>Facebook của bạn *</span>
-            <input id="facebook" name="facebook" type="text" maxlength="120" placeholder="Tên Facebook hoặc link cá nhân" required>
-          </label>
           <label class="profile-field" for="accountCount">
-            <span>Số tài khoản đăng ký *</span>
-            <input id="accountCount" name="quantity" type="number" min="2" max="30" value="2" required>
+            <span>Số lượng tài khoản *</span>
+            <input id="accountCount" name="quantity" type="number" min="1" max="30" value="1" required>
           </label>
         </div>
-        <p class="account-hint">Chọn từ 2 đến 30 tài khoản.</p>
+        <p class="account-hint">Nhập số lượng tài khoản cần đăng ký. Chi tiết tài khoản sẽ được quản trị bổ sung sau.</p>
       </section>
     </form>
     <div class="profile-actions">
-      <button class="button button-primary" id="submitProfile" type="submit" form="profileForm">Gửi hồ sơ</button>
-      <button class="button button-ghost" id="copyJson" type="button">Copy JSON</button>
+      <button class="button button-primary" id="submitProfile" type="submit" form="profileForm">Lưu thông tin</button>
       <p id="profileStatus" class="form-status" role="status"></p>
     </div>
   </main>
-
+  <section class="wrap lookup-card">
+    <div class="section-head"><p class="eyebrow">Kiểm tra thông tin</p><h2>Tìm hồ sơ đã nhập</h2><p>Nhập họ, tên và ngày sinh để kiểm tra thông tin đang được lưu.</p></div>
+    <form id="lookupForm" class="lookup-form">
+      <label class="profile-field"><span>Họ</span><input id="lookupFamilyName" required></label>
+      <label class="profile-field"><span>Tên</span><input id="lookupGivenName" required></label>
+      <label class="profile-field"><span>Ngày sinh</span><input id="lookupDob" type="date" required></label>
+      <button class="button button-ghost" type="submit">Kiểm tra</button>
+    </form>
+    <div id="lookupResult" class="lookup-result" role="status"></div>
+  </section>
   <footer class="site-foot">
     <div class="wrap"><p>Thông tin được gửi cùng nhau và chỉ dùng cho hồ sơ đăng ký của bạn.</p></div>
   </footer>
   <script src="sheet-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
   <script src="ho-so.js"></script>
 </body>
 </html>

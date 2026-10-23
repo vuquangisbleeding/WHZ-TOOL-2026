@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Quản lý hồ sơ khách hàng và các tài khoản đi kèm.">
+  <title>Quản lý khách · Hello!</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="customer-page">
+  <header class="site-head">
+    <div class="wrap head-row">
+      <a class="brand" href="index.html">
+        <span class="mark" aria-hidden="true">✦</span>
+        <span><span class="eyebrow">Hello, bạn ơi!</span><strong>Quản lý khách</strong></span>
+      </a>
+      <nav class="head-links" aria-label="Điều hướng">
+        <a class="head-link" href="index.html">Đăng ký hồ sơ</a>
+        <a class="head-link" href="index.html">Trang người dùng</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap customer-main">
+    <header class="hero customer-hero">
+      <p class="eyebrow">Khu vực quản trị</p>
+      <h1>Quản lý khách hàng</h1>
+      <p class="lead">Lưu trọn hồ sơ khách và quản lý các tài khoản được gắn với từng khách hàng trong một nơi.</p>
+    </header>
+
+    <div class="customer-toolbar">
+      <div>
+        <strong id="customerCount">0 khách hàng</strong>
+        <span class="toolbar-hint">Dán JSON khách hàng trực tiếp vào ô bên dưới</span>
+        <span class="toolbar-hint" id="customerSummary"></span>
+      </div>
+      <div class="toolbar-actions">
+        <button class="button button-primary button-small" id="importCustomers" type="button">Nhập JSON</button>
+        <button class="button button-ghost button-small" id="exportCustomers" type="button">Xuất JSON</button>
+        <button class="button button-ghost button-small" id="newCustomer" type="button">Tạo mẫu trống</button>
+      </div>
+    </div>
+    <textarea id="customerJsonInput" class="json-input" rows="5" placeholder='Dán một khách hàng, một mảng khách hàng hoặc {"customers": [...]} vào đây'></textarea>
+
+    <section class="customer-table-card" aria-label="Danh sách khách hàng">
+      <div class="customer-sidebar-head">
+          <div>
+            <p class="eyebrow">Danh sách</p>
+            <h2>Khách hàng</h2>
+          </div>
+        </div>
+        <label class="customer-search" for="customerSearch">
+          <span class="sr-only">Tìm khách hàng</span>
+          <input id="customerSearch" type="search" placeholder="Tìm theo tên, Facebook, email...">
+        </label>
+        <div class="table-filters">
+          <label for="customerStatusFilter">Trạng thái
+            <select id="customerStatusFilter">
+              <option value="all">Tất cả</option>
+              <option value="complete">Đủ tài khoản</option>
+              <option value="missing">Thiếu tài khoản</option>
+            </select>
+          </label>
+          <label for="pageSize">Mỗi trang
+            <select id="pageSize">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+        </div>
+        <div class="customer-table-wrap">
+          <table class="customer-table">
+            <thead><tr><th>Khách hàng</th><th>Facebook</th><th>Email</th><th>Số cần</th><th>Đã thêm</th><th>Trạng thái</th><th>Tổng tiền</th><th>Cập nhật</th><th></th></tr></thead>
+            <tbody id="customerList"></tbody>
+          </table>
+          <p id="emptyState" class="empty-state">Chưa có khách hàng. Hãy nhập file JSON.</p>
+        </div>
+        <div class="table-pagination">
+          <span id="paginationInfo"></span>
+          <div><button class="button button-ghost button-small" id="previousPage" type="button">Trước</button><button class="button button-ghost button-small" id="nextPage" type="button">Sau</button></div>
+        </div>
+    </section>
+
+    <dialog id="customerModal" class="customer-modal">
+    <div class="customer-layout">
+      <section class="customer-editor" aria-labelledby="editorTitle">
+        <div class="editor-head">
+          <div>
+            <p class="eyebrow">Hồ sơ khách hàng</p>
+            <h2 id="editorTitle">Thêm khách hàng mới</h2>
+          </div>
+          <button class="button button-ghost button-small" id="deleteCustomer" type="button" hidden>Xóa khách</button>
+          <button class="button button-ghost button-small" id="closeCustomerModal" type="button">Đóng</button>
+        </div>
+        <form id="customerForm" class="customer-form" novalidate>
+          <div id="customerFields"></div>
+          <section class="account-section">
+            <div class="account-section-head">
+              <div>
+                <p class="eyebrow">Tài khoản</p>
+                <h3>Danh sách tài khoản</h3>
+              </div>
+              <button class="button button-ghost button-small" id="addAccount" type="button">+ Thêm tài khoản</button>
+            </div>
+            <p class="account-description">Một khách có thể có nhiều tài khoản. Mỗi tài khoản gồm username, mật khẩu, proxy và link pay.</p>
+            <div class="account-import">
+              <textarea id="accountJsonInput" class="json-input" rows="3" placeholder='Dán một account hoặc mảng account JSON vào đây'></textarea>
+              <button class="button button-ghost button-small" id="importAccounts" type="button">Nhập JSON tài khoản</button>
+            </div>
+            <div id="accountList" class="managed-account-list"></div>
+          </section>
+          <div class="editor-actions">
+            <button class="button button-primary" type="submit">Lưu khách hàng</button>
+            <button class="button button-ghost" id="resetForm" type="button">Bỏ thay đổi</button>
+            <p id="customerStatus" class="form-status" role="status"></p>
+          </div>
+        </form>
+      </section>
+    </div>
+    </dialog>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="quan-ly-khach.js"></script>
+</body>
+</html>

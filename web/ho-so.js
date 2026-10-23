@@ -1,6 +1,5 @@
 const sections = [
   ["personal", "Cá nhân", [
-    ["scheme_country", "Quốc gia chương trình", "text", true],
     ["contact.has_agent", "Bạn có người đại diện là cố vấn di trú không?", "yesno", true],
     ["personal.family_name", "Họ", "text", true], ["personal.given_name_1", "Tên 1", "text", true],
     ["personal.given_name_2", "Tên 2", "text"], ["personal.given_name_3", "Tên 3", "text"],
@@ -69,6 +68,9 @@ const form = document.querySelector("#profileForm");
 const status = document.querySelector("#profileStatus");
 const submitButton = document.querySelector("#submitProfile");
 const copyButton = document.querySelector("#copyJson");
+const supabaseClient = window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY
+  ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+  : null;
 const inputId = path => `profile-${path.replaceAll(".", "-")}`;
 const getValue = (object, path) => path.split(".").reduce((value, key) => value?.[key], object) ?? "";
 function setValue(object, path, value) {
@@ -106,7 +108,6 @@ function buildForm() {
     });
     section.append(grid); form.append(section);
   });
-  form.querySelector('[data-path="scheme_country"]').value = "Vietnam";
 }
 function readProfile() {
   const profile = {};
@@ -163,54 +164,49 @@ async function submitProfile() {
   const fields = [...form.querySelectorAll("[required]")];
   const invalid = fields.find(field => {
     if (field.type === "checkbox") return !field.checked;
-    if (field.type === "number") return !Number.isInteger(Number(field.value)) || Number(field.value) < 2 || Number(field.value) > 30;
+    if (field.type === "number") return !Number.isInteger(Number(field.value)) || Number(field.value) < 1 || Number(field.value) > 30;
     return !field.value.trim();
   });
   if (invalid) {
     invalid.focus();
     showStatus(invalid.id === "accountCount"
-      ? "Chọn từ 2 đến 30 tài khoản."
+      ? "Chọn từ 1 đến 30 tài khoản."
       : "Bạn hãy điền hết các mục bắt buộc trước khi gửi.");
     return;
   }
-  const url = String(window.REGISTRATIONS_URL || "").trim();
-  const facebookField = form.querySelector("#facebook");
-  const quantityField = form.querySelector("#accountCount");
-  const facebook = facebookField?.value.trim() || localStorage.getItem("nz-tool-facebook") || "";
-  const quantity = Number(quantityField?.value || localStorage.getItem("nz-tool-account-count"));
-  if (!facebook) {
-    showStatus("Nhập tên Facebook hoặc link Facebook của bạn.");
+  if (!supabaseClient) {
+    showStatus("Chưa cấu hình nơi lưu hồ sơ. Vui lòng báo người quản trị.");
     return;
   }
-  if (!Number.isInteger(quantity) || quantity < 2 || quantity > 30) {
-    showStatus("Chọn từ 2 đến 30 tài khoản.");
+  const profile = readProfile();
+  const quantity = Number(form.querySelector("#accountCount")?.value || 0);
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 30) {
+    showStatus("Số lượng tài khoản phải từ 1 đến 30.");
     return;
   }
-  if (!url) {
-    showStatus("Chưa cấu hình nơi nhận hồ sơ. Vui lòng báo người quản trị.");
-    return;
-  }
+  const id = profileId();
   const payload = {
-    kind: "ho-so",
-    id: profileId(),
-    created_at: new Date().toISOString(),
-    facebook,
+    id,
+    facebook: "",
     quantity,
-    profile_json: JSON.stringify(normalizeDates(readProfile()))
+    profile,
+    accounts: [],
+    updatedAt: new Date().toISOString()
   };
   submitButton.disabled = true;
   submitButton.textContent = "Đang gửi...";
   showStatus("");
   try {
-    await fetch(url, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
+    const { error } = await supabaseClient.from("customers").upsert({
+      id,
+      data: payload,
+      updated_at: payload.updatedAt
     });
-    showStatus("Đã gửi hồ sơ thành công. Mình sẽ kiểm tra và liên hệ lại.");
-  } catch {
-    showStatus("Gửi hồ sơ chưa thành công. Kiểm tra mạng rồi thử lại.");
+    if (error) throw error;
+    showStatus("Đã lưu hồ sơ thành công. Bạn có thể dùng họ, tên và ngày sinh để kiểm tra lại.");
+  } catch (error) {
+    console.error("Không thể lưu hồ sơ:", error);
+    showStatus(`Lưu hồ sơ chưa thành công: ${error.message}`);
   } finally {
     submitButton.disabled = false;
     submitButton.textContent = "Gửi hồ sơ";
@@ -222,7 +218,7 @@ const quantityField = form.querySelector("#accountCount");
 const savedFacebook = localStorage.getItem("nz-tool-facebook");
 const savedQuantity = Number(localStorage.getItem("nz-tool-account-count"));
 if (facebookField && savedFacebook) facebookField.value = savedFacebook;
-if (quantityField && savedQuantity >= 2 && savedQuantity <= 30) quantityField.value = String(savedQuantity);
+if (quantityField && savedQuantity >= 1 && savedQuantity <= 30) quantityField.value = String(savedQuantity);
 form.addEventListener("submit", event => {
   event.preventDefault();
   if (facebookField) localStorage.setItem("nz-tool-facebook", facebookField.value.trim());
@@ -235,3 +231,32 @@ form.addEventListener("change", event => {
   }
 });
 copyButton?.addEventListener("click", copyJson);
+
+document.querySelector("#lookupForm")?.addEventListener("submit", async event => {
+  event.preventDefault();
+  const result = document.querySelector("#lookupResult");
+  const familyName = document.querySelector("#lookupFamilyName").value.trim().toLowerCase();
+  const givenName = document.querySelector("#lookupGivenName").value.trim().toLowerCase();
+  const dob = document.querySelector("#lookupDob").value;
+  if (!supabaseClient) {
+    result.textContent = "Chưa cấu hình nơi lưu hồ sơ.";
+    return;
+  }
+  result.textContent = "Đang kiểm tra...";
+  try {
+    const { data, error } = await supabaseClient.from("customers").select("data");
+    if (error) throw error;
+    const match = (data || []).map(row => row.data).find(customer => {
+      const profile = customer?.profile || {};
+      return String(profile.personal?.family_name || "").trim().toLowerCase() === familyName
+        && String(profile.personal?.given_name_1 || "").trim().toLowerCase() === givenName
+        && profile.personal?.date_of_birth === dob;
+    });
+    result.textContent = match
+      ? `Đã tìm thấy hồ sơ của ${match.profile.personal.family_name} ${match.profile.personal.given_name_1}. Email: ${match.profile.contact?.email || "chưa có"}.`
+      : "Không tìm thấy hồ sơ trùng khớp.";
+  } catch (error) {
+    console.error("Không thể tra cứu hồ sơ:", error);
+    result.textContent = `Tra cứu chưa thành công: ${error.message}`;
+  }
+});
