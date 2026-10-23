@@ -99,19 +99,34 @@ async function loadCustomers() {
     renderList();
     return;
   }
-  const { data, error } = await supabaseClient.from("customers").select("id,data,updated_at,last_edited_at").order("last_edited_at", { ascending: false });
+  let { data, error } = await supabaseClient.from("customers").select("id,data,updated_at,last_edited_at").order("last_edited_at", { ascending: false });
+  if (error?.message?.includes("last_edited_at")) {
+    ({ data, error } = await supabaseClient.from("customers").select("id,data,updated_at").order("updated_at", { ascending: false }));
+  }
   if (error) {
     console.error("Không thể tải khách hàng:", error);
     setStatus(`Không thể tải dữ liệu: ${error.message}`);
     return;
   }
-  customers = (data || []).map(row => normalizeCustomer({ ...row.data, id: row.id, updatedAt: row.updated_at, lastEditedAt: row.last_edited_at }, 0));
+  customers = (data || []).map(row => normalizeCustomer({
+    ...row.data,
+    id: row.id,
+    updatedAt: row.updated_at,
+    ...(row.last_edited_at ? { lastEditedAt: row.last_edited_at } : {})
+  }, 0));
   renderList();
 }
 async function upsertCustomer(customer) {
   if (!backendReady()) throw new Error("Chưa cấu hình Supabase.");
   const row = { id: customer.id, data: customer, updated_at: customer.updatedAt, last_edited_at: customer.lastEditedAt };
-  const { error } = await supabaseClient.from("customers").upsert(row);
+  let { error } = await supabaseClient.from("customers").upsert(row);
+  if (error?.message?.includes("last_edited_at")) {
+    ({ error } = await supabaseClient.from("customers").upsert({
+      id: customer.id,
+      data: customer,
+      updated_at: customer.updatedAt
+    }));
+  }
   if (error) throw error;
 }
 async function removeCustomer(id) {
@@ -168,7 +183,11 @@ async function importCustomers() {
         customer.updatedAt = customer.updatedAt || now;
         customer.lastEditedAt = customer.lastEditedAt || customer.updatedAt;
       });
-      const { error } = await supabaseClient.from("customers").upsert(imported.map(customer => ({ id: customer.id, data: customer, updated_at: customer.updatedAt, last_edited_at: customer.lastEditedAt })));
+      const rows = imported.map(customer => ({ id: customer.id, data: customer, updated_at: customer.updatedAt, last_edited_at: customer.lastEditedAt }));
+      let { error } = await supabaseClient.from("customers").upsert(rows);
+      if (error?.message?.includes("last_edited_at")) {
+        ({ error } = await supabaseClient.from("customers").upsert(rows.map(({ last_edited_at, ...row }) => row)));
+      }
       if (error) throw error;
       customers = [...imported, ...customers.filter(existing => !imported.some(item => item.id === existing.id))];
       selectedId = imported[0].id;

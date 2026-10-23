@@ -231,12 +231,20 @@ async function submitProfile() {
   submitButton.textContent = "Đang gửi...";
   showStatus("");
   try {
-    const { error } = await supabaseClient.from("customers").upsert({
+    const row = {
       id,
       data: payload,
       updated_at: payload.updatedAt,
       last_edited_at: payload.lastEditedAt
-    });
+    };
+    let { error } = await supabaseClient.from("customers").upsert(row);
+    if (error?.message?.includes("last_edited_at")) {
+      ({ error } = await supabaseClient.from("customers").upsert({
+        id,
+        data: payload,
+        updated_at: payload.updatedAt
+      }));
+    }
     if (error) throw error;
     editingCustomer = payload;
     submitButton.textContent = "Lưu thay đổi";
