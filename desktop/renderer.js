@@ -887,6 +887,35 @@ document.querySelector('#exportAccounts').addEventListener('click', () => {
 });
 document.querySelector('#saveAccounts').addEventListener('click', saveTelegram);
 document.querySelector('#saveTelegram').addEventListener('click', saveTelegram);
+document.querySelector('#openRegistration').addEventListener('click', async () => {
+  try {
+    const data = parseData();
+    const accounts = JSON.parse(data.accounts);
+    const result = await window.runnerApi.openRegistration({
+      applicant: JSON.parse(data.applicant),
+      account: accounts[0]
+    });
+    dataStatus.textContent = `Registration mở cho ${result.email}. Kiểm tra rồi tự bấm REGISTER.`;
+    dataStatus.className = 'data-status valid';
+  } catch (error) {
+    dataStatus.textContent = error.message;
+    dataStatus.className = 'data-status invalid';
+  }
+});
+document.querySelector('#openRegistrations').addEventListener('click', async () => {
+  try {
+    const data = parseData();
+    const result = await window.runnerApi.openRegistrations({
+      applicant: JSON.parse(data.applicant),
+      accounts: JSON.parse(data.accounts)
+    });
+    dataStatus.textContent = `Đã mở ${result.count} tab Registration. Kiểm tra rồi tự bấm REGISTER từng tab.`;
+    dataStatus.className = 'data-status valid';
+  } catch (error) {
+    dataStatus.textContent = error.message;
+    dataStatus.className = 'data-status invalid';
+  }
+});
 async function openResultsFile() {
   try { await window.runnerApi.openResults(); }
   catch (error) {

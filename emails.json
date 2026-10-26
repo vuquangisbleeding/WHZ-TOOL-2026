@@ -1,8 +1,26 @@
 [
   {
-    "username": "nngkchi1234",
+    "username": "nngkchi2",
     "password": "Vuquang02122000@",
     "email": "quangnv.ftuforum@gmail.com",
+    "proxy": false
+  },
+  {
+    "username": "nngkchi3",
+    "password": "Vuquang02122000@",
+    "email": "quangnv0212@gmail.com",
+    "proxy": false
+  },
+  {
+    "username": "nngkchi4",
+    "password": "Vuquang02122000@",
+    "email": "quangnv0212@gmail.com",
+    "proxy": false
+  },
+  {
+    "username": "nngkchi5",
+    "password": "Vuquang02122000@",
+    "email": "quangnv0212@gmail.com",
     "proxy": false
   }
 ]

@@ -62,13 +62,13 @@ test('every select in applicant.json is one of the form option values', () => {
   }
 });
 
-test('a free-typed date or a missing Yes/No answer is rejected', () => {
+test('a free-typed date is rejected but missing fields are allowed', () => {
   const broken = structuredClone(applicant);
   broken.personal.date_of_birth = '24/05/1996';
   assert.throws(() => validateApplicant(broken), /24 May, 1996/);
   broken.personal.date_of_birth = applicant.personal.date_of_birth;
   broken.health.renal_dialysis = '';
-  assert.throws(() => validateApplicant(broken), /renal dialysis/i);
+  assert.doesNotThrow(() => validateApplicant(broken));
 });
 
 test('a date for a hidden follow-up question is ignored', () => {

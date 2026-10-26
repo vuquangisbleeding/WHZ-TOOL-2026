@@ -6,9 +6,19 @@ const { fillEmptyKey } = require('./env-defaults');
 const { fetchWhitelist, maskWhitelistUrl, missingWhitelistSecrets } = require('../src/whitelist');
 const { parseProxyLine } = require('../src/io');
 const { readResults, resultsPath, RESULT_COLUMNS } = require('../src/results');
+const { openAndFillRegistration, openAndFillRegistrations } = require('../src/registration-browser');
 
 let mainWindow;
 let runnerProcess;
+let registrationBrowser;
+
+function isRegistrationBrowserConnected() {
+  const browser = registrationBrowser?.browser;
+  if (!browser) return false;
+  if (typeof browser.isConnected === 'function') return browser.isConnected();
+  if (typeof browser.connected === 'function') return browser.connected();
+  return Boolean(browser.connected);
+}
 
 function projectRoot() {
   return app.isPackaged ? app.getAppPath() : path.resolve(__dirname, '..');
@@ -114,6 +124,51 @@ async function readTelegramSettings() {
     resultsFile: resultsPath(root),
     proxyList
   };
+}
+
+async function readRegistrationSettings() {
+  const root = await dataRoot();
+  const content = await fs.readFile(path.join(root, '.env'), 'utf8');
+  const readValue = key => content.match(new RegExp(`^${key}=(.*)$`, 'm'))?.[1]?.trim() || process.env[key] || '';
+  return {
+    password: readValue('REGISTRATION_PASSWORD'),
+    secretAnswer: readValue('REGISTRATION_SECRET_ANSWER'),
+    secretQuestion: readValue('REGISTRATION_SECRET_QUESTION'),
+    username: readValue('REGISTRATION_USERNAME')
+  };
+}
+
+async function openRegistration(_event, { applicant, account }) {
+  if (isRegistrationBrowserConnected()) {
+    const page = registrationBrowser.page || registrationBrowser.pages?.[0];
+    if (page) await page.bringToFront();
+    return { ok: true, email: registrationBrowser.email || '' };
+  }
+  const settings = await readRegistrationSettings();
+  try {
+    registrationBrowser = await openAndFillRegistration(applicant, settings, account);
+  } catch (error) {
+    if (error.browser) registrationBrowser = { browser: error.browser, page: error.page };
+    throw error;
+  }
+  return { ok: true, email: registrationBrowser.email };
+}
+
+async function openRegistrations(_event, { applicant, accounts }) {
+  if (!Array.isArray(accounts) || accounts.length === 0) {
+    throw new Error('Cần ít nhất một tài khoản để mở nhiều Registration.');
+  }
+  if (isRegistrationBrowserConnected()) {
+    throw new Error('Các tab Registration trước đó vẫn đang mở. Hãy đóng chúng trước.');
+  }
+  const settings = await readRegistrationSettings();
+  try {
+    registrationBrowser = await openAndFillRegistrations(applicant, accounts, settings);
+  } catch (error) {
+    if (error.browser) registrationBrowser = { browser: error.browser, pages: error.pages || [] };
+    throw error;
+  }
+  return { ok: true, count: registrationBrowser.pages.length };
 }
 
 async function saveTelegramSettings(_event, { schemeCountry, proxyList }) {
@@ -303,6 +358,8 @@ app.whenReady().then(() => {
     return { ok: true };
   });
   ipcMain.handle('runner-open-folder', () => dialog.showOpenDialog(mainWindow, { properties: ['openDirectory'] }));
+  ipcMain.handle('registration-open', openRegistration);
+  ipcMain.handle('registrations-open', openRegistrations);
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 

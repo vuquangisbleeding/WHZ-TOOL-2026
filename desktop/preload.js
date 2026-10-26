@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('runnerApi', {
   importData: kind => ipcRenderer.invoke('data-import', kind),
   exportData: data => ipcRenderer.invoke('data-export', data),
   openFolder: () => ipcRenderer.invoke('runner-open-folder'),
+  openRegistration: data => ipcRenderer.invoke('registration-open', data),
+  openRegistrations: data => ipcRenderer.invoke('registrations-open', data),
   onOutput: callback => ipcRenderer.on('runner-output', (_, data) => callback(data)),
   onStatus: callback => ipcRenderer.on('runner-status', (_, data) => callback(data)),
   onExit: callback => ipcRenderer.on('runner-exit', (_, data) => callback(data)),

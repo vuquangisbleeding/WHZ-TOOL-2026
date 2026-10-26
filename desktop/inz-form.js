@@ -226,16 +226,6 @@ function fieldPaths() {
 }
 
 function validateApplicant(applicant) {
-  const missing = [];
-  for (const field of eachField()) {
-    if (!field.required || !field.path) continue;
-    if (field.showWhen && !shown(applicant, field.showWhen)) continue;
-    const value = readPath(applicant, field.path);
-    const empty = value === undefined || value === null || String(value).trim() === '';
-    const unchecked = field.type === 'check' && String(value).toLowerCase() !== 'yes' && value !== true;
-    if (empty || unchecked) missing.push(t(field.label));
-  }
-  if (missing.length) throw new Error(`Thiếu thông tin bắt buộc: ${missing.join('; ')}`);
   for (const field of eachField()) {
     if (field.type !== 'date' || !field.path) continue;
     if (field.showWhen && !shown(applicant, field.showWhen)) continue;
