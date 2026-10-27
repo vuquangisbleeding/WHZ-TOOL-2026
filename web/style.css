@@ -51,6 +51,54 @@ button { cursor: pointer; }
 
 .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
 
+.customer-lock {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.customer-lock-card {
+  width: min(440px, 100%);
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.customer-lock-card h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(30px, 6vw, 46px);
+}
+
+.customer-lock-card > p:not(.eyebrow) {
+  margin-bottom: 24px;
+  color: var(--muted);
+}
+
+.customer-lock-card form {
+  display: grid;
+  gap: 10px;
+}
+
+.customer-lock-card label {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.customer-lock-card input {
+  width: 100%;
+  min-height: 46px;
+  padding: 9px 10px;
+  border: 1px solid #d9cbb8;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.customer-lock-card .button { margin-top: 6px; }
+
 .sr-only {
   position: absolute;
   width: 1px;

@@ -192,19 +192,6 @@ function readRegistration() {
   };
 }
 async function submitProfile() {
-  const fields = [...form.querySelectorAll("[required]")];
-  const invalid = fields.find(field => {
-    if (field.type === "checkbox") return !field.checked;
-    if (field.type === "number") return !Number.isInteger(Number(field.value)) || Number(field.value) < 1 || Number(field.value) > 30;
-    return !field.value.trim();
-  });
-  if (invalid) {
-    invalid.focus();
-    showStatus(invalid.id === "accountCount"
-      ? "Chọn từ 1 đến 30 tài khoản."
-      : "Bạn hãy điền hết các mục bắt buộc trước khi gửi.");
-    return;
-  }
   if (!supabaseClient) {
     showStatus("Chưa cấu hình nơi lưu hồ sơ. Vui lòng báo người quản trị.");
     return;

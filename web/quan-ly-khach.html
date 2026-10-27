@@ -10,21 +10,36 @@
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="customer-page">
-  <header class="site-head">
-    <div class="wrap head-row">
-      <a class="brand" href="index.html">
-        <span class="mark" aria-hidden="true">✦</span>
-        <span><span class="eyebrow">Hello, bạn ơi!</span><strong>Quản lý khách</strong></span>
-      </a>
-      <nav class="head-links" aria-label="Điều hướng">
-        <a class="head-link" href="index.html">Đăng ký hồ sơ</a>
-        <a class="head-link" href="index.html">Trang người dùng</a>
-      </nav>
+<body class="customer-page is-locked">
+  <section class="customer-lock" id="customerLock" aria-labelledby="customerLockTitle">
+    <div class="customer-lock-card">
+      <p class="eyebrow">Khu vực quản trị</p>
+      <h1 id="customerLockTitle">Nhập mật khẩu để tiếp tục</h1>
+      <p>Toàn bộ nội dung quản lý khách sẽ được hiển thị sau khi xác thực.</p>
+      <form id="customerLockForm">
+        <label for="customerPassword">Mật khẩu</label>
+        <input id="customerPassword" type="password" inputmode="numeric" autocomplete="off" required autofocus>
+        <button class="button button-primary" type="submit">Mở trang quản lý</button>
+        <p id="customerLockStatus" class="form-status" role="alert" aria-live="polite"></p>
+      </form>
     </div>
-  </header>
+  </section>
 
-  <main class="wrap customer-main">
+  <div id="customerContent" hidden>
+    <header class="site-head">
+      <div class="wrap head-row">
+        <a class="brand" href="index.html">
+          <span class="mark" aria-hidden="true">✦</span>
+          <span><span class="eyebrow">Hello, bạn ơi!</span><strong>Quản lý khách</strong></span>
+        </a>
+        <nav class="head-links" aria-label="Điều hướng">
+          <a class="head-link" href="index.html">Đăng ký hồ sơ</a>
+          <a class="head-link" href="index.html">Trang người dùng</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap customer-main">
     <header class="hero customer-hero">
       <p class="eyebrow">Khu vực quản trị</p>
       <h1>Quản lý khách hàng</h1>
@@ -122,9 +137,32 @@
       </section>
     </div>
     </dialog>
-  </main>
+    </main>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="quan-ly-khach.js"></script>
+  <script>
+    const customerLockForm = document.querySelector("#customerLockForm");
+    const customerPassword = document.querySelector("#customerPassword");
+    const customerLockStatus = document.querySelector("#customerLockStatus");
+    const customerContent = document.querySelector("#customerContent");
+    const customerLock = document.querySelector("#customerLock");
+
+    customerLockForm.addEventListener("submit", event => {
+      event.preventDefault();
+      if (customerPassword.value !== "0000") {
+        customerLockStatus.textContent = "Mật khẩu không đúng.";
+        customerPassword.select();
+        return;
+      }
+
+      customerLock.hidden = true;
+      customerContent.hidden = false;
+      document.body.classList.remove("is-locked");
+      const customerScript = document.createElement("script");
+      customerScript.src = "quan-ly-khach.js";
+      document.body.append(customerScript);
+    });
+  </script>
 </body>
 </html>
