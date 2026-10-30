@@ -149,6 +149,8 @@ function normalizeCustomer(item, index) {
     quantity: Number(item.quantity || item.accountCount || 0),
     price: Number(item.price || item.amount || 0),
     profile,
+    ...(item.scheme_country ? { scheme_country: item.scheme_country } : {}),
+    ...(item.registration && typeof item.registration === "object" ? { registration: item.registration } : {}),
     accounts: Array.isArray(item.accounts) ? item.accounts.map(normalizeAccount) : [],
     updatedAt: item.updatedAt || item.created_at || new Date().toISOString(),
     lastEditedAt: item.lastEditedAt || item.updatedAt || item.created_at || new Date().toISOString()
@@ -353,11 +355,40 @@ function renderList() {
     const stats = accountStats(customer);
     const row = document.createElement("tr");
     row.className = customer.id === selectedId ? "is-selected" : "";
-    row.innerHTML = `<td><strong>${customerName(customer)}</strong></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td>${stats.required}</td><td>${stats.added}</td><td><span class="status-badge ${stats.complete ? "status-complete" : "status-missing"}">${stats.complete ? "Đủ" : `Thiếu ${stats.required - stats.added}`}</span></td><td>${formatPrice(customer.price)}</td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-open" type="button">Mở</button></td>`;
+    row.innerHTML = `<td><strong>${customerName(customer)}</strong></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td>${stats.required}</td><td>${stats.added}</td><td><span class="status-badge ${stats.complete ? "status-complete" : "status-missing"}">${stats.complete ? "Đủ" : `Thiếu ${stats.required - stats.added}`}</span></td><td>${formatPrice(customer.price)}</td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
+    row.querySelector(".table-copy").addEventListener("click", event => copyCustomerJson(customer, event.currentTarget));
     row.querySelector(".table-open").addEventListener("click", () => openCustomer(customer.id));
     row.addEventListener("dblclick", () => openCustomer(customer.id));
     customerList.append(row);
   });
+}
+function sortJsonValue(value) {
+  if (Array.isArray(value)) return value.map(sortJsonValue);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(Object.keys(value).sort().map(key => [key, sortJsonValue(value[key])]));
+}
+function sortRegistration(value) {
+  if (!value || typeof value !== "object") return value;
+  const ordered = {};
+  ["secret_question", "secret_answer"].forEach(key => {
+    if (key in value) ordered[key] = value[key];
+  });
+  Object.keys(value).filter(key => !(key in ordered)).sort().forEach(key => { ordered[key] = sortJsonValue(value[key]); });
+  return ordered;
+}
+function customerProfileJson(customer) {
+  const source = customer.profile || {};
+  const output = {};
+  Object.keys(source).sort().forEach(section => {
+    output[section] = sortJsonValue(source[section]);
+  });
+  if (customer.scheme_country || source.scheme_country) {
+    output.scheme_country = customer.scheme_country || source.scheme_country;
+  }
+  if (customer.registration || source.registration) {
+    output.registration = sortRegistration(customer.registration || source.registration);
+  }
+  return output;
 }
 function openCustomer(id) {
   const customer = readCustomers().find(item => item.id === id);
@@ -377,7 +408,8 @@ async function saveCustomer(event) {
   }
   const data = readForm();
   const lastEditedAt = new Date().toISOString();
-  const customer = { ...data, id: selectedId || `KH-${Date.now()}`, updatedAt: lastEditedAt, lastEditedAt };
+  const existing = selectedId ? customers.find(item => item.id === selectedId) : null;
+  const customer = { ...existing, ...data, id: selectedId || `KH-${Date.now()}`, updatedAt: lastEditedAt, lastEditedAt };
   try {
     await upsertCustomer(customer);
     const index = customers.findIndex(item => item.id === customer.id);
@@ -433,6 +465,30 @@ document.querySelector("#exportCustomers").addEventListener("click", () => {
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob); link.download = "khach-hang.json"; link.click(); URL.revokeObjectURL(link.href);
 });
+async function copyCustomerJson(customer, button) {
+  const json = JSON.stringify(customerProfileJson(customer), null, 2);
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(json);
+    } else {
+      const input = document.createElement("textarea");
+      input.value = json;
+      input.setAttribute("readonly", "");
+      input.style.position = "fixed";
+      input.style.opacity = "0";
+      document.body.append(input);
+      input.select();
+      if (!document.execCommand("copy")) throw new Error("Trình duyệt không cho phép sao chép.");
+      input.remove();
+    }
+    button.textContent = "Đã copy JSON";
+    setStatus(`Đã sao chép JSON của ${customerName(customer)} vào bộ nhớ tạm.`);
+    setTimeout(() => { button.textContent = "Copy JSON"; }, 1600);
+  } catch (error) {
+    console.error("Không thể sao chép JSON khách hàng:", error);
+    setStatus(`Không thể sao chép JSON: ${error.message}`);
+  }
+}
 form.addEventListener("submit", saveCustomer);
 renderList();
 loadCustomers();
