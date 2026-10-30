@@ -376,6 +376,14 @@ function sortRegistration(value) {
   Object.keys(value).filter(key => !(key in ordered)).sort().forEach(key => { ordered[key] = sortJsonValue(value[key]); });
   return ordered;
 }
+function removeVietnameseDiacritics(value) {
+  if (typeof value === "string") {
+    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[đĐ]/g, character => character === "đ" ? "d" : "D");
+  }
+  if (Array.isArray(value)) return value.map(removeVietnameseDiacritics);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, removeVietnameseDiacritics(item)]));
+}
 function customerProfileJson(customer) {
   const source = customer.profile || {};
   const output = {};
@@ -388,7 +396,7 @@ function customerProfileJson(customer) {
   if (customer.registration || source.registration) {
     output.registration = sortRegistration(customer.registration || source.registration);
   }
-  return output;
+  return removeVietnameseDiacritics(output);
 }
 function openCustomer(id) {
   const customer = readCustomers().find(item => item.id === id);
