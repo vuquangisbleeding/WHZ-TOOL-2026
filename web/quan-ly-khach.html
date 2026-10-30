@@ -51,12 +51,19 @@
         <strong id="customerCount">0 khách hàng</strong>
         <span class="toolbar-hint">Dán JSON khách hàng trực tiếp vào ô bên dưới</span>
         <span class="toolbar-hint" id="customerSummary"></span>
+        <span class="toolbar-hint" id="selectedCustomerSummary">Đã chọn: 0</span>
+        <p id="customerCopyStatus" class="form-status" role="status" aria-live="polite"></p>
       </div>
       <div class="toolbar-actions">
         <button class="button button-primary button-small" id="importCustomers" type="button">Nhập JSON</button>
+        <button class="button button-ghost button-small" id="copySelectedCustomers" type="button" disabled>Copy JSON đã chọn</button>
         <button class="button button-ghost button-small" id="exportCustomers" type="button">Xuất JSON</button>
         <button class="button button-ghost button-small" id="newCustomer" type="button">Tạo mẫu trống</button>
       </div>
+    </div>
+    <div id="customerCopyResult" class="customer-copy-result" hidden>
+      <label for="customerCopyOutput">JSON đã copy</label>
+      <textarea id="customerCopyOutput" class="json-input" rows="8" readonly></textarea>
     </div>
     <textarea id="customerJsonInput" class="json-input" rows="5" placeholder='Dán một khách hàng, một mảng khách hàng hoặc {"customers": [...]} vào đây'></textarea>
 
@@ -89,7 +96,7 @@
         </div>
         <div class="customer-table-wrap">
           <table class="customer-table">
-            <thead><tr><th>Khách hàng</th><th>Facebook</th><th>Email</th><th>Số cần</th><th>Đã thêm</th><th>Trạng thái</th><th>Tổng tiền</th><th>Cập nhật</th><th></th></tr></thead>
+            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Facebook</th><th>Email</th><th>Số cần</th><th>Đã thêm</th><th>Trạng thái</th><th>Tổng tiền</th><th>Cập nhật</th><th></th></tr></thead>
             <tbody id="customerList"></tbody>
           </table>
           <p id="emptyState" class="empty-state">Chưa có khách hàng. Hãy nhập file JSON.</p>

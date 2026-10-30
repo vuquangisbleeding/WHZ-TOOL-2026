@@ -78,6 +78,7 @@ let selectedId = null;
 let customers = [];
 let currentPage = 1;
 let pageSize = 10;
+const selectedCustomerIds = new Set();
 const supabaseClient = window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY
   ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
   : null;
@@ -90,9 +91,35 @@ function setValue(object, path, value) {
   const target = keys.reduce((item, key) => (item[key] ||= {}), object);
   target[last] = value;
 }
+function selectedCustomers() {
+  return readCustomers().filter(customer => selectedCustomerIds.has(customer.id));
+}
 function readCustomers() { return customers; }
 function backendReady() { return Boolean(supabaseClient && window.SUPABASE_URL && window.SUPABASE_ANON_KEY); }
 function setStatus(message) { status.textContent = message; }
+function setCopyStatus(message) {
+  document.querySelector("#customerCopyStatus").textContent = message;
+}
+async function writeClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (error) {
+      console.warn("Clipboard API không khả dụng, chuyển sang cách sao chép dự phòng:", error);
+    }
+  }
+  const input = document.createElement("textarea");
+  input.value = text;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.append(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) throw new Error("Trình duyệt không cho phép sao chép. Hãy copy trực tiếp trong ô JSON.");
+}
 async function loadCustomers() {
   if (!backendReady()) {
     setStatus("Chưa cấu hình Supabase. Hãy điền URL và anon key trong supabase-config.js.");
@@ -346,16 +373,31 @@ function renderList() {
   }, { required: 0, added: 0, price: 0 });
   customerCount.textContent = `${filtered.length}/${readCustomers().length} khách hàng`;
   document.querySelector("#customerSummary").textContent = `Tài khoản: ${allStats.added}/${allStats.required} · Tổng tiền: ${formatPrice(allStats.price)}`;
+  selectedCustomerIds.forEach(id => {
+    if (!readCustomers().some(customer => customer.id === id)) selectedCustomerIds.delete(id);
+  });
+  document.querySelector("#selectedCustomerSummary").textContent = `Đã chọn: ${selectedCustomerIds.size}`;
+  document.querySelector("#copySelectedCustomers").disabled = selectedCustomerIds.size === 0;
   emptyState.hidden = filtered.length > 0;
   document.querySelector("#paginationInfo").textContent = filtered.length ? `Trang ${currentPage}/${totalPages} · ${filtered.length} kết quả` : "";
   document.querySelector("#previousPage").disabled = currentPage === 1;
   document.querySelector("#nextPage").disabled = currentPage === totalPages;
+  const visibleSelected = pageCustomers.filter(customer => selectedCustomerIds.has(customer.id)).length;
+  const selectVisible = document.querySelector("#selectVisibleCustomers");
+  selectVisible.checked = pageCustomers.length > 0 && visibleSelected === pageCustomers.length;
+  selectVisible.indeterminate = visibleSelected > 0 && visibleSelected < pageCustomers.length;
   if (!filtered.length) return;
   pageCustomers.forEach(customer => {
     const stats = accountStats(customer);
     const row = document.createElement("tr");
     row.className = customer.id === selectedId ? "is-selected" : "";
-    row.innerHTML = `<td><strong>${customerName(customer)}</strong></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td>${stats.required}</td><td>${stats.added}</td><td><span class="status-badge ${stats.complete ? "status-complete" : "status-missing"}">${stats.complete ? "Đủ" : `Thiếu ${stats.required - stats.added}`}</span></td><td>${formatPrice(customer.price)}</td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
+    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(customer)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(customer)}</strong></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td>${stats.required}</td><td>${stats.added}</td><td><span class="status-badge ${stats.complete ? "status-complete" : "status-missing"}">${stats.complete ? "Đủ" : `Thiếu ${stats.required - stats.added}`}</span></td><td>${formatPrice(customer.price)}</td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
+    row.querySelector(".customer-select").addEventListener("click", event => event.stopPropagation());
+    row.querySelector(".customer-select").addEventListener("change", event => {
+      if (event.currentTarget.checked) selectedCustomerIds.add(customer.id);
+      else selectedCustomerIds.delete(customer.id);
+      renderList();
+    });
     row.querySelector(".table-copy").addEventListener("click", event => copyCustomerJson(customer, event.currentTarget));
     row.querySelector(".table-open").addEventListener("click", () => openCustomer(customer.id));
     row.addEventListener("dblclick", () => openCustomer(customer.id));
@@ -456,6 +498,19 @@ document.querySelector("#pageSize").addEventListener("change", event => { pageSi
 document.querySelector("#previousPage").addEventListener("click", () => { if (currentPage > 1) { currentPage -= 1; renderList(); } });
 document.querySelector("#nextPage").addEventListener("click", () => { currentPage += 1; renderList(); });
 document.querySelector("#importCustomers").addEventListener("click", importCustomers);
+document.querySelector("#selectVisibleCustomers").addEventListener("change", event => {
+  const query = document.querySelector("#customerSearch").value.trim().toLowerCase();
+  const filter = document.querySelector("#customerStatusFilter").value;
+  const filtered = readCustomers().filter(customer => {
+    const matchesQuery = `${customerName(customer)} ${customer.facebook} ${getValue(customer.profile, "contact.email")}`.toLowerCase().includes(query);
+    const stats = accountStats(customer);
+    return matchesQuery && (filter === "all" || (filter === "complete" && stats.complete) || (filter === "missing" && !stats.complete));
+  });
+  const pageCustomers = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  pageCustomers.forEach(customer => event.currentTarget.checked ? selectedCustomerIds.add(customer.id) : selectedCustomerIds.delete(customer.id));
+  renderList();
+});
+document.querySelector("#copySelectedCustomers").addEventListener("click", copySelectedCustomers);
 document.querySelector("#importAccounts").addEventListener("click", () => {
   try {
     const parsed = parseJsonInput(document.querySelector("#accountJsonInput").value.trim(), "JSON tài khoản");
@@ -476,25 +531,39 @@ document.querySelector("#exportCustomers").addEventListener("click", () => {
 async function copyCustomerJson(customer, button) {
   const json = JSON.stringify(customerProfileJson(customer), null, 2);
   try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(json);
-    } else {
-      const input = document.createElement("textarea");
-      input.value = json;
-      input.setAttribute("readonly", "");
-      input.style.position = "fixed";
-      input.style.opacity = "0";
-      document.body.append(input);
-      input.select();
-      if (!document.execCommand("copy")) throw new Error("Trình duyệt không cho phép sao chép.");
-      input.remove();
-    }
+    await writeClipboard(json);
     button.textContent = "Đã copy JSON";
-    setStatus(`Đã sao chép JSON của ${customerName(customer)} vào bộ nhớ tạm.`);
+    document.querySelector("#customerCopyOutput").value = json;
+    document.querySelector("#customerCopyResult").hidden = false;
+    setCopyStatus(`Đã sao chép JSON của ${customerName(customer)}. Bạn cũng có thể copy trực tiếp trong ô bên dưới.`);
     setTimeout(() => { button.textContent = "Copy JSON"; }, 1600);
   } catch (error) {
     console.error("Không thể sao chép JSON khách hàng:", error);
-    setStatus(`Không thể sao chép JSON: ${error.message}`);
+    document.querySelector("#customerCopyOutput").value = json;
+    document.querySelector("#customerCopyResult").hidden = false;
+    setCopyStatus(`Không thể tự copy: ${error.message}`);
+  }
+}
+async function copySelectedCustomers() {
+  const selected = selectedCustomers();
+  if (!selected.length) {
+    setCopyStatus("Hãy tick ít nhất một khách hàng để copy JSON.");
+    return;
+  }
+  const button = document.querySelector("#copySelectedCustomers");
+  const json = JSON.stringify(selected.map(customerProfileJson), null, 2);
+  try {
+    await writeClipboard(json);
+    button.textContent = `Đã copy ${selected.length} khách`;
+    document.querySelector("#customerCopyOutput").value = json;
+    document.querySelector("#customerCopyResult").hidden = false;
+    setCopyStatus(`Đã sao chép ${selected.length} khách hàng dưới dạng một mảng JSON.`);
+    setTimeout(() => { button.textContent = "Copy JSON đã chọn"; }, 1600);
+  } catch (error) {
+    console.error("Không thể sao chép JSON khách hàng đã chọn:", error);
+    document.querySelector("#customerCopyOutput").value = json;
+    document.querySelector("#customerCopyResult").hidden = false;
+    setCopyStatus(`Không thể tự copy: ${error.message}`);
   }
 }
 form.addEventListener("submit", saveCustomer);
