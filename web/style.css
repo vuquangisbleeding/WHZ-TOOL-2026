@@ -597,6 +597,7 @@ button { cursor: pointer; }
 .table-open { padding: 4px 0; }
 .table-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 .table-pagination > div { display: flex; gap: 8px; }
+.table-pagination-actions { align-items: center; }
 .table-pagination button:disabled { cursor: not-allowed; opacity: .45; }
 .customer-list-item { display: grid; gap: 3px; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); text-align: left; }
 .customer-list-item:hover, .customer-list-item.is-selected { background: var(--pine-soft); }

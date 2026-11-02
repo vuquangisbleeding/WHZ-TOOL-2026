@@ -56,7 +56,6 @@
       </div>
       <div class="toolbar-actions">
         <button class="button button-primary button-small" id="importCustomers" type="button">Nhập JSON</button>
-        <button class="button button-primary button-small" id="saveAllCustomers" type="button" disabled>Lưu tất cả</button>
         <button class="button button-ghost button-small" id="copySelectedCustomers" type="button" disabled>Copy JSON đã chọn</button>
         <button class="button button-ghost button-small" id="exportCustomers" type="button">Xuất JSON</button>
         <button class="button button-ghost button-small" id="newCustomer" type="button">Tạo mẫu trống</button>
@@ -119,7 +118,11 @@
         </div>
         <div class="table-pagination">
           <span id="paginationInfo"></span>
-          <div><button class="button button-ghost button-small" id="previousPage" type="button">Trước</button><button class="button button-ghost button-small" id="nextPage" type="button">Sau</button></div>
+          <div class="table-pagination-actions">
+            <button class="button button-primary button-small" id="saveAllCustomers" type="button" disabled>Lưu tất cả</button>
+            <button class="button button-ghost button-small" id="previousPage" type="button">Trước</button>
+            <button class="button button-ghost button-small" id="nextPage" type="button">Sau</button>
+          </div>
         </div>
     </section>
 
