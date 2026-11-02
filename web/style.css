@@ -580,6 +580,7 @@ button { cursor: pointer; }
 .customer-table th { background: var(--sand); color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
 .customer-table td { font-size: 12px; }
 .customer-table .inline-price { width: 100px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font-size: 12px; }
+.customer-table .inline-running-quantity { width: 72px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font-size: 12px; }
 .customer-table .inline-note { width: 140px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 12px; resize: vertical; }
 .inline-status { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 .account-summary { white-space: nowrap; }
@@ -599,6 +600,7 @@ button { cursor: pointer; }
 .table-pagination > div { display: flex; gap: 8px; }
 .table-pagination-actions { align-items: center; }
 .table-pagination button:disabled { cursor: not-allowed; opacity: .45; }
+.selected-customers-total { padding: 9px 16px 12px; border-top: 1px solid var(--line); background: var(--sand); color: var(--pine); font-size: 13px; font-weight: 700; }
 .customer-list-item { display: grid; gap: 3px; width: 100%; padding: 12px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); text-align: left; }
 .customer-list-item:hover, .customer-list-item.is-selected { background: var(--pine-soft); }
 .customer-list-item span { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }

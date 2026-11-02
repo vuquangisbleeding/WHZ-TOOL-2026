@@ -108,10 +108,17 @@
               <option value="50">50</option>
             </select>
           </label>
+          <label for="priceSort">Sắp xếp giá
+            <select id="priceSort">
+              <option value="none">Mặc định</option>
+              <option value="asc">Giá thấp → cao</option>
+              <option value="desc">Giá cao → thấp</option>
+            </select>
+          </label>
         </div>
         <div class="customer-table-wrap">
           <table class="customer-table">
-            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Tài khoản</th><th>Giá khách trả</th><th>Hợp đồng</th><th>Note</th><th>Facebook</th><th>Email</th><th>Cập nhật</th><th></th></tr></thead>
+            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Tài khoản</th><th>Số lượng chạy</th><th>Giá khách trả</th><th>Hợp đồng</th><th>Note</th><th>Facebook</th><th>Email</th><th>Cập nhật</th><th></th></tr></thead>
             <tbody id="customerList"></tbody>
           </table>
           <p id="emptyState" class="empty-state">Chưa có khách hàng. Hãy nhập file JSON.</p>
@@ -124,6 +131,7 @@
             <button class="button button-ghost button-small" id="nextPage" type="button">Sau</button>
           </div>
         </div>
+        <div id="selectedCustomersTotal" class="selected-customers-total" role="status" aria-live="polite"></div>
     </section>
 
     <dialog id="customerModal" class="customer-modal">

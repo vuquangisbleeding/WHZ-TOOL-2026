@@ -176,6 +176,7 @@ function normalizeCustomer(item, index) {
     id: item.id || `KH-${Date.now()}-${index}`,
     facebook: item.facebook || item.facebook_url || "",
     quantity: Number(item.quantity || item.accountCount || 0),
+    runningQuantity: Number(item.runningQuantity ?? item.quantityRunning ?? item.running_quantity ?? item.runQuantity ?? 0),
     price: Number(item.price || item.amount || 0),
     contractSent: contractSentValue === true || contractSentValue === "true" || contractSentValue === "Yes" || contractSentValue === "Đã gửi",
     accountsReady: accountsReadyValue === undefined ? undefined : accountsReadyValue === true || accountsReadyValue === "true" || accountsReadyValue === "Yes",
@@ -260,7 +261,7 @@ function buildFields() {
   });
 }
 function emptyCustomer() {
-  return { id: "", facebook: "", quantity: 1, price: 0, contractSent: false, accountsReady: false, note: "", profile: {}, accounts: [] };
+  return { id: "", facebook: "", quantity: 1, runningQuantity: 0, price: 0, contractSent: false, accountsReady: false, note: "", profile: {}, accounts: [] };
 }
 function fillForm(customer) {
   form.reset();
@@ -381,6 +382,7 @@ function renderList() {
   const minPrice = Number(document.querySelector("#minPrice").value || 0);
   const maxPriceValue = document.querySelector("#maxPrice").value;
   const maxPrice = maxPriceValue === "" ? Number.POSITIVE_INFINITY : Number(maxPriceValue);
+  const sort = document.querySelector("#priceSort").value;
   const filtered = readCustomers().map(draftCustomer).filter(customer => {
     const matchesQuery = `${customerName(customer)} ${customer.facebook} ${getValue(customer.profile, "contact.email")}`.toLowerCase().includes(query);
     const stats = accountStats(customer);
@@ -388,6 +390,10 @@ function renderList() {
     const matchesContract = contractFilter === "all" || (contractFilter === "sent" && customer.contractSent) || (contractFilter === "not-sent" && !customer.contractSent);
     const price = Number(customer.price || 0);
     return matchesQuery && matchesAccounts && matchesContract && price >= minPrice && price <= maxPrice;
+  }).sort((left, right) => {
+    if (sort === "asc") return Number(left.price || 0) - Number(right.price || 0);
+    if (sort === "desc") return Number(right.price || 0) - Number(left.price || 0);
+    return 0;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   currentPage = Math.min(currentPage, totalPages);
@@ -403,6 +409,12 @@ function renderList() {
     if (!readCustomers().some(customer => customer.id === id)) selectedCustomerIds.delete(id);
   });
   document.querySelector("#selectedCustomerSummary").textContent = `Đã chọn: ${selectedCustomerIds.size}`;
+  const selectedTotal = readCustomers()
+    .filter(customer => selectedCustomerIds.has(customer.id))
+    .reduce((total, customer) => total + Number(draftCustomer(customer).price || 0), 0);
+  document.querySelector("#selectedCustomersTotal").textContent = selectedCustomerIds.size
+    ? `Tổng giá khách trả của ${selectedCustomerIds.size} khách đã chọn: ${formatPrice(selectedTotal)}`
+    : "Chưa chọn khách hàng nào.";
   document.querySelector("#copySelectedCustomers").disabled = selectedCustomerIds.size === 0;
   emptyState.hidden = filtered.length > 0;
   document.querySelector("#paginationInfo").textContent = filtered.length ? `Trang ${currentPage}/${totalPages} · ${filtered.length} kết quả` : "";
@@ -418,7 +430,7 @@ function renderList() {
     const stats = accountStats(draft);
     const row = document.createElement("tr");
     row.className = customer.id === selectedId ? "is-selected" : "";
-    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(draft)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(draft)}</strong></td><td class="account-summary" title="${stats.state === "complete" ? "Đủ số tài khoản cần tạo" : "Số tài khoản chưa khớp số cần tạo"}"><strong>${stats.added}/${stats.required}</strong>${stats.state === "complete" ? ' <span class="account-check" aria-label="Đủ tài khoản">✓</span>' : ""}</td><td><input class="inline-price" type="number" min="0" step="1000" value="${Number(draft.price || 0)}" aria-label="Giá khách trả của ${customerName(draft)}"></td><td><label class="inline-status"><input class="contract-toggle" type="checkbox" ${draft.contractSent ? "checked" : ""} aria-label="Hợp đồng đã gửi"></label></td><td><textarea class="inline-note" rows="1" aria-label="Note của ${customerName(draft)}" placeholder="Note..."></textarea></td><td>${draft.facebook || "—"}</td><td>${getValue(draft.profile, "contact.email") || "—"}</td><td>${new Date(draft.lastEditedAt || draft.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
+    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(draft)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(draft)}</strong></td><td class="account-summary" title="${stats.state === "complete" ? "Đủ số tài khoản cần tạo" : "Số tài khoản chưa khớp số cần tạo"}"><strong>${stats.added}/${stats.required}</strong>${stats.state === "complete" ? ' <span class="account-check" aria-label="Đủ tài khoản">✓</span>' : ""}</td><td><input class="inline-running-quantity" type="number" min="0" step="1" value="${Number(draft.runningQuantity || 0)}" aria-label="Số lượng chạy của ${customerName(draft)}"></td><td><input class="inline-price" type="number" min="0" step="1000" value="${Number(draft.price || 0)}" aria-label="Giá khách trả của ${customerName(draft)}"></td><td><label class="inline-status"><input class="contract-toggle" type="checkbox" ${draft.contractSent ? "checked" : ""} aria-label="Hợp đồng đã gửi"></label></td><td><textarea class="inline-note" rows="1" aria-label="Note của ${customerName(draft)}" placeholder="Note..."></textarea></td><td>${draft.facebook || "—"}</td><td>${getValue(draft.profile, "contact.email") || "—"}</td><td>${new Date(draft.lastEditedAt || draft.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
     row.querySelector(".inline-note").value = draft.note || "";
     row.querySelector(".customer-select").addEventListener("click", event => event.stopPropagation());
     row.querySelector(".customer-select").addEventListener("change", event => {
@@ -432,6 +444,11 @@ function renderList() {
     row.querySelector(".inline-price").addEventListener("change", event => {
       const price = Number(event.currentTarget.value);
       if (Number.isFinite(price) && price >= 0) queueCustomerChange(customer, { price });
+    });
+    row.querySelector(".inline-running-quantity").addEventListener("click", event => event.stopPropagation());
+    row.querySelector(".inline-running-quantity").addEventListener("change", event => {
+      const runningQuantity = Number(event.currentTarget.value);
+      if (Number.isInteger(runningQuantity) && runningQuantity >= 0) queueCustomerChange(customer, { runningQuantity });
     });
     row.querySelector(".contract-toggle").addEventListener("click", event => event.stopPropagation());
     row.querySelector(".contract-toggle").addEventListener("change", event => queueCustomerChange(customer, { contractSent: event.currentTarget.checked }));
@@ -533,6 +550,7 @@ document.querySelector("#customerSearch").addEventListener("input", () => { curr
 document.querySelector("#customerStatusFilter").addEventListener("change", () => { currentPage = 1; renderList(); });
 document.querySelector("#contractFilter").addEventListener("change", () => { currentPage = 1; renderList(); });
 document.querySelectorAll(".price-filter").forEach(input => input.addEventListener("input", () => { currentPage = 1; renderList(); }));
+document.querySelector("#priceSort").addEventListener("change", () => { currentPage = 1; renderList(); });
 document.querySelector("#pageSize").addEventListener("change", event => { pageSize = Number(event.target.value); currentPage = 1; renderList(); });
 document.querySelector("#previousPage").addEventListener("click", () => { if (currentPage > 1) { currentPage -= 1; renderList(); } });
 document.querySelector("#nextPage").addEventListener("click", () => { currentPage += 1; renderList(); });
