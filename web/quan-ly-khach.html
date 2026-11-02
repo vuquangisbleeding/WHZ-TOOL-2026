@@ -111,7 +111,7 @@
         </div>
         <div class="customer-table-wrap">
           <table class="customer-table">
-            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Facebook</th><th>Email</th><th>Tài khoản</th><th>Trạng thái</th><th>Giá khách trả</th><th>Hợp đồng</th><th>Note</th><th>Cập nhật</th><th></th></tr></thead>
+            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Tài khoản</th><th>Giá khách trả</th><th>Hợp đồng</th><th>Note</th><th>Trạng thái</th><th>Facebook</th><th>Email</th><th>Cập nhật</th><th></th></tr></thead>
             <tbody id="customerList"></tbody>
           </table>
           <p id="emptyState" class="empty-state">Chưa có khách hàng. Hãy nhập file JSON.</p>
@@ -157,6 +157,10 @@
                 <option value="false">Chưa gửi</option>
                 <option value="true">Đã gửi</option>
               </select>
+            </label>
+            <label class="account-checkbox">
+              <input id="customer-accounts-ready" type="checkbox">
+              <span>Đã xác nhận tạo đủ tài khoản</span>
             </label>
             <label class="customer-field customer-field-wide">
               <span>Note về khách</span>

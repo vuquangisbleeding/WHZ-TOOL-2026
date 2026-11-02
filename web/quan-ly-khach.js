@@ -171,12 +171,14 @@ function parseProfile(value) {
 function normalizeCustomer(item, index) {
   const profile = parseProfile(item.profile || item.profile_json);
   const contractSentValue = item.contractSent ?? item.contract_sent ?? item.sentContract ?? false;
+  const accountsReadyValue = item.accountsReady ?? item.accounts_ready;
   return {
     id: item.id || `KH-${Date.now()}-${index}`,
     facebook: item.facebook || item.facebook_url || "",
     quantity: Number(item.quantity || item.accountCount || 0),
     price: Number(item.price || item.amount || 0),
     contractSent: contractSentValue === true || contractSentValue === "true" || contractSentValue === "Yes" || contractSentValue === "Đã gửi",
+    accountsReady: accountsReadyValue === undefined ? undefined : accountsReadyValue === true || accountsReadyValue === "true" || accountsReadyValue === "Yes",
     note: String(item.note ?? item.notes ?? ""),
     profile,
     ...(item.scheme_country ? { scheme_country: item.scheme_country } : {}),
@@ -292,7 +294,7 @@ function renumberAccounts() {
   [...accountList.children].forEach((card, index) => { card.querySelector("strong").textContent = `Tài khoản ${index + 1}`; });
 }
 function emptyCustomer() {
-  return { id: "", facebook: "", quantity: 1, price: 0, contractSent: false, note: "", profile: {}, accounts: [] };
+  return { id: "", facebook: "", quantity: 1, price: 0, contractSent: false, accountsReady: false, note: "", profile: {}, accounts: [] };
 }
 function fillForm(customer) {
   form.reset();
@@ -343,6 +345,7 @@ function readForm() {
     quantity: Number(document.querySelector("#customer-quantity").value || 1),
     price: Number(document.querySelector("#customer-price").value || 0),
     contractSent: document.querySelector("#customer-contract-sent").value === "true",
+    accountsReady: document.querySelector("#customer-accounts-ready").checked,
     note: document.querySelector("#customer-note").value.trim(),
     profile,
     accounts: [...accountList.children].map(card => Object.fromEntries([...card.querySelectorAll("[data-account]")].map(input => [
@@ -368,8 +371,22 @@ function accountStats(customer) {
     added,
     difference,
     state: difference === 0 ? "complete" : difference < 0 ? (added === 0 ? "empty" : "missing") : "excess",
-    complete: difference === 0
+    complete: difference === 0,
+    confirmed: customer.accountsReady === true
   };
+}
+async function updateCustomerInline(customer, changes, statusTarget) {
+  const updated = { ...customer, ...changes, lastEditedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  try {
+    await upsertCustomer(updated);
+    const index = customers.findIndex(item => item.id === customer.id);
+    if (index !== -1) customers[index] = updated;
+    renderList();
+  } catch (error) {
+    console.error("Không thể cập nhật nhanh khách hàng:", error);
+    if (statusTarget) statusTarget.textContent = `Không thể lưu: ${error.message}`;
+    renderList();
+  }
 }
 function renderList() {
   const query = document.querySelector("#customerSearch").value.trim().toLowerCase();
@@ -415,10 +432,10 @@ function renderList() {
     const stats = accountStats(customer);
     const row = document.createElement("tr");
     row.className = customer.id === selectedId ? "is-selected" : "";
-    const accountLabel = stats.state === "complete" ? "Đủ" : stats.state === "excess" ? `Thừa ${stats.difference}` : stats.state === "empty" ? "Chưa tạo" : `Thiếu ${Math.abs(stats.difference)}`;
+    const accountLabel = stats.state === "complete" ? (stats.confirmed ? "Đã xác nhận" : "Đủ, chưa tick") : stats.state === "excess" ? `Thừa ${stats.difference}` : stats.state === "empty" ? "Chưa tạo" : `Thiếu ${Math.abs(stats.difference)}`;
     const accountClass = stats.state === "complete" ? "status-complete" : stats.state === "excess" ? "status-excess" : "status-missing";
     const note = customer.note || "—";
-    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(customer)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(customer)}</strong></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td><strong>${stats.added}/${stats.required}</strong></td><td><span class="status-badge ${accountClass}">${accountLabel}</span></td><td>${formatPrice(customer.price)}</td><td><span class="status-badge ${customer.contractSent ? "status-complete" : "status-missing"}">${customer.contractSent ? "Đã gửi" : "Chưa gửi"}</span></td><td class="customer-note-cell"></td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
+    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(customer)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(customer)}</strong></td><td><strong>${stats.added}/${stats.required}</strong></td><td><input class="inline-price" type="number" min="0" step="1000" value="${Number(customer.price || 0)}" aria-label="Giá khách trả của ${customerName(customer)}"></td><td><label class="inline-status"><input class="contract-toggle" type="checkbox" ${customer.contractSent ? "checked" : ""}><span class="status-badge ${customer.contractSent ? "status-complete" : "status-missing"}">${customer.contractSent ? "Đã gửi" : "Chưa gửi"}</span></label></td><td class="customer-note-cell"></td><td><label class="inline-status" title="${stats.state === "complete" ? "Xác nhận đã tạo đủ tài khoản" : "Cần đủ username mới có thể xác nhận"}"><input class="accounts-ready-toggle" type="checkbox" ${stats.confirmed ? "checked" : ""} ${stats.state !== "complete" ? "disabled" : ""}><span class="status-badge ${accountClass}">${accountLabel}</span></label></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
     const noteCell = row.querySelector(".customer-note-cell");
     noteCell.textContent = note;
     noteCell.title = note;
@@ -430,6 +447,15 @@ function renderList() {
     });
     row.querySelector(".table-copy").addEventListener("click", event => copyCustomerJson(customer, event.currentTarget));
     row.querySelector(".table-open").addEventListener("click", () => openCustomer(customer.id));
+    row.querySelector(".inline-price").addEventListener("click", event => event.stopPropagation());
+    row.querySelector(".inline-price").addEventListener("change", event => {
+      const price = Number(event.currentTarget.value);
+      if (Number.isFinite(price) && price >= 0) updateCustomerInline(customer, { price });
+    });
+    row.querySelector(".contract-toggle").addEventListener("click", event => event.stopPropagation());
+    row.querySelector(".contract-toggle").addEventListener("change", event => updateCustomerInline(customer, { contractSent: event.currentTarget.checked }));
+    row.querySelector(".accounts-ready-toggle").addEventListener("click", event => event.stopPropagation());
+    row.querySelector(".accounts-ready-toggle").addEventListener("change", event => updateCustomerInline(customer, { accountsReady: event.currentTarget.checked }));
     row.addEventListener("dblclick", () => openCustomer(customer.id));
     customerList.append(row);
   });
