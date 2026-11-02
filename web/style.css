@@ -570,6 +570,7 @@ button { cursor: pointer; }
 .table-filters { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .table-filters label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 600; }
 .table-filters select { border: 1px solid #d9cbb8; border-radius: 8px; padding: 7px 9px; background: #fff; color: var(--ink); }
+.table-filters .price-filter { width: 110px; border: 1px solid #d9cbb8; border-radius: 8px; padding: 7px 9px; background: #fff; color: var(--ink); }
 .customer-list { display: grid; gap: 4px; padding: 8px; max-height: 65vh; overflow-y: auto; }
 .customer-table-wrap { overflow-x: auto; }
 .customer-table { width: 100%; min-width: 850px; border-collapse: collapse; text-align: left; }
@@ -584,6 +585,8 @@ button { cursor: pointer; }
 .status-badge { display: inline-block; padding: 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 .status-complete { background: var(--pine-soft); color: var(--pine); }
 .status-missing { background: #fff0e9; color: var(--rust-dark); }
+.status-excess { background: #fff4cf; color: #825b00; }
+.customer-note-cell { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap !important; }
 .table-open { padding: 4px 0; }
 .table-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
 .table-pagination > div { display: flex; gap: 8px; }
@@ -597,6 +600,7 @@ button { cursor: pointer; }
 .customer-form { display: grid; gap: 20px; padding-top: 20px; }
 .customer-profile-section, .account-section { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fffaf3; }
 .customer-profile-section:nth-child(2n) { background: #f4f8f4; }
+.customer-meta-section { display: grid; grid-template-columns: minmax(180px, 260px) 1fr; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fffaf3; }
 .customer-profile-section .profile-section-head { margin-bottom: 16px; }
 .customer-profile-section .profile-section-head h3 { margin: 0; font-size: 20px; }
 .customer-grid, .account-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
@@ -746,6 +750,7 @@ button { cursor: pointer; }
   .customer-list { max-height: 260px; }
   .customer-editor { padding: 18px; }
   .customer-grid, .account-grid { grid-template-columns: 1fr; }
+  .customer-meta-section { grid-template-columns: 1fr; padding: 16px; }
   .account-import { grid-template-columns: 1fr; }
   .customer-field-wide { grid-column: auto; }
   .customer-profile-section, .account-section { padding: 16px; }

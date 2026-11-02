@@ -79,12 +79,27 @@
           <input id="customerSearch" type="search" placeholder="Tìm theo tên, Facebook, email...">
         </label>
         <div class="table-filters">
-          <label for="customerStatusFilter">Trạng thái
+          <label for="customerStatusFilter">Tài khoản
             <select id="customerStatusFilter">
               <option value="all">Tất cả</option>
-              <option value="complete">Đủ tài khoản</option>
+              <option value="complete">Đủ số lượng</option>
               <option value="missing">Thiếu tài khoản</option>
+              <option value="excess">Thừa tài khoản</option>
+              <option value="empty">Chưa tạo</option>
             </select>
+          </label>
+          <label for="contractFilter">Hợp đồng
+            <select id="contractFilter">
+              <option value="all">Tất cả</option>
+              <option value="sent">Đã gửi</option>
+              <option value="not-sent">Chưa gửi</option>
+            </select>
+          </label>
+          <label for="minPrice">Giá từ
+            <input id="minPrice" class="price-filter" type="number" min="0" step="1000" placeholder="0">
+          </label>
+          <label for="maxPrice">Đến
+            <input id="maxPrice" class="price-filter" type="number" min="0" step="1000" placeholder="Không giới hạn">
           </label>
           <label for="pageSize">Mỗi trang
             <select id="pageSize">
@@ -96,7 +111,7 @@
         </div>
         <div class="customer-table-wrap">
           <table class="customer-table">
-            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Facebook</th><th>Email</th><th>Số cần</th><th>Đã thêm</th><th>Trạng thái</th><th>Tổng tiền</th><th>Cập nhật</th><th></th></tr></thead>
+            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Facebook</th><th>Email</th><th>Tài khoản</th><th>Trạng thái</th><th>Giá khách trả</th><th>Hợp đồng</th><th>Note</th><th>Cập nhật</th><th></th></tr></thead>
             <tbody id="customerList"></tbody>
           </table>
           <p id="emptyState" class="empty-state">Chưa có khách hàng. Hãy nhập file JSON.</p>
@@ -134,6 +149,19 @@
               <button class="button button-ghost button-small" id="importAccounts" type="button">Nhập JSON tài khoản</button>
             </div>
             <div id="accountList" class="managed-account-list"></div>
+          </section>
+          <section class="customer-meta-section">
+            <label class="customer-field">
+              <span>Đã gửi hợp đồng cho khách?</span>
+              <select id="customer-contract-sent">
+                <option value="false">Chưa gửi</option>
+                <option value="true">Đã gửi</option>
+              </select>
+            </label>
+            <label class="customer-field customer-field-wide">
+              <span>Note về khách</span>
+              <textarea id="customer-note" rows="3" placeholder="Ghi chú nội bộ về khách hàng..."></textarea>
+            </label>
           </section>
           <div class="editor-actions">
             <button class="button button-primary" type="submit">Lưu khách hàng</button>

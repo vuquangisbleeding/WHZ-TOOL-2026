@@ -170,11 +170,14 @@ function parseProfile(value) {
 }
 function normalizeCustomer(item, index) {
   const profile = parseProfile(item.profile || item.profile_json);
+  const contractSentValue = item.contractSent ?? item.contract_sent ?? item.sentContract ?? false;
   return {
     id: item.id || `KH-${Date.now()}-${index}`,
     facebook: item.facebook || item.facebook_url || "",
     quantity: Number(item.quantity || item.accountCount || 0),
     price: Number(item.price || item.amount || 0),
+    contractSent: contractSentValue === true || contractSentValue === "true" || contractSentValue === "Yes" || contractSentValue === "Đã gửi",
+    note: String(item.note ?? item.notes ?? ""),
     profile,
     ...(item.scheme_country ? { scheme_country: item.scheme_country } : {}),
     ...(item.registration && typeof item.registration === "object" ? { registration: item.registration } : {}),
@@ -289,7 +292,7 @@ function renumberAccounts() {
   [...accountList.children].forEach((card, index) => { card.querySelector("strong").textContent = `Tài khoản ${index + 1}`; });
 }
 function emptyCustomer() {
-  return { id: "", facebook: "", quantity: 1, price: 0, profile: {}, accounts: [] };
+  return { id: "", facebook: "", quantity: 1, price: 0, contractSent: false, note: "", profile: {}, accounts: [] };
 }
 function fillForm(customer) {
   form.reset();
@@ -329,6 +332,8 @@ function fillForm(customer) {
   document.querySelector("#customer-facebook").value = customer.facebook || "";
   document.querySelector("#customer-quantity").value = customer.quantity || 1;
   document.querySelector("#customer-price").value = customer.price || 0;
+  document.querySelector("#customer-contract-sent").value = String(Boolean(customer.contractSent));
+  document.querySelector("#customer-note").value = customer.note || "";
 }
 function readForm() {
   const profile = {};
@@ -337,6 +342,8 @@ function readForm() {
     facebook: document.querySelector("#customer-facebook").value.trim(),
     quantity: Number(document.querySelector("#customer-quantity").value || 1),
     price: Number(document.querySelector("#customer-price").value || 0),
+    contractSent: document.querySelector("#customer-contract-sent").value === "true",
+    note: document.querySelector("#customer-note").value.trim(),
     profile,
     accounts: [...accountList.children].map(card => Object.fromEntries([...card.querySelectorAll("[data-account]")].map(input => [input.dataset.account, input.type === "checkbox" ? input.checked : input.value.trim()])))
   };
@@ -352,16 +359,30 @@ function formatPrice(value) {
 function accountStats(customer) {
   const required = Math.max(0, Number(customer.quantity || 0));
   const added = Array.isArray(customer.accounts) ? customer.accounts.length : 0;
-  return { required, added, complete: added >= required };
+  const difference = added - required;
+  return {
+    required,
+    added,
+    difference,
+    state: difference === 0 ? "complete" : difference < 0 ? (added === 0 ? "empty" : "missing") : "excess",
+    complete: difference === 0
+  };
 }
 function renderList() {
   const query = document.querySelector("#customerSearch").value.trim().toLowerCase();
   customerList.replaceChildren();
   const filter = document.querySelector("#customerStatusFilter").value;
+  const contractFilter = document.querySelector("#contractFilter").value;
+  const minPrice = Number(document.querySelector("#minPrice").value || 0);
+  const maxPriceValue = document.querySelector("#maxPrice").value;
+  const maxPrice = maxPriceValue === "" ? Number.POSITIVE_INFINITY : Number(maxPriceValue);
   const filtered = readCustomers().filter(customer => {
     const matchesQuery = `${customerName(customer)} ${customer.facebook} ${getValue(customer.profile, "contact.email")}`.toLowerCase().includes(query);
     const stats = accountStats(customer);
-    return matchesQuery && (filter === "all" || (filter === "complete" && stats.complete) || (filter === "missing" && !stats.complete));
+    const matchesAccounts = filter === "all" || filter === stats.state;
+    const matchesContract = contractFilter === "all" || (contractFilter === "sent" && customer.contractSent) || (contractFilter === "not-sent" && !customer.contractSent);
+    const price = Number(customer.price || 0);
+    return matchesQuery && matchesAccounts && matchesContract && price >= minPrice && price <= maxPrice;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   currentPage = Math.min(currentPage, totalPages);
@@ -372,7 +393,7 @@ function renderList() {
     return summary;
   }, { required: 0, added: 0, price: 0 });
   customerCount.textContent = `${filtered.length}/${readCustomers().length} khách hàng`;
-  document.querySelector("#customerSummary").textContent = `Tài khoản: ${allStats.added}/${allStats.required} · Tổng tiền: ${formatPrice(allStats.price)}`;
+  document.querySelector("#customerSummary").textContent = `Tài khoản: ${allStats.added}/${allStats.required} · Tổng giá khách trả: ${formatPrice(allStats.price)}`;
   selectedCustomerIds.forEach(id => {
     if (!readCustomers().some(customer => customer.id === id)) selectedCustomerIds.delete(id);
   });
@@ -391,7 +412,13 @@ function renderList() {
     const stats = accountStats(customer);
     const row = document.createElement("tr");
     row.className = customer.id === selectedId ? "is-selected" : "";
-    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(customer)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(customer)}</strong></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td>${stats.required}</td><td>${stats.added}</td><td><span class="status-badge ${stats.complete ? "status-complete" : "status-missing"}">${stats.complete ? "Đủ" : `Thiếu ${stats.required - stats.added}`}</span></td><td>${formatPrice(customer.price)}</td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
+    const accountLabel = stats.state === "complete" ? "Đủ" : stats.state === "excess" ? `Thừa ${stats.difference}` : stats.state === "empty" ? "Chưa tạo" : `Thiếu ${Math.abs(stats.difference)}`;
+    const accountClass = stats.state === "complete" ? "status-complete" : stats.state === "excess" ? "status-excess" : "status-missing";
+    const note = customer.note || "—";
+    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(customer)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(customer)}</strong></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td><strong>${stats.added}/${stats.required}</strong></td><td><span class="status-badge ${accountClass}">${accountLabel}</span></td><td>${formatPrice(customer.price)}</td><td><span class="status-badge ${customer.contractSent ? "status-complete" : "status-missing"}">${customer.contractSent ? "Đã gửi" : "Chưa gửi"}</span></td><td class="customer-note-cell"></td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
+    const noteCell = row.querySelector(".customer-note-cell");
+    noteCell.textContent = note;
+    noteCell.title = note;
     row.querySelector(".customer-select").addEventListener("click", event => event.stopPropagation());
     row.querySelector(".customer-select").addEventListener("change", event => {
       if (event.currentTarget.checked) selectedCustomerIds.add(customer.id);
@@ -494,6 +521,8 @@ document.querySelector("#customerModal")?.addEventListener("click", event => {
 document.querySelector("#addAccount").addEventListener("click", () => createAccount());
 document.querySelector("#customerSearch").addEventListener("input", () => { currentPage = 1; renderList(); });
 document.querySelector("#customerStatusFilter").addEventListener("change", () => { currentPage = 1; renderList(); });
+document.querySelector("#contractFilter").addEventListener("change", () => { currentPage = 1; renderList(); });
+document.querySelectorAll(".price-filter").forEach(input => input.addEventListener("input", () => { currentPage = 1; renderList(); }));
 document.querySelector("#pageSize").addEventListener("change", event => { pageSize = Number(event.target.value); currentPage = 1; renderList(); });
 document.querySelector("#previousPage").addEventListener("click", () => { if (currentPage > 1) { currentPage -= 1; renderList(); } });
 document.querySelector("#nextPage").addEventListener("click", () => { currentPage += 1; renderList(); });
@@ -501,10 +530,17 @@ document.querySelector("#importCustomers").addEventListener("click", importCusto
 document.querySelector("#selectVisibleCustomers").addEventListener("change", event => {
   const query = document.querySelector("#customerSearch").value.trim().toLowerCase();
   const filter = document.querySelector("#customerStatusFilter").value;
+  const contractFilter = document.querySelector("#contractFilter").value;
+  const minPrice = Number(document.querySelector("#minPrice").value || 0);
+  const maxPriceValue = document.querySelector("#maxPrice").value;
+  const maxPrice = maxPriceValue === "" ? Number.POSITIVE_INFINITY : Number(maxPriceValue);
   const filtered = readCustomers().filter(customer => {
     const matchesQuery = `${customerName(customer)} ${customer.facebook} ${getValue(customer.profile, "contact.email")}`.toLowerCase().includes(query);
     const stats = accountStats(customer);
-    return matchesQuery && (filter === "all" || (filter === "complete" && stats.complete) || (filter === "missing" && !stats.complete));
+    const matchesAccounts = filter === "all" || filter === stats.state;
+    const matchesContract = contractFilter === "all" || (contractFilter === "sent" && customer.contractSent) || (contractFilter === "not-sent" && !customer.contractSent);
+    const price = Number(customer.price || 0);
+    return matchesQuery && matchesAccounts && matchesContract && price >= minPrice && price <= maxPrice;
   });
   const pageCustomers = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   pageCustomers.forEach(customer => event.currentTarget.checked ? selectedCustomerIds.add(customer.id) : selectedCustomerIds.delete(customer.id));
