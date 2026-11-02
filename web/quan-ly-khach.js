@@ -264,11 +264,11 @@ function createAccount(account = {}) {
     <div class="managed-account-head"><strong>Tài khoản</strong><button class="text-button remove-account" type="button">Xóa</button></div>
     <div class="account-grid">
       <label class="customer-field"><span>Username *</span><input data-account="username" type="text" required autocomplete="off"></label>
-      <label class="customer-field"><span>Email</span><input data-account="email" type="email" autocomplete="off"></label>
-      <label class="customer-field"><span>Mật khẩu *</span><input data-account="password" type="text" required autocomplete="off"></label>
-      <label class="customer-field"><span>Proxy</span><input data-account="proxy" type="text" placeholder="host:port:user:pass"></label>
-      <label class="customer-field"><span>Link pay</span><input data-account="payLink" type="url" placeholder="https://..."></label>
-      <label class="account-checkbox"><input data-account="isServer" type="checkbox"><span>isServer</span></label>
+      <input data-account="email" type="hidden">
+      <input data-account="password" type="hidden">
+      <input data-account="proxy" type="hidden">
+      <input data-account="payLink" type="hidden">
+      <input data-account="isServer" type="hidden">
     </div>`;
   const normalized = normalizeAccount(account);
   card.querySelector('[data-account="username"]').value = normalized.username;
@@ -276,7 +276,7 @@ function createAccount(account = {}) {
   card.querySelector('[data-account="password"]').value = normalized.password;
   card.querySelector('[data-account="proxy"]').value = normalized.proxy;
   card.querySelector('[data-account="payLink"]').value = normalized.payLink;
-  card.querySelector('[data-account="isServer"]').checked = normalized.isServer;
+  card.querySelector('[data-account="isServer"]').value = String(normalized.isServer);
   card.querySelector(".remove-account").addEventListener("click", () => {
     if (accountList.children.length === 1) {
       card.querySelectorAll("input").forEach(input => { input.value = ""; });
@@ -345,7 +345,10 @@ function readForm() {
     contractSent: document.querySelector("#customer-contract-sent").value === "true",
     note: document.querySelector("#customer-note").value.trim(),
     profile,
-    accounts: [...accountList.children].map(card => Object.fromEntries([...card.querySelectorAll("[data-account]")].map(input => [input.dataset.account, input.type === "checkbox" ? input.checked : input.value.trim()])))
+    accounts: [...accountList.children].map(card => Object.fromEntries([...card.querySelectorAll("[data-account]")].map(input => [
+      input.dataset.account,
+      input.dataset.account === "isServer" ? input.value === "true" : input.value.trim()
+    ])))
   };
 }
 function customerName(customer) {
@@ -549,12 +552,20 @@ document.querySelector("#selectVisibleCustomers").addEventListener("change", eve
 document.querySelector("#copySelectedCustomers").addEventListener("click", copySelectedCustomers);
 document.querySelector("#importAccounts").addEventListener("click", () => {
   try {
-    const parsed = parseJsonInput(document.querySelector("#accountJsonInput").value.trim(), "JSON tài khoản");
-    const accounts = Array.isArray(parsed) ? parsed : Array.isArray(parsed.accounts) ? parsed.accounts : [parsed];
-    if (!accounts.length || accounts.some(account => !account || typeof account !== "object")) throw new Error("JSON tài khoản không có dữ liệu.");
+    const raw = document.querySelector("#accountJsonInput").value.trim();
+    if (!raw) throw new Error("Hãy nhập ít nhất một username.");
+    let accounts;
+    if (raw.startsWith("[") || raw.startsWith("{")) {
+      const parsed = parseJsonInput(raw, "JSON tài khoản");
+      accounts = Array.isArray(parsed) ? parsed : Array.isArray(parsed.accounts) ? parsed.accounts : [parsed];
+      if (accounts.some(account => !account || typeof account !== "object")) throw new Error("JSON tài khoản không có dữ liệu.");
+    } else {
+      accounts = raw.split(/\r?\n/).map(username => username.trim()).filter(Boolean).map(username => ({ username }));
+    }
+    if (!accounts.length) throw new Error("Hãy nhập ít nhất một username.");
     accounts.forEach(createAccount);
     document.querySelector("#accountJsonInput").value = "";
-    setStatus(`Đã thêm ${accounts.length} tài khoản vào form. Bấm Lưu khách hàng để lưu database.`);
+    setStatus(`Đã thêm ${accounts.length} username vào form. Bấm Lưu khách hàng để lưu database.`);
   } catch (error) {
     setStatus(error.message);
   }
