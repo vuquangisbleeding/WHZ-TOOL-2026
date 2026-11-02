@@ -337,7 +337,7 @@ function customerMessage(customer) {
 
 https://onlineservices.immigration.govt.nz/?WHS
 
-1. Kiểm tra thông tin lần cuối. Nếu cần sửa gì, vui lòng báo sớm nhất có thể.
+1. Kiểm tra thông tin lần cuối ở tài khoản test. Nếu cần sửa gì, vui lòng báo sớm nhất có thể.
 2. Đọc kỹ từng mục trong hồ sơ trước khi xác nhận.
 3. Báo ngay nếu bạn thuộc một trong các trường hợp sau:
 
@@ -345,6 +345,7 @@ https://onlineservices.immigration.govt.nz/?WHS
 - Đang mang thai
 4. Số điện thoại ghi theo mã vùng quốc gia, bỏ số 0 ở đầu. Ví dụ: 0912345678 → 84912345678
 5. Kiểm tra kỹ thẻ thanh toán quốc tế: thẻ còn hạn, đủ số dư và đã mở chức năng thanh toán quốc tế/online.
+6. Nhớ online lúc 4h sáng để nhận kết quả
 
 THÔNG TIN ĐĂNG KÝ
 
@@ -360,7 +361,7 @@ async function copyCustomerMessage() {
     setCopyStatus("Hãy tick ít nhất một khách hàng để copy message.");
     return;
   }
-  const message = selected.map(customerMessage).join("\n\n---\n\n");
+  const message = selected.map(customerMessage).join("\n\n---\n\n").replaceAll("*", "");
   try {
     await writeClipboard(message);
     document.querySelector("#customerCopyOutput").value = message;
