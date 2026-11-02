@@ -561,6 +561,8 @@ button { cursor: pointer; }
 .customer-copy-result label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 13px; font-weight: 700; }
 .customer-copy-result .json-input { margin: 0; background: #fff; }
 .json-input { width: 100%; margin: 0 0 18px; padding: 12px; border: 1px solid #d9cbb8; border-radius: 10px; background: var(--card); color: var(--ink); font: 13px/1.5 "Space Mono", monospace; resize: vertical; }
+.customer-file-import { display: flex; align-items: center; gap: 8px; margin: -8px 0 18px; color: var(--muted); font-size: 13px; font-weight: 600; }
+.customer-file-import input { font: inherit; }
 .customer-table-card { overflow: hidden; }
 .customer-sidebar-head, .editor-head, .account-section-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
 .customer-sidebar-head { padding: 20px; border-bottom: 1px solid var(--line); }
@@ -581,6 +583,8 @@ button { cursor: pointer; }
 .customer-table td { font-size: 12px; }
 .customer-table .inline-price { width: 100px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font-size: 12px; }
 .customer-table .inline-running-quantity { width: 72px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font-size: 12px; }
+.customer-table .inline-account-quantity { width: 58px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font-size: 12px; }
+.customer-table .inline-test-account { width: 120px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font-size: 12px; }
 .customer-table .inline-note { width: 140px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 12px; resize: vertical; }
 .inline-status { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 .account-summary { white-space: nowrap; }

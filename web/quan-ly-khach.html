@@ -56,13 +56,18 @@
       </div>
       <div class="toolbar-actions">
         <button class="button button-primary button-small" id="importCustomers" type="button">Nhập JSON</button>
+        <button class="button button-ghost button-small" id="replaceCustomers" type="button">Thay thế toàn bộ</button>
         <button class="button button-ghost button-small" id="copySelectedCustomers" type="button" disabled>Copy JSON đã chọn</button>
         <button class="button button-ghost button-small" id="exportCustomers" type="button">Xuất JSON</button>
         <button class="button button-ghost button-small" id="newCustomer" type="button">Tạo mẫu trống</button>
       </div>
     </div>
+    <label class="customer-file-import" for="customerJsonFile">
+      <span>Hoặc chọn file JSON</span>
+      <input id="customerJsonFile" type="file" accept=".json,application/json">
+    </label>
     <div id="customerCopyResult" class="customer-copy-result" hidden>
-      <label for="customerCopyOutput">JSON đã copy</label>
+      <label for="customerCopyOutput">Nội dung đã copy</label>
       <textarea id="customerCopyOutput" class="json-input" rows="8" readonly></textarea>
     </div>
     <textarea id="customerJsonInput" class="json-input" rows="5" placeholder='Dán một khách hàng, một mảng khách hàng hoặc {"customers": [...]} vào đây'></textarea>
@@ -118,7 +123,7 @@
         </div>
         <div class="customer-table-wrap">
           <table class="customer-table">
-            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Tài khoản</th><th>Số lượng chạy</th><th>Giá khách trả</th><th>Hợp đồng</th><th>Note</th><th>Facebook</th><th>Email</th><th>Cập nhật</th><th></th></tr></thead>
+            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Tài khoản</th><th>Số lượng chạy</th><th>Tài khoản test</th><th>Giá khách trả</th><th>Hợp đồng</th><th>Note</th><th>Facebook</th><th>Email</th><th>Cập nhật</th><th></th></tr></thead>
             <tbody id="customerList"></tbody>
           </table>
           <p id="emptyState" class="empty-state">Chưa có khách hàng. Hãy nhập file JSON.</p>
@@ -127,6 +132,7 @@
           <span id="paginationInfo"></span>
           <div class="table-pagination-actions">
             <button class="button button-primary button-small" id="saveAllCustomers" type="button" disabled>Lưu tất cả</button>
+            <button class="button button-ghost button-small" id="copyCustomerMessage" type="button" disabled>Copy message</button>
             <button class="button button-ghost button-small" id="previousPage" type="button">Trước</button>
             <button class="button button-ghost button-small" id="nextPage" type="button">Sau</button>
           </div>

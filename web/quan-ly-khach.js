@@ -85,6 +85,7 @@ const supabaseClient = window.supabase && window.SUPABASE_URL && window.SUPABASE
 
 const inputId = path => `customer-${path.replaceAll(".", "-")}`;
 const getValue = (object, path) => path.split(".").reduce((value, key) => value?.[key], object) ?? "";
+const escapeAttribute = value => String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 function setValue(object, path, value) {
   const keys = path.split(".");
   const last = keys.pop();
@@ -177,6 +178,7 @@ function normalizeCustomer(item, index) {
     facebook: item.facebook || item.facebook_url || "",
     quantity: Number(item.quantity || item.accountCount || 0),
     runningQuantity: Number(item.runningQuantity ?? item.quantityRunning ?? item.running_quantity ?? item.runQuantity ?? 0),
+    testAccount: String(item.testAccount ?? item.accountTest ?? item.test_account ?? item.testUsername ?? ""),
     price: Number(item.price || item.amount || 0),
     contractSent: contractSentValue === true || contractSentValue === "true" || contractSentValue === "Yes" || contractSentValue === "Đã gửi",
     accountsReady: accountsReadyValue === undefined ? undefined : accountsReadyValue === true || accountsReadyValue === "true" || accountsReadyValue === "Yes",
@@ -206,7 +208,7 @@ function parseJsonInput(value, label) {
     throw new Error(`${label} không hợp lệ.`);
   }
 }
-async function importCustomers() {
+async function importCustomers({ replace = false } = {}) {
     try {
       const parsed = parseJsonInput(document.querySelector("#customerJsonInput").value.trim(), "JSON khách hàng");
       const source = Array.isArray(parsed) ? parsed : Array.isArray(parsed.customers) ? parsed.customers : [parsed];
@@ -224,11 +226,18 @@ async function importCustomers() {
         ({ error } = await supabaseClient.from("customers").upsert(rows.map(({ last_edited_at, ...row }) => row)));
       }
       if (error) throw error;
+      if (replace) {
+        const existingIds = customers.map(customer => customer.id).filter(id => !imported.some(item => item.id === id));
+        if (existingIds.length) {
+          const { error: deleteError } = await supabaseClient.from("customers").delete().in("id", existingIds);
+          if (deleteError) throw deleteError;
+        }
+      }
       customers = [...imported, ...customers.filter(existing => !imported.some(item => item.id === existing.id))];
       selectedId = imported[0].id;
       openCustomer(selectedId);
       document.querySelector("#customerJsonInput").value = "";
-      setStatus(`Đã nhập ${imported.length} khách hàng vào database.`);
+      setStatus(replace ? `Đã thay thế toàn bộ dữ liệu bằng ${imported.length} khách hàng.` : `Đã nhập ${imported.length} khách hàng vào database.`);
     } catch (error) {
       console.error("Không thể nhập JSON khách hàng:", error);
       setStatus(error.message === "Chưa cấu hình Supabase." ? error.message : error.message || "JSON khách hàng không có dữ liệu.");
@@ -261,7 +270,7 @@ function buildFields() {
   });
 }
 function emptyCustomer() {
-  return { id: "", facebook: "", quantity: 1, runningQuantity: 0, price: 0, contractSent: false, accountsReady: false, note: "", profile: {}, accounts: [] };
+  return { id: "", facebook: "", quantity: 1, runningQuantity: 0, testAccount: "", price: 0, contractSent: false, accountsReady: false, note: "", profile: {}, accounts: [] };
 }
 function fillForm(customer) {
   form.reset();
@@ -322,6 +331,47 @@ function customerName(customer) {
 }
 function formatPrice(value) {
   return Number(value) > 0 ? `${new Intl.NumberFormat("vi-VN").format(value)} đ` : "—";
+}
+function customerMessage(customer) {
+  return `CÁC VIỆC CẦN CHUẨN BỊ
+
+https://onlineservices.immigration.govt.nz/?WHS
+
+1. Kiểm tra thông tin lần cuối. Nếu cần sửa gì, vui lòng báo sớm nhất có thể.
+2. Đọc kỹ từng mục trong hồ sơ trước khi xác nhận.
+3. Báo ngay nếu bạn thuộc một trong các trường hợp sau:
+
+- Có liên quan đến vấn đề hình sự (từng bị buộc tội, kết án, trục xuất…)
+- Đang mang thai
+4. Số điện thoại ghi theo mã vùng quốc gia, bỏ số 0 ở đầu. Ví dụ: 0912345678 → 84912345678
+5. Kiểm tra kỹ thẻ thanh toán quốc tế: thẻ còn hạn, đủ số dư và đã mở chức năng thanh toán quốc tế/online.
+
+THÔNG TIN ĐĂNG KÝ
+
+- Họ tên: ${customerName(customer)}
+- Số lượng tài khoản: ${Number(customer.quantity || 0)}
+- Giá chốt: ${Number(customer.price || 0)} triệu đồng
+- Thời hạn thanh toán: trước ngày 20/11/2026
+- Hình thức: chuyển khoản`;
+}
+async function copyCustomerMessage() {
+  const selected = selectedCustomers().map(draftCustomer);
+  if (!selected.length) {
+    setCopyStatus("Hãy tick ít nhất một khách hàng để copy message.");
+    return;
+  }
+  const message = selected.map(customerMessage).join("\n\n---\n\n");
+  try {
+    await writeClipboard(message);
+    document.querySelector("#customerCopyOutput").value = message;
+    document.querySelector("#customerCopyResult").hidden = false;
+    setCopyStatus(`Đã copy message cho ${selected.length} khách hàng.`);
+  } catch (error) {
+    console.error("Không thể sao chép message khách hàng:", error);
+    document.querySelector("#customerCopyOutput").value = message;
+    document.querySelector("#customerCopyResult").hidden = false;
+    setCopyStatus(`Không thể tự copy message: ${error.message}`);
+  }
 }
 function accountStats(customer) {
   const required = Math.max(0, Number(customer.quantity || 0));
@@ -416,6 +466,7 @@ function renderList() {
     ? `Tổng giá khách trả của ${selectedCustomerIds.size} khách đã chọn: ${formatPrice(selectedTotal)}`
     : "Chưa chọn khách hàng nào.";
   document.querySelector("#copySelectedCustomers").disabled = selectedCustomerIds.size === 0;
+  document.querySelector("#copyCustomerMessage").disabled = selectedCustomerIds.size === 0;
   emptyState.hidden = filtered.length > 0;
   document.querySelector("#paginationInfo").textContent = filtered.length ? `Trang ${currentPage}/${totalPages} · ${filtered.length} kết quả` : "";
   document.querySelector("#previousPage").disabled = currentPage === 1;
@@ -430,7 +481,7 @@ function renderList() {
     const stats = accountStats(draft);
     const row = document.createElement("tr");
     row.className = customer.id === selectedId ? "is-selected" : "";
-    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(draft)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(draft)}</strong></td><td class="account-summary" title="${stats.state === "complete" ? "Đủ số tài khoản cần tạo" : "Số tài khoản chưa khớp số cần tạo"}"><strong>${stats.added}/${stats.required}</strong>${stats.state === "complete" ? ' <span class="account-check" aria-label="Đủ tài khoản">✓</span>' : ""}</td><td><input class="inline-running-quantity" type="number" min="0" step="1" value="${Number(draft.runningQuantity || 0)}" aria-label="Số lượng chạy của ${customerName(draft)}"></td><td><input class="inline-price" type="number" min="0" step="1000" value="${Number(draft.price || 0)}" aria-label="Giá khách trả của ${customerName(draft)}"></td><td><label class="inline-status"><input class="contract-toggle" type="checkbox" ${draft.contractSent ? "checked" : ""} aria-label="Hợp đồng đã gửi"></label></td><td><textarea class="inline-note" rows="1" aria-label="Note của ${customerName(draft)}" placeholder="Note..."></textarea></td><td>${draft.facebook || "—"}</td><td>${getValue(draft.profile, "contact.email") || "—"}</td><td>${new Date(draft.lastEditedAt || draft.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
+    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(draft)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(draft)}</strong></td><td class="account-summary" title="${stats.state === "complete" ? "Đủ số tài khoản cần tạo" : "Số tài khoản chưa khớp số cần tạo"}"><input class="inline-account-quantity" type="number" min="0" step="1" value="${Number(draft.quantity || 0)}" aria-label="Số lượng tài khoản của ${customerName(draft)}"></td><td><input class="inline-running-quantity" type="number" min="0" step="1" value="${Number(draft.runningQuantity || 0)}" aria-label="Số lượng chạy của ${customerName(draft)}"></td><td><input class="inline-test-account" type="text" value="${escapeAttribute(draft.testAccount)}" aria-label="Tài khoản test của ${customerName(draft)}" placeholder="Username"></td><td><input class="inline-price" type="number" min="0" step="1000" value="${Number(draft.price || 0)}" aria-label="Giá khách trả của ${customerName(draft)}"></td><td><label class="inline-status"><input class="contract-toggle" type="checkbox" ${draft.contractSent ? "checked" : ""} aria-label="Hợp đồng đã gửi"></label></td><td><textarea class="inline-note" rows="1" aria-label="Note của ${customerName(draft)}" placeholder="Note..."></textarea></td><td>${draft.facebook || "—"}</td><td>${getValue(draft.profile, "contact.email") || "—"}</td><td>${new Date(draft.lastEditedAt || draft.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
     row.querySelector(".inline-note").value = draft.note || "";
     row.querySelector(".customer-select").addEventListener("click", event => event.stopPropagation());
     row.querySelector(".customer-select").addEventListener("change", event => {
@@ -450,6 +501,13 @@ function renderList() {
       const runningQuantity = Number(event.currentTarget.value);
       if (Number.isInteger(runningQuantity) && runningQuantity >= 0) queueCustomerChange(customer, { runningQuantity });
     });
+    row.querySelector(".inline-account-quantity").addEventListener("click", event => event.stopPropagation());
+    row.querySelector(".inline-account-quantity").addEventListener("change", event => {
+      const quantity = Number(event.currentTarget.value);
+      if (Number.isInteger(quantity) && quantity >= 0) queueCustomerChange(customer, { quantity });
+    });
+    row.querySelector(".inline-test-account").addEventListener("click", event => event.stopPropagation());
+    row.querySelector(".inline-test-account").addEventListener("input", event => queueCustomerChange(customer, { testAccount: event.currentTarget.value }));
     row.querySelector(".contract-toggle").addEventListener("click", event => event.stopPropagation());
     row.querySelector(".contract-toggle").addEventListener("change", event => queueCustomerChange(customer, { contractSent: event.currentTarget.checked }));
     row.querySelector(".inline-note").addEventListener("click", event => event.stopPropagation());
@@ -555,6 +613,22 @@ document.querySelector("#pageSize").addEventListener("change", event => { pageSi
 document.querySelector("#previousPage").addEventListener("click", () => { if (currentPage > 1) { currentPage -= 1; renderList(); } });
 document.querySelector("#nextPage").addEventListener("click", () => { currentPage += 1; renderList(); });
 document.querySelector("#importCustomers").addEventListener("click", importCustomers);
+document.querySelector("#customerJsonFile").addEventListener("change", async event => {
+  const file = event.currentTarget.files?.[0];
+  if (!file) return;
+  try {
+    document.querySelector("#customerJsonInput").value = await file.text();
+    setStatus(`Đã đọc ${file.name}. Hãy bấm "Thay thế toàn bộ" để lưu.`);
+  } catch (error) {
+    console.error("Không thể đọc file JSON khách hàng:", error);
+    setStatus(`Không thể đọc file: ${error.message}`);
+  }
+});
+document.querySelector("#replaceCustomers").addEventListener("click", () => {
+  if (window.confirm("Thay thế toàn bộ dữ liệu khách hiện tại bằng JSON đang nhập? Dữ liệu cũ không có trong JSON sẽ bị xóa.")) {
+    importCustomers({ replace: true });
+  }
+});
 document.querySelector("#saveAllCustomers").addEventListener("click", saveAllCustomers);
 document.querySelector("#selectVisibleCustomers").addEventListener("change", event => {
   const query = document.querySelector("#customerSearch").value.trim().toLowerCase();
@@ -576,6 +650,7 @@ document.querySelector("#selectVisibleCustomers").addEventListener("change", eve
   renderList();
 });
 document.querySelector("#copySelectedCustomers").addEventListener("click", copySelectedCustomers);
+document.querySelector("#copyCustomerMessage").addEventListener("click", copyCustomerMessage);
 document.querySelector("#exportCustomers").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(customers, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
