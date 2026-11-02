@@ -67,7 +67,6 @@ const PROFILE_SECTIONS = [
 const STORAGE_KEY = "nz-tool-customers-v1";
 const form = document.querySelector("#customerForm");
 const customerFields = document.querySelector("#customerFields");
-const accountList = document.querySelector("#accountList");
 const customerList = document.querySelector("#customerList");
 const emptyState = document.querySelector("#emptyState");
 const status = document.querySelector("#customerStatus");
@@ -79,6 +78,7 @@ let customers = [];
 let currentPage = 1;
 let pageSize = 10;
 const selectedCustomerIds = new Set();
+const pendingCustomerChanges = new Map();
 const supabaseClient = window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY
   ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
   : null;
@@ -259,40 +259,6 @@ function buildFields() {
     customerFields.append(section);
   });
 }
-function createAccount(account = {}) {
-  const card = document.createElement("article");
-  card.className = "managed-account";
-  card.innerHTML = `
-    <div class="managed-account-head"><strong>Tài khoản</strong><button class="text-button remove-account" type="button">Xóa</button></div>
-    <div class="account-grid">
-      <label class="customer-field"><span>Username *</span><input data-account="username" type="text" required autocomplete="off"></label>
-      <input data-account="email" type="hidden">
-      <input data-account="password" type="hidden">
-      <input data-account="proxy" type="hidden">
-      <input data-account="payLink" type="hidden">
-      <input data-account="isServer" type="hidden">
-    </div>`;
-  const normalized = normalizeAccount(account);
-  card.querySelector('[data-account="username"]').value = normalized.username;
-  card.querySelector('[data-account="email"]').value = normalized.email;
-  card.querySelector('[data-account="password"]').value = normalized.password;
-  card.querySelector('[data-account="proxy"]').value = normalized.proxy;
-  card.querySelector('[data-account="payLink"]').value = normalized.payLink;
-  card.querySelector('[data-account="isServer"]').value = String(normalized.isServer);
-  card.querySelector(".remove-account").addEventListener("click", () => {
-    if (accountList.children.length === 1) {
-      card.querySelectorAll("input").forEach(input => { input.value = ""; });
-      return;
-    }
-    card.remove();
-    renumberAccounts();
-  });
-  accountList.append(card);
-  renumberAccounts();
-}
-function renumberAccounts() {
-  [...accountList.children].forEach((card, index) => { card.querySelector("strong").textContent = `Tài khoản ${index + 1}`; });
-}
 function emptyCustomer() {
   return { id: "", facebook: "", quantity: 1, price: 0, contractSent: false, accountsReady: false, note: "", profile: {}, accounts: [] };
 }
@@ -303,8 +269,6 @@ function fillForm(customer) {
     if (control.type === "checkbox") control.checked = Boolean(value);
     else control.value = value;
   });
-  accountList.replaceChildren();
-  (customer.accounts?.length ? customer.accounts : [{}]).forEach(createAccount);
   const facebook = document.querySelector("#customer-facebook");
   if (!facebook) {
     const field = createControl("facebook", "Facebook của khách hàng", "text", true);
@@ -345,13 +309,9 @@ function readForm() {
     quantity: Number(document.querySelector("#customer-quantity").value || 1),
     price: Number(document.querySelector("#customer-price").value || 0),
     contractSent: document.querySelector("#customer-contract-sent").value === "true",
-    accountsReady: document.querySelector("#customer-accounts-ready").checked,
     note: document.querySelector("#customer-note").value.trim(),
     profile,
-    accounts: [...accountList.children].map(card => Object.fromEntries([...card.querySelectorAll("[data-account]")].map(input => [
-      input.dataset.account,
-      input.dataset.account === "isServer" ? input.value === "true" : input.value.trim()
-    ])))
+    accounts: selectedId ? (customers.find(customer => customer.id === selectedId)?.accounts || []) : []
   };
 }
 function customerName(customer) {
@@ -375,17 +335,42 @@ function accountStats(customer) {
     confirmed: customer.accountsReady === true
   };
 }
-async function updateCustomerInline(customer, changes, statusTarget) {
-  const updated = { ...customer, ...changes, lastEditedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+function draftCustomer(customer) {
+  if (!customer) return customer;
+  return pendingCustomerChanges.has(customer.id)
+    ? { ...customer, ...pendingCustomerChanges.get(customer.id) }
+    : customer;
+}
+function queueCustomerChange(customer, changes) {
+  pendingCustomerChanges.set(customer.id, { ...(pendingCustomerChanges.get(customer.id) || {}), ...changes });
+  document.querySelector("#saveAllCustomers").disabled = false;
+  document.querySelector("#customerCopyStatus").textContent = `Có ${pendingCustomerChanges.size} khách hàng chưa lưu.`;
+}
+async function saveAllCustomers() {
+  if (!pendingCustomerChanges.size) return;
+  const button = document.querySelector("#saveAllCustomers");
+  button.disabled = true;
+  button.textContent = "Đang lưu...";
   try {
-    await upsertCustomer(updated);
-    const index = customers.findIndex(item => item.id === customer.id);
-    if (index !== -1) customers[index] = updated;
+    const now = new Date().toISOString();
+    const updates = [...pendingCustomerChanges.entries()].map(([id, changes]) => {
+      const customer = customers.find(item => item.id === id);
+      return customer ? { ...customer, ...changes, lastEditedAt: now, updatedAt: now } : null;
+    }).filter(Boolean);
+    for (const customer of updates) await upsertCustomer(customer);
+    updates.forEach(updated => {
+      const index = customers.findIndex(item => item.id === updated.id);
+      if (index !== -1) customers[index] = updated;
+    });
+    pendingCustomerChanges.clear();
+    document.querySelector("#customerCopyStatus").textContent = `Đã lưu ${updates.length} khách hàng.`;
     renderList();
   } catch (error) {
-    console.error("Không thể cập nhật nhanh khách hàng:", error);
-    if (statusTarget) statusTarget.textContent = `Không thể lưu: ${error.message}`;
-    renderList();
+    console.error("Không thể lưu các thay đổi khách hàng:", error);
+    document.querySelector("#customerCopyStatus").textContent = `Không thể lưu tất cả: ${error.message}`;
+  } finally {
+    button.textContent = "Lưu tất cả";
+    button.disabled = pendingCustomerChanges.size === 0;
   }
 }
 function renderList() {
@@ -396,7 +381,7 @@ function renderList() {
   const minPrice = Number(document.querySelector("#minPrice").value || 0);
   const maxPriceValue = document.querySelector("#maxPrice").value;
   const maxPrice = maxPriceValue === "" ? Number.POSITIVE_INFINITY : Number(maxPriceValue);
-  const filtered = readCustomers().filter(customer => {
+  const filtered = readCustomers().map(draftCustomer).filter(customer => {
     const matchesQuery = `${customerName(customer)} ${customer.facebook} ${getValue(customer.profile, "contact.email")}`.toLowerCase().includes(query);
     const stats = accountStats(customer);
     const matchesAccounts = filter === "all" || filter === stats.state;
@@ -408,8 +393,8 @@ function renderList() {
   currentPage = Math.min(currentPage, totalPages);
   const pageCustomers = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const allStats = readCustomers().reduce((summary, customer) => {
-    const stats = accountStats(customer);
-    summary.required += stats.required; summary.added += stats.added; summary.price += Number(customer.price || 0);
+    const stats = accountStats(draftCustomer(customer));
+    summary.required += stats.required; summary.added += stats.added; summary.price += Number(draftCustomer(customer).price || 0);
     return summary;
   }, { required: 0, added: 0, price: 0 });
   customerCount.textContent = `${filtered.length}/${readCustomers().length} khách hàng`;
@@ -429,33 +414,29 @@ function renderList() {
   selectVisible.indeterminate = visibleSelected > 0 && visibleSelected < pageCustomers.length;
   if (!filtered.length) return;
   pageCustomers.forEach(customer => {
-    const stats = accountStats(customer);
+    const draft = draftCustomer(customer);
+    const stats = accountStats(draft);
     const row = document.createElement("tr");
     row.className = customer.id === selectedId ? "is-selected" : "";
-    const accountLabel = stats.state === "complete" ? (stats.confirmed ? "Đã xác nhận" : "Đủ, chưa tick") : stats.state === "excess" ? `Thừa ${stats.difference}` : stats.state === "empty" ? "Chưa tạo" : `Thiếu ${Math.abs(stats.difference)}`;
-    const accountClass = stats.state === "complete" ? "status-complete" : stats.state === "excess" ? "status-excess" : "status-missing";
-    const note = customer.note || "—";
-    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(customer)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(customer)}</strong></td><td><strong>${stats.added}/${stats.required}</strong></td><td><input class="inline-price" type="number" min="0" step="1000" value="${Number(customer.price || 0)}" aria-label="Giá khách trả của ${customerName(customer)}"></td><td><label class="inline-status"><input class="contract-toggle" type="checkbox" ${customer.contractSent ? "checked" : ""}><span class="status-badge ${customer.contractSent ? "status-complete" : "status-missing"}">${customer.contractSent ? "Đã gửi" : "Chưa gửi"}</span></label></td><td class="customer-note-cell"></td><td><label class="inline-status" title="${stats.state === "complete" ? "Xác nhận đã tạo đủ tài khoản" : "Cần đủ username mới có thể xác nhận"}"><input class="accounts-ready-toggle" type="checkbox" ${stats.confirmed ? "checked" : ""} ${stats.state !== "complete" ? "disabled" : ""}><span class="status-badge ${accountClass}">${accountLabel}</span></label></td><td>${customer.facebook || "—"}</td><td>${getValue(customer.profile, "contact.email") || "—"}</td><td>${new Date(customer.lastEditedAt || customer.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
-    const noteCell = row.querySelector(".customer-note-cell");
-    noteCell.textContent = note;
-    noteCell.title = note;
+    row.innerHTML = `<td class="customer-select-column"><input class="customer-select" type="checkbox" aria-label="Chọn ${customerName(draft)}" ${selectedCustomerIds.has(customer.id) ? "checked" : ""}></td><td><strong>${customerName(draft)}</strong></td><td class="account-summary" title="${stats.state === "complete" ? "Đủ số tài khoản cần tạo" : "Số tài khoản chưa khớp số cần tạo"}"><strong>${stats.added}/${stats.required}</strong>${stats.state === "complete" ? ' <span class="account-check" aria-label="Đủ tài khoản">✓</span>' : ""}</td><td><input class="inline-price" type="number" min="0" step="1000" value="${Number(draft.price || 0)}" aria-label="Giá khách trả của ${customerName(draft)}"></td><td><label class="inline-status"><input class="contract-toggle" type="checkbox" ${draft.contractSent ? "checked" : ""} aria-label="Hợp đồng đã gửi"></label></td><td><textarea class="inline-note" rows="1" aria-label="Note của ${customerName(draft)}" placeholder="Note..."></textarea></td><td>${draft.facebook || "—"}</td><td>${getValue(draft.profile, "contact.email") || "—"}</td><td>${new Date(draft.lastEditedAt || draft.updatedAt).toLocaleDateString("vi-VN")}</td><td><button class="text-button table-copy" type="button">Copy JSON</button> <button class="text-button table-open" type="button">Mở</button></td>`;
+    row.querySelector(".inline-note").value = draft.note || "";
     row.querySelector(".customer-select").addEventListener("click", event => event.stopPropagation());
     row.querySelector(".customer-select").addEventListener("change", event => {
       if (event.currentTarget.checked) selectedCustomerIds.add(customer.id);
       else selectedCustomerIds.delete(customer.id);
       renderList();
     });
-    row.querySelector(".table-copy").addEventListener("click", event => copyCustomerJson(customer, event.currentTarget));
+    row.querySelector(".table-copy").addEventListener("click", event => copyCustomerJson(draft, event.currentTarget));
     row.querySelector(".table-open").addEventListener("click", () => openCustomer(customer.id));
     row.querySelector(".inline-price").addEventListener("click", event => event.stopPropagation());
     row.querySelector(".inline-price").addEventListener("change", event => {
       const price = Number(event.currentTarget.value);
-      if (Number.isFinite(price) && price >= 0) updateCustomerInline(customer, { price });
+      if (Number.isFinite(price) && price >= 0) queueCustomerChange(customer, { price });
     });
     row.querySelector(".contract-toggle").addEventListener("click", event => event.stopPropagation());
-    row.querySelector(".contract-toggle").addEventListener("change", event => updateCustomerInline(customer, { contractSent: event.currentTarget.checked }));
-    row.querySelector(".accounts-ready-toggle").addEventListener("click", event => event.stopPropagation());
-    row.querySelector(".accounts-ready-toggle").addEventListener("change", event => updateCustomerInline(customer, { accountsReady: event.currentTarget.checked }));
+    row.querySelector(".contract-toggle").addEventListener("change", event => queueCustomerChange(customer, { contractSent: event.currentTarget.checked }));
+    row.querySelector(".inline-note").addEventListener("click", event => event.stopPropagation());
+    row.querySelector(".inline-note").addEventListener("input", event => queueCustomerChange(customer, { note: event.currentTarget.value }));
     row.addEventListener("dblclick", () => openCustomer(customer.id));
     customerList.append(row);
   });
@@ -497,7 +478,7 @@ function customerProfileJson(customer) {
   return removeVietnameseDiacritics(output);
 }
 function openCustomer(id) {
-  const customer = readCustomers().find(item => item.id === id);
+  const customer = draftCustomer(readCustomers().find(item => item.id === id));
   if (!customer) return;
   selectedId = id; editorTitle.textContent = customerName(customer); deleteButton.hidden = false; fillForm(customer); status.textContent = ""; renderList();
   document.querySelector("#customerModal")?.showModal();
@@ -520,6 +501,7 @@ async function saveCustomer(event) {
     await upsertCustomer(customer);
     const index = customers.findIndex(item => item.id === customer.id);
     if (index === -1) customers.unshift(customer); else customers[index] = customer;
+    pendingCustomerChanges.delete(customer.id);
     selectedId = customer.id; editorTitle.textContent = customerName(customer); deleteButton.hidden = false;
     setStatus("Đã lưu khách hàng vào database."); renderList(); document.querySelector("#customerModal")?.close();
   } catch (error) {
@@ -547,7 +529,6 @@ document.querySelector("#closeCustomerModal").addEventListener("click", () => do
 document.querySelector("#customerModal")?.addEventListener("click", event => {
   if (event.target === event.currentTarget) event.currentTarget.close();
 });
-document.querySelector("#addAccount").addEventListener("click", () => createAccount());
 document.querySelector("#customerSearch").addEventListener("input", () => { currentPage = 1; renderList(); });
 document.querySelector("#customerStatusFilter").addEventListener("change", () => { currentPage = 1; renderList(); });
 document.querySelector("#contractFilter").addEventListener("change", () => { currentPage = 1; renderList(); });
@@ -556,6 +537,7 @@ document.querySelector("#pageSize").addEventListener("change", event => { pageSi
 document.querySelector("#previousPage").addEventListener("click", () => { if (currentPage > 1) { currentPage -= 1; renderList(); } });
 document.querySelector("#nextPage").addEventListener("click", () => { currentPage += 1; renderList(); });
 document.querySelector("#importCustomers").addEventListener("click", importCustomers);
+document.querySelector("#saveAllCustomers").addEventListener("click", saveAllCustomers);
 document.querySelector("#selectVisibleCustomers").addEventListener("change", event => {
   const query = document.querySelector("#customerSearch").value.trim().toLowerCase();
   const filter = document.querySelector("#customerStatusFilter").value;
@@ -576,26 +558,6 @@ document.querySelector("#selectVisibleCustomers").addEventListener("change", eve
   renderList();
 });
 document.querySelector("#copySelectedCustomers").addEventListener("click", copySelectedCustomers);
-document.querySelector("#importAccounts").addEventListener("click", () => {
-  try {
-    const raw = document.querySelector("#accountJsonInput").value.trim();
-    if (!raw) throw new Error("Hãy nhập ít nhất một username.");
-    let accounts;
-    if (raw.startsWith("[") || raw.startsWith("{")) {
-      const parsed = parseJsonInput(raw, "JSON tài khoản");
-      accounts = Array.isArray(parsed) ? parsed : Array.isArray(parsed.accounts) ? parsed.accounts : [parsed];
-      if (accounts.some(account => !account || typeof account !== "object")) throw new Error("JSON tài khoản không có dữ liệu.");
-    } else {
-      accounts = raw.split(/\r?\n/).map(username => username.trim()).filter(Boolean).map(username => ({ username }));
-    }
-    if (!accounts.length) throw new Error("Hãy nhập ít nhất một username.");
-    accounts.forEach(createAccount);
-    document.querySelector("#accountJsonInput").value = "";
-    setStatus(`Đã thêm ${accounts.length} username vào form. Bấm Lưu khách hàng để lưu database.`);
-  } catch (error) {
-    setStatus(error.message);
-  }
-});
 document.querySelector("#exportCustomers").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(customers, null, 2)], { type: "application/json" });
   const link = document.createElement("a");

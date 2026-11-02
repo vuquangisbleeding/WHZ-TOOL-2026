@@ -580,7 +580,10 @@ button { cursor: pointer; }
 .customer-table th { background: var(--sand); color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
 .customer-table td { font-size: 12px; }
 .customer-table .inline-price { width: 100px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font-size: 12px; }
+.customer-table .inline-note { width: 140px; min-height: 28px; padding: 3px 6px; border: 1px solid #d9cbb8; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 12px; resize: vertical; }
 .inline-status { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.account-summary { white-space: nowrap; }
+.account-check { color: var(--pine); font-size: 15px; font-weight: 700; }
 .inline-status input { width: 14px; height: 14px; accent-color: var(--pine); }
 .inline-status input:disabled { cursor: not-allowed; opacity: .55; }
 .customer-table tbody tr { cursor: pointer; }

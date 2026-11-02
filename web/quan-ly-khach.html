@@ -56,6 +56,7 @@
       </div>
       <div class="toolbar-actions">
         <button class="button button-primary button-small" id="importCustomers" type="button">Nhập JSON</button>
+        <button class="button button-primary button-small" id="saveAllCustomers" type="button" disabled>Lưu tất cả</button>
         <button class="button button-ghost button-small" id="copySelectedCustomers" type="button" disabled>Copy JSON đã chọn</button>
         <button class="button button-ghost button-small" id="exportCustomers" type="button">Xuất JSON</button>
         <button class="button button-ghost button-small" id="newCustomer" type="button">Tạo mẫu trống</button>
@@ -111,7 +112,7 @@
         </div>
         <div class="customer-table-wrap">
           <table class="customer-table">
-            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Tài khoản</th><th>Giá khách trả</th><th>Hợp đồng</th><th>Note</th><th>Trạng thái</th><th>Facebook</th><th>Email</th><th>Cập nhật</th><th></th></tr></thead>
+            <thead><tr><th class="customer-select-column"><input id="selectVisibleCustomers" type="checkbox" aria-label="Chọn khách hàng trên trang này"></th><th>Khách hàng</th><th>Tài khoản</th><th>Giá khách trả</th><th>Hợp đồng</th><th>Note</th><th>Facebook</th><th>Email</th><th>Cập nhật</th><th></th></tr></thead>
             <tbody id="customerList"></tbody>
           </table>
           <p id="emptyState" class="empty-state">Chưa có khách hàng. Hãy nhập file JSON.</p>
@@ -135,21 +136,6 @@
         </div>
         <form id="customerForm" class="customer-form" novalidate>
           <div id="customerFields"></div>
-          <section class="account-section">
-            <div class="account-section-head">
-              <div>
-                <p class="eyebrow">Tài khoản</p>
-                <h3>Danh sách tài khoản</h3>
-              </div>
-              <button class="button button-ghost button-small" id="addAccount" type="button">+ Thêm tài khoản</button>
-            </div>
-            <p class="account-description">Danh sách chỉ hiển thị username. Nhập nhanh bằng cách điền mỗi username trên một dòng.</p>
-            <div class="account-import">
-              <textarea id="accountJsonInput" class="json-input" rows="5" placeholder="username_1&#10;username_2&#10;username_3"></textarea>
-              <button class="button button-ghost button-small" id="importAccounts" type="button">Thêm username</button>
-            </div>
-            <div id="accountList" class="managed-account-list"></div>
-          </section>
           <section class="customer-meta-section">
             <label class="customer-field">
               <span>Đã gửi hợp đồng cho khách?</span>
@@ -157,10 +143,6 @@
                 <option value="false">Chưa gửi</option>
                 <option value="true">Đã gửi</option>
               </select>
-            </label>
-            <label class="account-checkbox">
-              <input id="customer-accounts-ready" type="checkbox">
-              <span>Đã xác nhận tạo đủ tài khoản</span>
             </label>
             <label class="customer-field customer-field-wide">
               <span>Note về khách</span>
