@@ -460,11 +460,16 @@ function renderList() {
     if (!readCustomers().some(customer => customer.id === id)) selectedCustomerIds.delete(id);
   });
   document.querySelector("#selectedCustomerSummary").textContent = `Đã chọn: ${selectedCustomerIds.size}`;
-  const selectedTotal = readCustomers()
+  const selectedTotals = readCustomers()
     .filter(customer => selectedCustomerIds.has(customer.id))
-    .reduce((total, customer) => total + Number(draftCustomer(customer).price || 0), 0);
+    .reduce((totals, customer) => {
+      const draft = draftCustomer(customer);
+      totals.price += Number(draft.price || 0);
+      totals.runningQuantity += Number(draft.runningQuantity || 0);
+      return totals;
+    }, { price: 0, runningQuantity: 0 });
   document.querySelector("#selectedCustomersTotal").textContent = selectedCustomerIds.size
-    ? `Tổng giá khách trả của ${selectedCustomerIds.size} khách đã chọn: ${formatPrice(selectedTotal)}`
+    ? `Tổng giá khách trả của ${selectedCustomerIds.size} khách đã chọn: ${formatPrice(selectedTotals.price)} · Tổng số lượng chạy: ${selectedTotals.runningQuantity}`
     : "Chưa chọn khách hàng nào.";
   document.querySelector("#copySelectedCustomers").disabled = selectedCustomerIds.size === 0;
   document.querySelector("#copyCustomerMessage").disabled = selectedCustomerIds.size === 0;
